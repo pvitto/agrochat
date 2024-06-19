@@ -1,0 +1,165 @@
+var datosActuales = [];
+$(document).ready(function(){ 
+    var time = 100;
+    var images = 6;
+    var tabla = document.getElementById("tabla"); 
+
+    function ponerTexto(){
+        var texto = "Agro-CostaSAS, tiene por objeto social la importación, distribución y comercialización de repuestos para maquinaria pesada, manejando para CATERPILLAR: rodaje marca BERCO, partes para mando final, empaquetaduras y sellos para parte hidraulica, sellos y empaques en general, partes de motor, suspensión, discos de freno y fricción, herramientas de corte, entre otras; y contamos con un amplio surtido en rodaje marca BERCO y herramienta de corte para maquinaria de las marcas: KOMATSU, HITACHI, KOBELCO,JOHN DEERE, FIAT ALLIS, CASE, DOOSAN, LIUGONG, entre otras.<br><br> Ofrecemos una amplia gama de martillos hidraulicos y baldes para excavadoras y cargadores.<br><br> En Agro-Costa SAS no solo entregamos repuestos y servicio de excelente calidad; también encontrara increíbles precios y el apoyo que usted necesita para recibir su pedido ágil y eficaz.";
+        maquina("typer",texto,100,0);
+    };
+
+    function maquina(contenedor,texto,intervalo,n){
+        var i=0,
+        // Creamos el timer
+        largo = 0;
+        timer = setInterval(function() {
+            if ( i<texto.length ) {
+                // Si NO hemos llegado al final del texto..
+                // Vamos añadiendo letra por letra y la _ al final.                
+                $("#"+contenedor).html(texto.substr(0,i++) + "_");
+                if($('#typer')[0].scrollHeight > largo){
+                    $('#typer').scrollTop( $('#typer').height());
+                    largo = $('#typer')[0].scrollHeight;
+                }
+            } else {
+                // En caso contrario..
+                // Salimos del Timer y quitamos la barra baja (_)
+                clearInterval(timer);
+                $("#"+contenedor).html(texto);
+                // Auto invocamos la rutina n veces (0 para infinito)
+                if ( --n!=0 ) {
+                    setTimeout(function() {
+                        largo = 0;
+                        maquina(contenedor,texto,intervalo,n);
+                    },3600);
+                }
+            }
+        },intervalo);
+    };
+
+    function imagenes(){
+        return (Math.floor(Math.random() * 6) + 1)+".png";
+    };
+
+    function ponerImagenes(){
+        $("#slide").css("background-image","url('assets/img/1.png')");
+
+        setInterval(function(){
+            $("#slide").fadeOut(1000,"swing",function(){
+                $("#slide").css("background-image","url('assets/img/"+imagenes()+"')");
+                $("#slide").fadeIn(1000,"swing");
+            });   
+        },10000);   
+    };
+
+    function actualizarDatos(){
+        $.getJSON("welcome/obtenerDatos", function(result){
+            datosActuales = result.data;
+            $.each(result.data, function(i, field){
+                setTimeout(function(){
+                    if(document.getElementById(field.TransId) == null && field.estado != "Verificada")
+                    {
+                        var row = tabla.insertRow(1);
+                        row.style.display = "none";
+                        // Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
+                        var cell1 = row.insertCell(0);
+                        var cell2 = row.insertCell(1);
+                        var cell3 = row.insertCell(2);
+                        // Add some text to the new cells:
+                        cell1.innerHTML = field.TransId;
+                        cell2.innerHTML = field.CustName;
+                        cell3.innerHTML = field.estado;
+                        cell3.style.borderRadius = "25px";
+                        row.id = field.TransId;
+                        switch(field.estado) {
+                            /*case "Remision":
+                                cell3.style.backgroundColor = "lightgreen";//$("#"+field.TransId).css("background-color","rgba(0, 255, 0, 0.5)");
+                                break;*/
+                            case "Picked":
+                                cell3.style.backgroundColor = "indianred";//$("#"+field.TransId).css("background-color","rgba(0, 0, 255, 0.5)");
+                                break;
+                        } 
+                        $("#"+field.TransId).fadeIn(1000,"swing");
+                    }
+                    else if(document.getElementById(field.TransId) && field.estado !=  $("#"+field.TransId)[0].cells[2].innerHTML){
+                        $("#"+field.TransId).fadeOut(1000,"swing");
+                        var ee = $("#"+field.TransId)[0];
+                        tabla.deleteRow($("#"+field.TransId)[0].rowIndex);
+                        var tt = tabla.insertRow(1);
+                        tt.style.display = "none";
+                        tt.innerHTML = ee.innerHTML;
+                        tt.cells[2].innerHTML = field.estado;
+                        tt.cells[2].style.borderRadius = "25px";
+                        tt.id = ee.id;
+                        switch(field.estado) {
+                            /*case "Remision":
+                                tt.cells[2].style.backgroundColor = "lightgreen";
+                                break;*/
+                            case "Verificada":
+                                tt.cells[2].style.backgroundColor = "lightgreen";
+                                break;
+                            case "Picked":
+                                tt.cells[2].style.backgroundColor = "indianred";
+                                break;
+                        }   
+                        $("#"+tt.id).fadeIn(1000,"swing");
+                    } 
+                    else if(document.getElementById(field.TransId) && field.estado ==  $("#"+field.TransId)[0].cells[2].innerHTML && field.estado == "Verificada"){
+                        $("#"+field.TransId).fadeOut(1000,"swing");
+                        tabla.deleteRow($("#"+field.TransId)[0].rowIndex);
+                    }             
+                    if(i == result.data.length-1){
+                        setTimeout(function(){
+                            time = 500;
+                            actualizarDatos();
+                        },10000);
+                    }  
+                }, time);
+                time+=500;
+            });        
+        });
+    };
+
+    function traerDatos(){
+        $.getJSON("welcome/obtenerDatos", function(result){
+            $.each(result.data, function(i, field){
+                setTimeout(function(){
+                    var row = tabla.insertRow(1);
+                    row.style.display = "none";
+                    // Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
+                    var cell1 = row.insertCell(0);
+                    var cell2 = row.insertCell(1);
+                    var cell3 = row.insertCell(2);
+                    // Add some text to the new cells:
+                    cell1.innerHTML = field.TransId;
+                    cell2.innerHTML = field.CustName;
+                    cell3.innerHTML = field.estado;
+                    cell3.style.borderRadius = "25px";
+                    row.id = field.TransId;
+                    switch(field.estado) {
+                        /*case "Remision":
+                            cell3.style.backgroundColor = "lightgreen";
+                            break;*/
+                        case "Verificada":
+                            cell3.style.backgroundColor = "lightgreen";
+                            break;
+                        case "Picked":
+                            cell3.style.backgroundColor = "indianred";
+                            break;
+                    }                    
+                    $("#"+field.TransId).fadeIn(1000,"swing");
+                    if(i== result.data.length-1){
+                        time = 500;
+                        actualizarDatos();
+                    }
+                },time);
+                time+=100;
+            });        
+        });
+    };         
+
+    ponerTexto();
+    ponerImagenes();
+    traerDatos();
+});
