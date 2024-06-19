@@ -34,13 +34,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
       }
       </style>
       <meta charset="UTF-8">
-      <link rel = "stylesheet" type = "text/css" href = "<?php echo base_url();?>assets/js/ext/build/classic/theme-neptune-touch/resources/theme-neptune-touch-all.css" />
-      <link rel = "stylesheet" type = "text/css" href = "<?php echo base_url();?>assets/fonts/font-awesome/css/all.min.css" />
-      <script type = "text/javascript" src = "<?php echo base_url();?>assets/js/ext/build/ext-all.js"> </script>
-      <script type = "text/javascript" src = "<?php echo base_url();?>assets/js/ext/build/classic/locale/locale-es.js"> </script>	  
+      <link rel = "stylesheet" type = "text/css" href = "assets/js/ext/build/classic/theme-neptune-touch/resources/theme-neptune-touch-all.css" />
+      <link rel = "stylesheet" type = "text/css" href = "assets/fonts/font-awesome/css/all.min.css" />
+      <script type = "text/javascript" src = "assets/js/ext/build/ext-all.js"> </script>
+      <script type = "text/javascript" src = "assets/js/ext/build/classic/locale/locale-es.js"> </script>	  
       <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
       <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-      <script type="text/javascript" src="<?php echo base_url();?>assets/js/traslado.js"></script>
+      <script type="text/javascript" src="assets/js/traslado.js"></script>
       <title>AGRO-COSTA SAS</title>
       <link rel="shortcut icon" href="assets/img/favicon.ico" type="image/x-icon">
    </head>
