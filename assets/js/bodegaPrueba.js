@@ -16,6 +16,24 @@ Ext.onReady(function() {
 		Ext.getCmp('tabpanel').setVisible(false);
 		Ext.getCmp("tabla").getStore().reload();
 	};
+
+	function mostrarOpciones(recordId) {
+		var record = Ext.getCmp('tabla').getStore().getById(recordId);
+		if (!record) return;
+	
+		Ext.Msg.prompt('Opciones adicionales', 'Ingrese la localización o el nombre del transportista:', function(btn, text) {
+			if (btn === 'ok') {
+				// Guardar la opción elegida en el registro
+				if (text.trim() !== '') {
+					record.set('Localizacion', text.trim());
+					record.set('Transportista', '');  // Limpiar el otro campo si se llenó uno
+				}
+				// Actualizar el registro en la grilla
+				record.commit();
+			}
+		});
+	}
+	
 	 
 	Ext.create('Ext.container.Viewport', {
 		layout: 'border',
@@ -254,7 +272,9 @@ Ext.onReady(function() {
 						{ name: 'FechaTransaccion', type: 'string' },
 						{ name: 'FechaImpresion', type: 'string' },
 						{ name: 'NombreUsuario', type: 'string' },
-						{ name: 'Observaciones', type: 'string' }
+						{ name: 'Observaciones', type: 'string' },
+						{ name: 'Localizacion', type: 'string' },
+						{ name: 'Transportista', type: 'string' }
 					],
 					proxy: {
 						timeout: 600000,
@@ -321,7 +341,7 @@ Ext.onReady(function() {
 							]
 						},
 						renderer: function(value, metaData, record, rowIndex, colIndex, store, view){
-							var proc = record.get("IdProceso");
+							var proc = record.get("IdProceso"); 
 
 							switch(proc) {
 								case 0:
@@ -338,7 +358,7 @@ Ext.onReady(function() {
 									break;
 								case 4:
 									metaData.tdCls = 'empacado';
-									break;
+									return '<a href="#" onclick="mostrarOpciones(\'' + record.getId() + '\')">Ver opciones</a>';
 							}
 
 							return value;
