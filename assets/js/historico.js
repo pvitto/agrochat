@@ -8,7 +8,7 @@ Ext.onReady(function() {
 	 * recommended on touch devices.
 	 */
 	//var url = "http://192.168.0.251/agro/bodega/";
-	if (!localStorage.getItem('auth')) {
+	 if (!localStorage.getItem('auth')) {
         window.location.href = 'Login';
         return;
     }
@@ -30,6 +30,7 @@ Ext.onReady(function() {
 	createMainViewport();
 
 	function createMainViewport() {
+	startSessionTimer();
 	Ext.create('Ext.container.Viewport', {
 		layout: 'border',
 		items: [
