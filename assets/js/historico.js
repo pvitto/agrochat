@@ -8,88 +8,27 @@ Ext.onReady(function() {
 	 * recommended on touch devices.
 	 */
 	//var url = "http://192.168.0.251/agro/bodega/";
-	var url = "/agro/historico/";
+	if (!localStorage.getItem('auth')) {
+        window.location.href = 'Login';
+        return;
+    }
 
-	var sessionTimeout;
+    var socket = io.connect('http://192.168.0.205:4000');
+    var url = "/agro/historico/";
+    var sessionTimeout;
 
-function startSessionTimer() {
-    clearTimeout(sessionTimeout);
-    sessionTimeout = setTimeout(function() {
-        Ext.Msg.alert('Sesión expirada', 'Su sesión ha expirado. Por favor, vuelva a iniciar sesión.', function() {
-            location.reload();  // Recargar la página para mostrar la ventana de inicio de sesión
-        });
-    }, 30 * 60 * 1000);  // 30 minutos en milisegundos
-}
+    function startSessionTimer() {
+        clearTimeout(sessionTimeout);
+        sessionTimeout = setTimeout(function() {
+            Ext.Msg.alert('Sesión expirada', 'Su sesión ha expirado. Por favor, vuelva a iniciar sesión.', function() {
+                localStorage.removeItem('auth');
+                window.location.href = 'Login'; // Redirigir a la página de inicio de sesión
+            });
+        }, 30 * 60 * 1000);  // 30 minutos en milisegundos
+    }
 
+	createMainViewport();
 
-	Ext.onReady(function() {
-		var loginWindow = Ext.create('Ext.window.Window', {
-			title: 'Inicio de Sesión',
-			modal: true,
-			closable: false,
-			draggable: false,
-			resizable: false,
-			width: 300,
-			layout: 'fit',
-			items: [{
-				xtype: 'form',
-				id: 'loginForm',
-				bodyPadding: 10,
-				defaults: {
-					xtype: 'textfield',
-					anchor: '100%',
-					allowBlank: false
-				},
-				items: [{
-					fieldLabel: 'Usuario',
-					name: 'username',
-					id: 'username',
-					allowBlank: false
-				}, {
-					fieldLabel: 'Contraseña',
-					name: 'password',
-					id: 'password',
-					inputType: 'password',
-					allowBlank: false
-				}],
-				buttons: [{
-					text: 'Ingresar',
-					formBind: true,
-					listeners: {
-						click: function() {
-							var form = this.up('form').getForm();
-							if (form.isValid()) {
-								form.submit({
-									url: url+'chequearUsuario',
-									method: 'POST',
-									params: {
-										Usuario: form.findField('username').getValue(),
-										Contraseña: form.findField('password').getValue()
-									},
-									success: function(form, action) {
-										var response = Ext.decode(action.response.responseText);
-										if (response.success) {
-											loginWindow.close();
-											startSessionTimer();
-											createMainViewport();
-										} else {
-											Ext.Msg.alert('Error', 'Usuario o contraseña incorrectos');
-										}
-									},
-									failure: function(form, action) {
-										Ext.Msg.alert('Error', 'Usuario o contraseña incorrectos');
-									}
-								});
-							}
-						}
-					}
-				}]
-			}]
-		});
-	
-		loginWindow.show();
-	});
-	 
 	function createMainViewport() {
 	Ext.create('Ext.container.Viewport', {
 		layout: 'border',
