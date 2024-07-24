@@ -88,49 +88,6 @@ Ext.onReady(function() {
 									}
 								}
 							},
-
-
-							/*{
-								xtype: 'textfield',
-								typeAhead: true,
-								id: 'items',
-								width: 275,
-								labelWidth: 120,
-								fieldLabel: 'Consultar Item',
-								//triggerAction: 'all',
-								value: "",
-								editable: true,
-								//maxlength:1,
-								listeners: {
-									change: function(textfield, e, eOpts) {
-										//console.log("Yes it works!!" + textfield.getRawValue());
-										Ext.getCmp("form").getForm().reset();
-										//Ext.getCmp("tabla").getView().setDisabled(false);
-										Ext.getCmp('tabpanel').setVisible(false);
-										if(textfield.getValue() == ""){
-											Ext.getCmp('tabla').getStore().clearFilter();
-										}else{
-											
-											//esta funciona lo cambie solo para filtrar x 2 campos
-											//Ext.getCmp('tabla').getStore().filter("Itemid",textfield.getRawValue());
-											Ext.getCmp('tabla').getStore().filterBy(function(record) {
-												var fieldValue1 = record.get('Itemid');
-												var fieldValue2 = record.get('AliasProv');
-
-												 // Verificar si el texto introducido se encuentra en cualquiera de los dos campos
-												 return (typeof fieldValue1 === 'string' && fieldValue1.indexOf(textfield.getRawValue()) !== -1) ||
-           												(typeof fieldValue2 === 'string' && fieldValue2.indexOf(textfield.getRawValue()) !== -1);
-
-											});
-
-										}	
-										//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + Ext.getCmp('tabla').getStore().data.BinNum + Ext.getCmp('tabla').getStore().getModel().getFields('BinNum').getValue);
-										//console.log(Ext.getCmp('tabla').getStore().getModel().getFields);
-										//console.log(Ext.getCmp('tabla').getStore().getRange(0,100));
-									}
-									
-								}
-							},*/
 							"-",
 							{
 								xtype: 'textfield',
@@ -216,15 +173,6 @@ Ext.onReady(function() {
 					},
 					{
 						ptype: 'cellediting',			
-
-						// The widget definition describes a widget to be rendered into the expansion row.
-						// It has access to the application's ViewModel hierarchy. Its immediate ViewModel
-						// contains a record and recordIndex property. These, or any property of the record
-						// (including association stores) may be bound to the widget.
-						//
-						// See the Order model definition with the association declared to Company.
-						// Every Company record will be decorated with an "orders" method which,
-						// when called yields a store containing associated orders.
 						widget: {	
 							bind: {
 								store: Ext.create('Ext.data.Store', {
@@ -242,31 +190,13 @@ Ext.onReady(function() {
 										{ name: 'Comprt', type: 'int' },
 										{ name: 'Disp', type: 'int' },
 										{ name: 'Referencia_Equivalente', type: 'string' }
-									]/*,
-									proxy: {
-										timeout: 600000,
-										useDefaultXhrHeader: false,
-										type: 'ajax',
-										url: url+"obtenerReferencias",
-										reader: {
-											type: 'json',
-											rootProperty: 'data'
-										}
-									}*/,
+									],
 									data: []
 								})
 							},
 							xtype: 'grid',
 							header: false,
-							columns: [/*{
-								text: 'TransId',
-								dataIndex: 'TransId',
-								flex: 1
-							}, {
-								text: 'Piso',
-								dataIndex: 'Piso',
-								flex: 1
-							},*/ {
+							columns: [{
 								text: 'Ruta',
 								dataIndex: 'Ruta',
 								flex: 1
@@ -315,8 +245,6 @@ Ext.onReady(function() {
 				viewConfig: {
 					listeners: {
 						expandbody: function (rowNode, record, expandRow, e) {
-							//console.log(record);
-							//Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).store.load({params: {TransId: record.data.TransId, Piso: record.data.Piso}});
 							
 							if(Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).getStore().count() === 0){
 								Ext.Ajax.request({
@@ -366,23 +294,14 @@ Ext.onReady(function() {
 					}
 				}),
 				columns: [
-					
-					/*{
-						//xtype: 'checkcolumn',
-						header: 'RefEmpaque',
-						dataIndex: 'RefEmpaque',
-						width: 150//,
-						//stopSelection: false
-					},*/
+				
 					{
 						//xtype: 'checkcolumn',
 						header: 'Itemid',
 						dataIndex: 'Itemid',
 						groupable: true,
 						headerCheckbox: true,
-						width: 150,//,
-						//summaryType: 'count',  // Agrega resumen de recuento al final de la columna
-						//stopSelection: false
+						width: 150,
 						filter: 'string',
 						flex: 1
 						
@@ -393,9 +312,7 @@ Ext.onReady(function() {
 						dataIndex: 'Descrip',
 						groupable: true,
 						headerCheckbox: true,
-						width: 210,//,
-						//summaryType: 'count',  // Agrega resumen de recuento al final de la columna
-						//stopSelection: false
+						width: 210,
 						filter: 'string',
 						flex: 1
 						
@@ -420,14 +337,6 @@ Ext.onReady(function() {
 						//refenence: 'Name',
 						width: 120,
 						flex: 1
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}*/
 					},
 					{
 						//xtype: 'datecolumn',
@@ -436,73 +345,7 @@ Ext.onReady(function() {
 						//refenence: 'Name',
 						width: 120,
 						flex: 1
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}*/
 					}, 
-					 
-					 
-					
-					
-					
-					/*{
-						header: 'Orden Proceso',
-						dataIndex: 'Orden',
-						hidden: true,
-						width: 100/*,
-						editor: {
-							xtype: 'combo',
-							typeAhead: true,
-							triggerAction: 'all',
-							store: [
-								['Shade','Shade'],
-								['Mostly Shady','Mostly Shady'],
-								['Sun or Shade','Sun or Shade'],
-								['Mostly Sunny','Mostly Sunny'],
-								['Sunny','Sunny']
-							]
-						}
-					}, */
-					
-					/*{
-						header: 'Proveedor',
-						dataIndex: 'VendorName',
-						flex: 1,
-						minWidth: 150,
-						align: 'center',
-						//formatter: 'usMoney',
-						/*editor: {
-							xtype: 'numberfield',
-
-							allowBlank: false,
-							minValue: 0,
-							maxValue: 100000
-						}
-					}, */
-					
-					/*{
-						//xtype: 'datecolumn',
-						header: 'Ingresa',
-						dataIndex: 'Name',
-						refenence: 'Name',
-						width: 200
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}
-					}, */
-					
-					
-				
 					{
 						//xtype: 'datecolumn',
 						header: 'AliasProv',
@@ -511,63 +354,9 @@ Ext.onReady(function() {
 						//refenence: 'Name',
 						width: 120,
 						flex: 1
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}*/
 					}
-					/*,{
-						//xtype: 'checkcolumn',
-						header: 'Observaciones',
-						dataIndex: 'Observaciones',
-						headerCheckbox: true/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
-						//headerCheckbox: true,
-						//width: 190//,
-						//stopSelection: false
-					/*},
-					 {
-						xtype: 'actioncolumn',
-						width: 30,
-						sortable: false,
-						menuDisabled: true,
-						items: [{
-							iconCls: 'far fa-trash-alt',
-							tooltip: 'Delete Plant',
-							handler: 'onRemoveClick'
-						}]
-					}*/
+					
 				],
-				/*viewConfig: {
-					getRowClass: function(record, rowIndex, rowParams, store){
-						var proc = record.get("IdProceso");
-
-						switch(proc) {
-							case 0:
-								return 'picked';
-							case 1:
-								return 'recogiendo';
-							case 2:
-								return 'recogiendo';
-							case 3:
-								return 'empacando';
-							case 3:
-								return 'empacado';
-						}
-					}
-				},*/
 				listeners: {			
 					afterrender: function( view, eOpts ){
 						Ext.getCmp("form").getForm().reset();
@@ -583,11 +372,7 @@ Ext.onReady(function() {
 						Ext.getCmp("pro8").setValue(true);
 						//Ext.getCmp("Observacion").setDisabled(true);
 						Ext.getCmp('Observacion').setValue(record.data.Observaciones);
-						/*Ext.getCmp("pro1").setDisabled(true);
-						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp("pro4").setDisabled(true);*/
-						//Ext.getCmp("tabla").getView().setDisabled(true);
+						
 						Ext.getCmp('tabpanel').setVisible(true);
 						Ext.getCmp("usuarios").focus();
 
@@ -599,39 +384,20 @@ Ext.onReady(function() {
 						Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
 							Ext.getCmp('BinNum').setValue(record.data.BinNum);
 
-						/* if(record.data.IdProceso < 8){
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
-							
-							//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + record.data.BinNum);
-							
-						}			*/			
+								
 					},
 					rowclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
 						Ext.getCmp("form").getForm().reset();
 						Ext.getCmp("pro8").setDisabled(false);
 						Ext.getCmp("pro8").setValue(true);
 						Ext.getCmp('Observacion').setValue(record.data.Observaciones);
-						//Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
-						/*Ext.getCmp("pro1").setDisabled(true);
-						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp("pro4").setDisabled(true);*/
-						//Ext.getCmp("tabla").getView().setDisabled(true);
-						//Ext.getCmp('tabpanel').setVisible(true);
+						
 
 						if(record.data.IdUsuario != null){
 							Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
 						}
 
-						//Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
-						///Ext.getCmp('BinNum').setValue(record.data.BinNum);
-
-						/*if(record.data.IdProceso < 8){
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
-							
-						}			*/			
+									
 					}
 				}
 			}),
@@ -693,15 +459,7 @@ Ext.onReady(function() {
 											});
 											return false;
 										}
-										/*if(Ext.getCmp("proceso").getValue().IdProceso==7 && Ext.getCmp("Observacion").getValue().trim()==""){
-											Ext.Msg.show({
-												title:'Atención!',
-												message: 'Si vas a cancelar/activar un pedido digita la observacion',
-												buttons: Ext.Msg.OK,
-												icon: Ext.Msg.WARNING
-											});
-											return false;
-										}*/
+										
 										else{
 											var datos = {};
 											datos.Id = fila.Id;
@@ -839,11 +597,7 @@ listeners: {
                     },
 
 								items: [
-									/*{ boxLabel: 'Recogiendo', name: 'IdProceso', id: "pro1", inputValue: 1, disabled: true },
-									{ boxLabel: 'Recogido', name: 'IdProceso', id: "pro2", inputValue: 2, disabled: true },
-									{ boxLabel: 'Empacando', name: 'IdProceso', id: "pro3", inputValue: 3, disabled: true },
-									{ boxLabel: 'Empacado', name: 'IdProceso', id: "pro4", inputValue: 4, disabled: true },
-	                                { boxLabel: 'Cancelado', name: 'IdProceso', id: "pro7", inputValue: 7, disabled: false },*/
+									
 									{ boxLabel: 'Localizar', name: 'IdProceso', id: "pro8", inputValue: 8, disabled: true }
 								]
 							},
@@ -864,8 +618,6 @@ listeners: {
 									autoLoad: false,
 									fields: [
 										{ name: 'BinNum', type: 'string' }
-										/*,{ name: 'UserName', type: 'string' },
-										{ name: 'Password', type: 'string' }*/
 									],
 									proxy: {
 										timeout: 600000,

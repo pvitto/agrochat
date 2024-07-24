@@ -231,11 +231,12 @@ Ext.onReady(function() {
             display: flex;
             flex-direction: row;
             align-items: center;
-            width: 100%;
-            height: 200px;
+            width: 10cm; /* Ancho del rectángulo */
+            height: 5cm; /* Alto del rectángulo */
             border: 1px solid #000;
-            padding: 10px;
-            box-sizing: border-box; /* Asegura que el padding y el borde se incluyan en el ancho total */
+            padding: 5px; /* Ajustado para mantener proporciones */
+            box-sizing: border-box; /* Incluye el padding y el borde en el tamaño total */
+            page-break-inside: avoid; /* Evita que el rectángulo se divida en dos páginas si es posible */
         }
         .label-left {
             flex: 2;
@@ -243,6 +244,7 @@ Ext.onReady(function() {
             display: flex;
             flex-direction: column;
             justify-content: center; /* Centra verticalmente el contenido */
+            padding-right: 5px; /* Ajustado para mantener proporciones */
         }
         .label-right {
             flex: 1;
@@ -252,18 +254,18 @@ Ext.onReady(function() {
             justify-content: center; /* Centra verticalmente el contenido */
         }
         .label .reference {
-            font-size: 48px;
+            font-size: 1.0cm; /* Tamaño de fuente para la referencia */
             font-weight: bold;
-            text-align: center; /* Cambiado a 'left' para alinearlo con el diseño */
+            text-align: center;
         }
         .label .dispatch, .label .quantity {
-            font-size: 18px;
+            font-size: 0.4cm; /* Tamaño de fuente para despacho y cantidad */
         }
         .label .code-bar {
             display: block;
-            margin: 0 auto 10px auto; /* Ajustar margen inferior */
-            width: 320px;
-            height: 50px;
+            margin: 0 auto 5px auto; /* Ajusta el margen superior e inferior */
+            width: 5.0cm; /* Ancho del código de barras */
+            height: 1.0cm; /* Alto del código de barras */
         }
     </style>
 </head>
@@ -282,6 +284,7 @@ Ext.onReady(function() {
     </div>
 </body>
 </html>
+
 																	`;
 																	printWindow.document.write(printContent);
 																	printWindow.document.close();
