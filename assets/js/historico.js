@@ -1,13 +1,5 @@
 Ext.onReady(function() {
-	var socket = io.connect('http://192.168.0.205:4000');
-	//new Date().toJSON().split("T")[0].split("-").reverse().join("/")
-	/**
-	 * This example shows how to enable inline editing of grid cells.
-	 *
-	 * Note that cell editing is ideal for mouse/keyboard users and is not
-	 * recommended on touch devices.
-	 */
-	//var url = "http://192.168.0.251/agro/bodega/";
+
 	 if (!localStorage.getItem('auth')) {
         window.location.href = 'Login';
         return;
@@ -93,22 +85,12 @@ Ext.onReady(function() {
 					{
 						ptype: 'rowwidget',			
 
-						// The widget definition describes a widget to be rendered into the expansion row.
-						// It has access to the application's ViewModel hierarchy. Its immediate ViewModel
-						// contains a record and recordIndex property. These, or any property of the record
-						// (including association stores) may be bound to the widget.
-						//
-						// See the Order model definition with the association declared to Company.
-						// Every Company record will be decorated with an "orders" method which,
-						// when called yields a store containing associated orders.
 						widget: {	
 							bind: {
 								store: Ext.create('Ext.data.Store', {
 									autoLoad: false,
-									//groupField: "TransId",
+
 									fields: [
-										//{ name: 'TransId', type: 'string' },
-										//{ name: 'Piso', type: 'string' },
 										{ name: 'Ruta', type: 'int' },
 										{ name: 'Referencia', type: 'string' },
 										{ name: 'Localizacion', type: 'string' },
@@ -245,10 +227,7 @@ Ext.onReady(function() {
 					{
 						header: 'Remisión',
 						dataIndex: 'TransId',
-						width: 100//,
-						//editor: {
-							//allowBlank: false
-						//}
+						width: 100
 					}, 
 					{
 						header: 'Id Proceso',
@@ -298,19 +277,7 @@ Ext.onReady(function() {
 						header: 'Orden Proceso',
 						dataIndex: 'Orden',
 						hidden: true,
-						width: 100/*,
-						editor: {
-							xtype: 'combo',
-							typeAhead: true,
-							triggerAction: 'all',
-							store: [
-								['Shade','Shade'],
-								['Mostly Shady','Mostly Shady'],
-								['Sun or Shade','Sun or Shade'],
-								['Mostly Sunny','Mostly Sunny'],
-								['Sunny','Sunny']
-							]
-						}*/
+						width: 100
 					},
 					{
 						header: 'Piso',
