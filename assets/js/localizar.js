@@ -152,6 +152,8 @@ Ext.onReady(function() {
 							
 									if (selectedRecord) {
 										var itemId = selectedRecord.get('Itemid');
+										var cantidad = selectedRecord.get('Qtyorder');
+										var despacho = selectedRecord.get('TransId');
 							
 										Ext.Ajax.request({
 											url: url + 'generarCodigoDeBarras', 
@@ -164,22 +166,129 @@ Ext.onReady(function() {
 												if (respuesta.error) {
 													Ext.Msg.alert('Error', respuesta.error);
 												} else {
+													// Crear el popup
 													var popup = Ext.create('Ext.window.Window', {
 														title: 'Código de Barras Generado',
 														modal: true,
-														width: 500, 
-                            							height: 400,
+														width: 600,
+														height: 500,
+														layout: 'vbox',
 														items: [
 															{
-																xtype: 'box',
-																autoEl: {
-																	tag: 'img',
-																	src: 'data:image/png;base64,' + respuesta.imagen,
-																	style: 'width: 70%; height: 70%;'
-																}
+																xtype: 'panel',
+																layout: 'hbox',
+																padding: 10,
+																items: [
+																	{
+																		xtype: 'image',
+																		src: 'data:image/png;base64,' + respuesta.imagen,
+																		width: 200,
+																		height: 100,
+																		margin: '0 10 10 0'
+																	},
+																	{
+																		xtype: 'container',
+																		layout: 'vbox',
+																		items: [
+																			{
+																				xtype: 'displayfield',
+																				fieldLabel: 'Referencia',
+																				value: itemId,
+																				margin: '0 0 10 0'
+																			},
+																			{
+																				xtype: 'displayfield',
+																				fieldLabel: 'Cantidad',
+																				value: cantidad
+																			},
+																			{
+																				xtype: 'displayfield',
+																				fieldLabel: 'PO',
+																				value: despacho
+																			}
+																		]
+																	}
+																]
 															}
 														],
 														buttons: [
+															{
+																text: 'Imprimir',
+																handler: function() {
+																	// Crear una nueva ventana para impresión
+																	var printWindow = window.open('', '', 'height=600,width=800');
+																	var printContent = `
+																		<html>
+<head>
+    <title>AgroCosta-SAS</title>
+    <style>
+        @media print {
+            .no-print { display: none; }
+        }
+        body { font-family: Arial, sans-serif; }
+        .container { width: 100%; margin: 0 auto; }
+        .label {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            width: 100%;
+            height: 200px;
+            border: 1px solid #000;
+            padding: 10px;
+            box-sizing: border-box; /* Asegura que el padding y el borde se incluyan en el ancho total */
+        }
+        .label-left {
+            flex: 2;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centra verticalmente el contenido */
+        }
+        .label-right {
+            flex: 1;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centra verticalmente el contenido */
+        }
+        .label .reference {
+            font-size: 48px;
+            font-weight: bold;
+            text-align: center; /* Cambiado a 'left' para alinearlo con el diseño */
+        }
+        .label .dispatch, .label .quantity {
+            font-size: 18px;
+        }
+        .label .code-bar {
+            display: block;
+            margin: 0 auto 10px auto; /* Ajustar margen inferior */
+            width: 320px;
+            height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="label">
+            <div class="label-left">
+                <p class="reference">${itemId}</p>
+                <img class="code-bar" src="data:image/png;base64,${respuesta.imagen}" />
+            </div>
+            <div class="label-right">
+                <p class="dispatch">PO: ${despacho}</p>
+                <p class="quantity">Cantidad: ${cantidad}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+																	`;
+																	printWindow.document.write(printContent);
+																	printWindow.document.close();
+																	printWindow.focus();
+																	printWindow.print();
+																}
+															},
 															{
 																text: 'Cerrar',
 																handler: function() {
@@ -199,7 +308,9 @@ Ext.onReady(function() {
 										Ext.Msg.alert('Error', 'Debe seleccionar una fila primero');
 									}
 								}
-							}																			
+							}
+							
+																						
 							,
 							"->",
 							{
