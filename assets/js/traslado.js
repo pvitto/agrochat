@@ -169,8 +169,191 @@ Ext.onReady(function() {
 							//	Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + Ext.getCmp('fecha').getRawValue() );
 
 							} },
+							"-",
+							{
+								xtype: 'button',
+								text: 'Generar Código',
+								iconCls: 'fas fa-plus',
+								handler: function() {
+									var grid = this.up('grid');
+									var selectedRecord = grid.getSelectionModel().getSelection()[0];
+							
+									if (selectedRecord) {
+										var itemId = selectedRecord.get('Itemid');
+										var cantidad = selectedRecord.get('Qtyorder');
+										var despacho = selectedRecord.get('TransId');
+							
+										Ext.Ajax.request({
+											url: url + 'generarCodigoDeBarras', 
+											method: 'POST',
+											params: {
+												Referencia: itemId
+											},
+											success: function(response) {
+												var respuesta = Ext.decode(response.responseText);
+												if (respuesta.error) {
+													Ext.Msg.alert('Error', respuesta.error);
+												} else {
+													// Crear el popup
+													var popup = Ext.create('Ext.window.Window', {
+														title: 'Código de Barras Generado',
+														modal: true,
+														width: 600,
+														height: 500,
+														layout: 'vbox',
+														items: [
+															{
+																xtype: 'panel',
+																layout: 'hbox',
+																padding: 10,
+																items: [
+																	{
+																		xtype: 'image',
+																		src: 'data:image/png;base64,' + respuesta.imagen,
+																		width: 200,
+																		height: 100,
+																		margin: '0 10 10 0'
+																	},
+																	{
+																		xtype: 'container',
+																		layout: 'vbox',
+																		items: [
+																			{
+																				xtype: 'displayfield',
+																				fieldLabel: 'Referencia',
+																				value: itemId,
+																				margin: '0 0 10 0'
+																			},
+																			{
+																				xtype: 'displayfield',
+																				fieldLabel: 'Cantidad',
+																				value: cantidad
+																			},
+																			{
+																				xtype: 'displayfield',
+																				fieldLabel: 'PO',
+																				value: despacho
+																			}
+																		]
+																	}
+																]
+															}
+														],
+														buttons: [
+															{
+																text: 'Imprimir',
+																handler: function() {
+																	// Crear una nueva ventana para impresión
+																	var printWindow = window.open('', '', 'height=600,width=800');
+																	var printContent = `
+																		<!DOCTYPE html>
+<html>
+<head>
+    <title>AgroCosta-SAS</title>
+    <style>
+        @media print {
+            .no-print { display: none; }
+        }
+        body { font-family: Arial, sans-serif; }
+        .container { width: 100%; margin: 0 auto; }
+        .label {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center; /* Centra las secciones verticalmente */
+            width: 10cm; /* Ancho del rectángulo */
+            height: 5cm; /* Alto del rectángulo */
+            border: 1px solid #000;
+            padding: 5px; /* Ajustado para mantener proporciones */
+            box-sizing: border-box; /* Incluye el padding y el borde en el tamaño total */
+            page-break-inside: avoid; /* Evita que el rectángulo se divida en dos páginas si es posible */
+            position: relative; /* Necesario para posicionamiento absoluto */
+            padding-right: 35px;
+            padding-bottom: 30px;
+        }
+        .label-left {
+            flex: 2;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centra verticalmente el contenido */
+        }
+        .label-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centra verticalmente el contenido */
+			padding-bottom: 18px;
+        }
+        .label .reference {
+            font-size: 1.0cm; /* Tamaño de fuente para la referencia */
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 2px; /* Reducido para estar más cerca del código de barras */
+        }
+        .label .dispatch, .label .quantity {
+            font-size: 0.4cm; /* Tamaño de fuente para despacho y cantidad */
+            margin-bottom: -13px; /* Reducido para estar más cerca uno del otro */
+            text-align: center;
+        }
+        .label .company-name {
+            font-size: 0.35cm; /* Tamaño de fuente para el nombre de la empresa */
+            margin-bottom: 20px; /* Aumentado para separar del resto */
+            text-align: center;
+			font-weight: bold;
+        }
+        .label .code-bar {
+            display: block;
+            margin: 0 auto 2px auto; /* Ajusta el margen superior e inferior */
+            width: 5.0cm; /* Ancho del código de barras */
+            height: 1.5cm; /* Alto del código de barras */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="label">
+            <div class="label-left">
+                <p class="reference">${itemId}</p>
+                <img class="code-bar" src="data:image/png;base64,${respuesta.imagen}" />
+            </div>
+            <div class="label-right">
+                <p class="company-name">Agro-Costa SAS</p>
+                <p class="dispatch">PO: ${despacho}</p>
+                <p class="quantity">Cantidad: ${cantidad}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+											`;
+																	printWindow.document.write(printContent);
+																	printWindow.document.close();
+																	printWindow.focus();
+																	printWindow.print();
+																}
+															},
+															{
+																text: 'Cerrar',
+																handler: function() {
+																	popup.close();
+																}
+															}
+														]
+													});
+													popup.show();
+												}
+											},
+											failure: function(response) {
+												Ext.Msg.alert('Error', 'Error al generar el código de barras');
+											}
+										});
+									} else {
+										Ext.Msg.alert('Error', 'Debe seleccionar una fila primero');
+									}
+								}
+							},
 							"->",
-
 							{
 								xtype: 'button',
 								text: '',
@@ -215,15 +398,6 @@ Ext.onReady(function() {
 					},
 					{
 						ptype: 'cellediting',			
-
-						// The widget definition describes a widget to be rendered into the expansion row.
-						// It has access to the application's ViewModel hierarchy. Its immediate ViewModel
-						// contains a record and recordIndex property. These, or any property of the record
-						// (including association stores) may be bound to the widget.
-						//
-						// See the Order model definition with the association declared to Company.
-						// Every Company record will be decorated with an "orders" method which,
-						// when called yields a store containing associated orders.
 						widget: {	
 							bind: {
 								store: Ext.create('Ext.data.Store', {
@@ -241,31 +415,13 @@ Ext.onReady(function() {
 										{ name: 'Comprt', type: 'int' },
 										{ name: 'Disp', type: 'int' },
 										{ name: 'Referencia_Equivalente', type: 'string' }
-									]/*,
-									proxy: {
-										timeout: 600000,
-										useDefaultXhrHeader: false,
-										type: 'ajax',
-										url: url+"obtenerReferencias",
-										reader: {
-											type: 'json',
-											rootProperty: 'data'
-										}
-									}*/,
+									],
 									data: []
 								})
 							},
 							xtype: 'grid',
 							header: false,
-							columns: [/*{
-								text: 'TransId',
-								dataIndex: 'TransId',
-								flex: 1
-							}, {
-								text: 'Piso',
-								dataIndex: 'Piso',
-								flex: 1
-							},*/ {
+							columns: [{
 								text: 'Ruta',
 								dataIndex: 'Ruta',
 								flex: 1
@@ -563,70 +719,11 @@ Ext.onReady(function() {
 							return value;
 						}
 					}, 
-					/*{
-						header: 'Orden Proceso',
-						dataIndex: 'Orden',
-						hidden: true,
-						width: 100/*,
-						editor: {
-							xtype: 'combo',
-							typeAhead: true,
-							triggerAction: 'all',
-							store: [
-								['Shade','Shade'],
-								['Mostly Shady','Mostly Shady'],
-								['Sun or Shade','Sun or Shade'],
-								['Mostly Sunny','Mostly Sunny'],
-								['Sunny','Sunny']
-							]
-						}
-					}, */
-					
-					/*{
-						header: 'Proveedor',
-						dataIndex: 'VendorName',
-						flex: 1,
-						minWidth: 150,
-						align: 'center',
-						//formatter: 'usMoney',
-						/*editor: {
-							xtype: 'numberfield',
-
-							allowBlank: false,
-							minValue: 0,
-							maxValue: 100000
-						}
-					}, */
-					
-					/*{
-						//xtype: 'datecolumn',
-						header: 'Ingresa',
-						dataIndex: 'Name',
-						refenence: 'Name',
-						width: 200
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}
-					}, */
 					
 					{
 						//xtype: 'checkcolumn',
 						header: 'Fecha Localizado',
-						dataIndex: 'HoraInicial'/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
+						dataIndex: 'HoraInicial',
 						//headerCheckbox: true,
 						width: 190//,
 						//stopSelection: false
@@ -635,16 +732,7 @@ Ext.onReady(function() {
 					{
 						//xtype: 'checkcolumn',
 						header: 'Responsable',
-						dataIndex: 'NombreUsuario'/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
+						dataIndex: 'NombreUsuario',
 						//headerCheckbox: true,
 						width: 130,//,
 						flex: 0.5
@@ -656,14 +744,6 @@ Ext.onReady(function() {
 						flex: 0.5,
 						minWidth: 125,
 						align: 'center',
-						//formatter: 'usMoney',
-						/*editor: {
-							xtype: 'numberfield',
-
-							allowBlank: false,
-							minValue: 0,
-							maxValue: 100000
-						}*/
 					},
 					{
 						//xtype: 'datecolumn',
@@ -672,63 +752,9 @@ Ext.onReady(function() {
 						hidden: true,
 						//refenence: 'Name',
 						width: 120
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}*/
-					}
-					/*,{
-						//xtype: 'checkcolumn',
-						header: 'Observaciones',
-						dataIndex: 'Observaciones',
-						headerCheckbox: true/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
-						//headerCheckbox: true,
-						//width: 190//,
-						//stopSelection: false
-					/*},
-					 {
-						xtype: 'actioncolumn',
-						width: 30,
-						sortable: false,
-						menuDisabled: true,
-						items: [{
-							iconCls: 'far fa-trash-alt',
-							tooltip: 'Delete Plant',
-							handler: 'onRemoveClick'
-						}]
-					}*/
-				],
-				/*viewConfig: {
-					getRowClass: function(record, rowIndex, rowParams, store){
-						var proc = record.get("IdProceso");
 
-						switch(proc) {
-							case 0:
-								return 'picked';
-							case 1:
-								return 'recogiendo';
-							case 2:
-								return 'recogiendo';
-							case 3:
-								return 'empacando';
-							case 3:
-								return 'empacado';
-						}
 					}
-				},*/
+				],
 				listeners: {			
 					afterrender: function( view, eOpts ){
 						Ext.getCmp("form").getForm().reset();
@@ -743,11 +769,6 @@ Ext.onReady(function() {
 						Ext.getCmp("pro8").setDisabled(true);
 						//Ext.getCmp("Observacion").setDisabled(true);
 						Ext.getCmp('Observacion').setValue(record.data.Observaciones);
-						/*Ext.getCmp("pro1").setDisabled(true);
-						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp("pro4").setDisabled(true);*/
-						//Ext.getCmp("tabla").getView().setDisabled(true);
 						Ext.getCmp('tabpanel').setVisible(true);
 						Ext.getCmp("usuarios").focus();
 

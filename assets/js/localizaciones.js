@@ -1,13 +1,5 @@
 Ext.onReady(function() {
 	var socket = io.connect('http://192.168.0.205:4000');
-	//new Date().toJSON().split("T")[0].split("-").reverse().join("/")
-	/**
-	 * This example shows how to enable inline editing of grid cells.
-	 *
-	 * Note that cell editing is ideal for mouse/keyboard users and is not
-	 * recommended on touch devices.
-	 */
-	//var url = "http://192.168.0.251/agro/bodega/";
 	var url = "/agro/localizaciones/";
 
 	function restablecer(){
@@ -30,21 +22,11 @@ Ext.onReady(function() {
 				rowLines: true,
 				split: true,
 				columnLines: true,
-				//autoLoad: true,
 				frame: true,
 				features: [{ftype:'grouping', 
-				// personalizar forma encabezado de grupo. muestra nombre y número de elementos. 
 				groupHeaderTpl: 'Grupo: {name} ({rows.length} elemento{[values.rows.length > 1 ? "s" : ""]})', 
-				startCollapsed: true
-				//showSummaryRow: true // agrega al agrupar una fila para calculos https://docs-devel.sencha.com/extjs/7.4.0/classic/Ext.grid.feature.Grouping.html
-				
+				startCollapsed: true				
 			}, 
-			
-			/*{
-				ftype: 'summary',  // Habilita la funcionalidad de resumen
-				dock: 'bottom'
-			}*/
-			 
 		],
 				
 				dockedItems: [
@@ -82,8 +64,6 @@ Ext.onReady(function() {
 										}else{
 											Ext.getCmp('tabla').getStore().filter("Piso",combo.getRawValue());
 										}	
-										//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + Ext.getCmp('tabla').getStore().data.BinNum + Ext.getCmp('tabla').getStore().getModel().getFields('BinNum').getValue);
-										//console.log(Ext.getCmp('tabla').getStore().getModel().getFields);
 										console.log(Ext.getCmp('tabla').getStore().getRange(0,100));
 									}
 								}
@@ -108,25 +88,199 @@ Ext.onReady(function() {
 										Ext.getCmp("form").getForm().reset();
 										//Ext.getCmp("tabla").getView().setDisabled(false);
 										Ext.getCmp('tabpanel').setVisible(false);
-										//Ext.getCmp('tabla').getStore().load({params: {FechaTransaccion: field.getRawValue()}});
 									}
 								},
-								//maxValue: new Date()  // limited to the current date or prior
 							},
 							"-",
 							{ minWidth: 80, text: 'Consultar', iconCls: 'fas fa-sync-alt', hidden: false, id: 'Consultar', handler: function(){
 								Ext.getCmp('tabla').getStore().clearFilter();
 								Ext.getCmp("pisos").setValue(0);
 								Ext.getCmp("form").getForm().reset();
-								//Ext.getCmp("items").setValue("");
-								//Ext.getCmp("tabla").getView().setDisabled(false);
 								Ext.getCmp('tabpanel').setVisible(false);
 								Ext.getCmp('tabla').getStore().reload();
 
 								Ext.getCmp('tabla').getStore().load({params: {FechaTransaccion: Ext.getCmp('fecha').getRawValue()}});
-							//	Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + Ext.getCmp('fecha').getRawValue() );
+							
 
 							} },
+							"-",
+							{
+								xtype: 'button',
+								text: 'Generar Código',
+								iconCls: 'fas fa-plus',
+								handler: function() {
+									var grid = this.up('grid');
+									var selectedRecord = grid.getSelectionModel().getSelection()[0];
+							
+									if (selectedRecord) {
+										var itemId = selectedRecord.get('Itemid');
+										var descripcion = selectedRecord.get('Descrip');
+							
+										Ext.Ajax.request({
+											url: url + 'generarCodigoDeBarras', 
+											method: 'POST',
+											params: {
+												Referencia: itemId
+											},
+											success: function(response) {
+												var respuesta = Ext.decode(response.responseText);
+												if (respuesta.error) {
+													Ext.Msg.alert('Error', respuesta.error);
+												} else {
+													// Crear el popup
+													var popup = Ext.create('Ext.window.Window', {
+														title: 'Código de Barras Generado',
+														modal: true,
+														width: 600,
+														height: 500,
+														layout: 'vbox',
+														items: [
+															{
+																xtype: 'panel',
+																layout: 'hbox',
+																padding: 10,
+																items: [
+																	{
+																		xtype: 'image',
+																		src: 'data:image/png;base64,' + respuesta.imagen,
+																		width: 200,
+																		height: 100,
+																		margin: '0 10 10 0'
+																	},
+																	{
+																		xtype: 'container',
+																		layout: 'vbox',
+																		items: [
+																			{
+																				xtype: 'displayfield',
+																				fieldLabel: 'Referencia',
+																				value: itemId,
+																				margin: '0 0 10 0'
+																			},
+																			{
+																				xtype: 'displayfield',
+																				fieldLabel: 'Desc',
+																				value: descripcion
+																			}
+																		]
+																	}
+																]
+															}
+														],
+														buttons: [
+															{
+																text: 'Imprimir',
+																handler: function() {
+																	// Crear una nueva ventana para impresión
+																	var printWindow = window.open('', '', 'height=600,width=800');
+																	var printContent = `
+																		<!DOCTYPE html>
+<html>
+<head>
+    <title>AgroCosta-SAS</title>
+    <style>
+        @media print {
+            .no-print { display: none; }
+        }
+        body { font-family: Arial, sans-serif; }
+        .container { width: 100%; margin: 0 auto; }
+        .label {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center; /* Centra las secciones horizontalmente */
+            width: 10cm; /* Ancho del rectángulo */
+            height: 5cm; /* Alto del rectángulo */
+            border: 1px solid #000;
+            padding: 5px; /* Ajustado para mantener proporciones */
+            box-sizing: border-box; /* Incluye el padding y el borde en el tamaño total */
+            page-break-inside: avoid; /* Evita que el rectángulo se divida en dos páginas si es posible */
+            position: relative; /* Necesario para posicionamiento absoluto */
+			padding-bottom: 25px;
+        }
+        .label-left {
+            flex: 1;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Centra verticalmente el contenido */
+        }
+        .label-right {
+            position: absolute;
+            top: 5px; /* Ajusta según sea necesario */
+            right: 5px; /* Ajusta según sea necesario */
+            text-align: right;
+        }
+        .label .reference {
+            font-size: 0.9cm; /* Tamaño de fuente para la referencia */
+            font-weight: bold;
+            margin-bottom: 2px; /* Reducido para estar más cerca del código de barras */
+        }
+        .label .description {
+            font-size: 0.3cm;
+            margin-bottom: 2px;
+            word-wrap: break-word; /* Permite que las palabras largas se dividan */
+            max-width: 7cm; /* Limita el ancho máximo */
+            align-self: center;
+        }
+        .label .code-bar {
+            display: block;
+            margin: 0 auto 2px auto; /* Ajusta el margen superior e inferior */
+            width: 7.0cm; /* Ancho del código de barras */
+            height: 2cm; /* Alto del código de barras */
+        }
+        .label .company-name {
+            font-size: 0.3cm; /* Tamaño de fuente para el nombre de la empresa */
+            font-weight: bold;
+			padding-bottom: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="label">
+            <div class="label-left">
+                <p class="reference">${itemId}</p>
+                <p class="description">${descripcion}</p>
+                <img class="code-bar" src="data:image/png;base64,${respuesta.imagen}" />
+            </div>
+            <div class="label-right">
+                <p class="company-name">Agro-Costa SAS</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+`;
+																	printWindow.document.write(printContent);
+																	printWindow.document.close();
+																	printWindow.focus();
+																	printWindow.print();
+																}
+															},
+															{
+																text: 'Cerrar',
+																handler: function() {
+																	popup.close();
+																}
+															}
+														]
+													});
+													popup.show();
+												}
+											},
+											failure: function(response) {
+												Ext.Msg.alert('Error', 'Error al generar el código de barras');
+											}
+										});
+									} else {
+										Ext.Msg.alert('Error', 'Debe seleccionar una fila primero');
+									}
+								}
+							}
+							
+																						
+							,
 							"->",
 
 							{
@@ -158,8 +312,6 @@ Ext.onReady(function() {
 									XLSX.writeFile(workbook, 'tabla.xlsx');
 
 									store.clearFilter();
-
-								
 								}
 							}
 
@@ -179,8 +331,6 @@ Ext.onReady(function() {
 									autoLoad: false,
 									//groupField: "TransId",
 									fields: [
-										//{ name: 'TransId', type: 'string' },
-										//{ name: 'Piso', type: 'string' },
 										{ name: 'Ruta', type: 'int' },
 										{ name: 'Referencia', type: 'string' },
 										{ name: 'Localizacion', type: 'string' },
@@ -576,7 +726,6 @@ Ext.onReady(function() {
 								xtype: 'radiogroup',
 								fieldLabel: 'Proceso actual',
 								anchor: '98%',
-								// Arrange checkboxes into two columns, distributed vertically
 								columns: 1,
 								vertical: true,
 								allowBlank: false,
@@ -586,13 +735,9 @@ listeners: {
                             if (checkbox.checked) {
                                 resetBoxes(checkbox.ownerCt, checkbox.inputValue);
                             }
-                            /* not relevant for the understanding of the sample */
                             var panel = checkbox.ownerCt.ownerCt;
                             var f = panel.down('displayfield');
                             checkbox.checked ? checkbox.inputValue : 'none';
-                        
-                            /* so you can delete this, with the displayfield too */
-
                         }
                     },
 

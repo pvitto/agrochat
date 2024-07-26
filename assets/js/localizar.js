@@ -218,7 +218,8 @@ Ext.onReady(function() {
 																	// Crear una nueva ventana para impresión
 																	var printWindow = window.open('', '', 'height=600,width=800');
 																	var printContent = `
-																		<html>
+																		<!DOCTYPE html>
+<html>
 <head>
     <title>AgroCosta-SAS</title>
     <style>
@@ -231,12 +232,16 @@ Ext.onReady(function() {
             display: flex;
             flex-direction: row;
             align-items: center;
+            justify-content: center; /* Centra las secciones verticalmente */
             width: 10cm; /* Ancho del rectángulo */
             height: 5cm; /* Alto del rectángulo */
             border: 1px solid #000;
             padding: 5px; /* Ajustado para mantener proporciones */
             box-sizing: border-box; /* Incluye el padding y el borde en el tamaño total */
             page-break-inside: avoid; /* Evita que el rectángulo se divida en dos páginas si es posible */
+            position: relative; /* Necesario para posicionamiento absoluto */
+            padding-right: 35px;
+            padding-bottom: 30px;
         }
         .label-left {
             flex: 2;
@@ -244,28 +249,36 @@ Ext.onReady(function() {
             display: flex;
             flex-direction: column;
             justify-content: center; /* Centra verticalmente el contenido */
-            padding-right: 5px; /* Ajustado para mantener proporciones */
         }
         .label-right {
             flex: 1;
-            text-align: left;
             display: flex;
             flex-direction: column;
             justify-content: center; /* Centra verticalmente el contenido */
+			padding-bottom: 18px;
         }
         .label .reference {
             font-size: 1.0cm; /* Tamaño de fuente para la referencia */
             font-weight: bold;
             text-align: center;
+            margin-bottom: 2px; /* Reducido para estar más cerca del código de barras */
         }
         .label .dispatch, .label .quantity {
             font-size: 0.4cm; /* Tamaño de fuente para despacho y cantidad */
+            margin-bottom: -13px; /* Reducido para estar más cerca uno del otro */
+            text-align: center;
+        }
+        .label .company-name {
+            font-size: 0.35cm; /* Tamaño de fuente para el nombre de la empresa */
+            margin-bottom: 20px; /* Aumentado para separar del resto */
+            text-align: center;
+			font-weight: bold;
         }
         .label .code-bar {
             display: block;
-            margin: 0 auto 5px auto; /* Ajusta el margen superior e inferior */
+            margin: 0 auto 2px auto; /* Ajusta el margen superior e inferior */
             width: 5.0cm; /* Ancho del código de barras */
-            height: 1.0cm; /* Alto del código de barras */
+            height: 1.5cm; /* Alto del código de barras */
         }
     </style>
 </head>
@@ -277,15 +290,14 @@ Ext.onReady(function() {
                 <img class="code-bar" src="data:image/png;base64,${respuesta.imagen}" />
             </div>
             <div class="label-right">
+                <p class="company-name">Agro-Costa SAS</p>
                 <p class="dispatch">PO: ${despacho}</p>
                 <p class="quantity">Cantidad: ${cantidad}</p>
             </div>
         </div>
     </div>
 </body>
-</html>
-
-																	`;
+</html>																`;
 																	printWindow.document.write(printContent);
 																	printWindow.document.close();
 																	printWindow.focus();

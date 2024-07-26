@@ -18,6 +18,7 @@ def generar_codigo_barras(texto):
         
         # Imprime la imagen codificada en base64
         print(imagen_base64)
+        
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
