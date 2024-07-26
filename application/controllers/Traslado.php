@@ -208,6 +208,7 @@ class traslado extends CI_Controller {
         //$this->load->view('welcome_message');
     }    
 
+    /*
     public function generarCodigoDeBarras()
     {
         $referencia = $this->input->post('Referencia');
@@ -235,4 +236,5 @@ class traslado extends CI_Controller {
     
         $this->respuesta();
     }
+    */
 }
