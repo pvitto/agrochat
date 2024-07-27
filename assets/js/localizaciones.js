@@ -116,186 +116,172 @@ Ext.onReady(function() {
 										var itemId = selectedRecord.get('Itemid');
 										var descripcion = selectedRecord.get('Descrip');
 							
-										// Crear el popup
-										var popup = Ext.create('Ext.window.Window', {
-											title: 'Código de Barras Generado',
-											modal: true,
-											width: 600,
-											height: 500,
-											layout: 'vbox',
-											items: [
-												{
-													xtype: 'panel',
-													layout: 'hbox',
-													padding: 10,
+										// Cargar y ejecutar el script generarBarras.js
+										var script = document.createElement('script');
+										// Cambiar "localhost" por el socket
+										script.src = 'http://localhost:81/agro/assets/js/generarBarras.js';
+										document.head.appendChild(script);
+							
+										script.onload = function() {
+											// Generar el código de barras en el cliente
+											generateBarcode(itemId).then(function(imgData) {
+												// Crear el popup
+												var popup = Ext.create('Ext.window.Window', {
+													title: 'Código de Barras Generado',
+													modal: true,
+													width: 600,
+													height: 500,
+													layout: 'vbox',
 													items: [
 														{
-															xtype: 'container',
-															width: 300,
-															height: 150,
-															html: '<svg id="barcode"></svg>', // Contenedor para el código de barras
-															margin: '0 10 10 0'
-														},
-														{
-															xtype: 'container',
-															layout: 'vbox',
+															xtype: 'panel',
+															layout: 'hbox',
+															padding: 10,
 															items: [
 																{
-																	xtype: 'displayfield',
-																	fieldLabel: 'Referencia',
-																	value: itemId,
-																	margin: '0 0 10 0'
+																	xtype: 'image',
+																	src: imgData,
+																	width: 200,
+																	height: 100,
+																	margin: '0 10 10 0'
 																},
 																{
-																	xtype: 'displayfield',
-																	fieldLabel: 'Desc',
-																	value: descripcion
+																	xtype: 'container',
+																	layout: 'vbox',
+																	items: [
+																		{
+																			xtype: 'displayfield',
+																			fieldLabel: 'Referencia',
+																			value: itemId,
+																			margin: '0 0 10 0'
+																		},
+																		{
+																			xtype: 'displayfield',
+																			fieldLabel: 'Desc',
+																			value: descripcion
+																		}
+																	]
 																}
 															]
 														}
-													]
-												}
-											],
-											buttons: [
-												{
-													text: 'Imprimir',
-													handler: function() {
-														// Esperar a que el SVG esté completamente renderizado
-														requestAnimationFrame(function() {
-															setTimeout(function() {
-																var svg = document.getElementById('barcode');
-																var svgData = new XMLSerializer().serializeToString(svg);
-																var canvas = document.createElement('canvas');
-																var ctx = canvas.getContext('2d');
-																var img = document.createElement('img');
-							
-																img.setAttribute('src', 'data:image/svg+xml;base64,' + btoa(svgData));
-							
-																img.onload = function() {
-																	canvas.width = img.width;
-																	canvas.height = img.height;
-																	ctx.drawImage(img, 0, 0);
-																	var imgData = canvas.toDataURL('image/png');
-							
-																	// Crear una nueva ventana para impresión
-																	var printWindow = window.open('', '', 'height=600,width=800');
-																	var printContent = `
-																		<!DOCTYPE html>
-																		<html>
-																		<head>
-																			<title>AgroCosta-SAS</title>
-																			<style>
-																				@media print {
-																					.no-print { display: none; }
-																				}
-																				body { font-family: Arial, sans-serif; }
-																				.container { width: 100%; margin: 0 auto; }
-																				.label {
-																					display: flex;
-																					flex-direction: row;
-																					align-items: center;
-																					justify-content: center;
-																					width: 10cm;
-																					height: 5cm;
-																					border: 1px solid #000;
-																					padding: 5px;
-																					box-sizing: border-box;
-																					page-break-inside: avoid;
-																					position: relative;
-																					padding-bottom: 25px;
-																				}
-																				.label-left {
-																					flex: 1;
-																					text-align: center;
-																					display: flex;
-																					flex-direction: column;
-																					justify-content: center;
-																				}
-																				.label-right {
-																					position: absolute;
-																					top: 5px;
-																					right: 5px;
-																					text-align: right;
-																				}
-																				.label .reference {
-																					font-size: 0.9cm;
-																					font-weight: bold;
-																					margin-bottom: 2px;
-																				}
-																				.label .description {
-																					font-size: 0.3cm;
-																					margin-bottom: 2px;
-																					word-wrap: break-word;
-																					max-width: 7cm;
-																					align-self: center;
-																				}
-																				.label .code-bar {
-																					display: block;
-																					margin: 0 auto 2px auto;
-																					width: 7.0cm;
-																					height: 2cm;
-																				}
-																				.label .company-name {
-																					font-size: 0.3cm;
-																					font-weight: bold;
-																					padding-bottom: 25px;
-																				}
-																			</style>
-																		</head>
-																		<body>
-																			<div class="container">
-																				<div class="label">
-																					<div class="label-left">
-																						<p class="reference">${itemId}</p>
-																						<p class="description">${descripcion}</p>
-																						<img class="code-bar" src="${imgData}" />
-																					</div>
-																					<div class="label-right">
-																						<p class="company-name">Agro-Costa SAS</p>
-																					</div>
+													],
+													buttons: [
+														{
+															text: 'Imprimir',
+															handler: function() {
+																var printWindow = window.open('', '', 'height=600,width=800');
+																var printContent = `
+																	<!DOCTYPE html>
+																	<html>
+																	<head>
+																		<title>AgroCosta-SAS</title>
+																		<style>
+																			@media print {
+																				.no-print { display: none; }
+																			}
+																			body { font-family: Arial, sans-serif; }
+																			.container { width: 100%; margin: 0 auto; }
+																			.label {
+																				display: flex;
+																				flex-direction: row;
+																				align-items: center;
+																				justify-content: center;
+																				width: 10cm;
+																				height: 5cm;
+																				border: 1px solid #000;
+																				padding: 5px;
+																				box-sizing: border-box;
+																				page-break-inside: avoid;
+																				position: relative;
+																				padding-bottom: 25px;
+																			}
+																			.label-left {
+																				flex: 1;
+																				text-align: center;
+																				display: flex;
+																				flex-direction: column;
+																				justify-content: center;
+																			}
+																			.label-right {
+																				position: absolute;
+																				top: 5px;
+																				right: 5px;
+																				text-align: right;
+																			}
+																			.label .reference {
+																				font-size: 0.9cm;
+																				font-weight: bold;
+																				margin-bottom: 2px;
+																			}
+																			.label .description {
+																				font-size: 0.3cm;
+																				margin-bottom: 2px;
+																				word-wrap: break-word;
+																				max-width: 7cm;
+																				align-self: center;
+																			}
+																			.label .code-bar {
+																				display: block;
+																				margin: 0 auto 2px auto;
+																				width: 7.0cm;
+																				height: 2cm;
+																			}
+																			.label .company-name {
+																				font-size: 0.3cm;
+																				font-weight: bold;
+																				padding-bottom: 25px;
+																			}
+																		</style>
+																	</head>
+																	<body>
+																		<div class="container">
+																			<div class="label">
+																				<div class="label-left">
+																					<p class="reference">${itemId}</p>
+																					<p class="description">${descripcion}</p>
+																					<img class="code-bar" src="${imgData}" />
+																				</div>
+																				<div class="label-right">
+																					<p class="company-name">Agro-Costa SAS</p>
 																				</div>
 																			</div>
-																		</body>
-																		</html>
-																	`;
-																	printWindow.document.write(printContent);
-																	printWindow.document.close();
-																	printWindow.focus();
+																		</div>
+																	</body>
+																	</html>
+																`;
+																printWindow.document.write(printContent);
+																printWindow.document.close();
+																printWindow.focus();
 							
-																	// Retrasar la apertura de la ventana de impresión
-																	setTimeout(function() {
-																		printWindow.print();
-																	}); // Ajusta el tiempo según sea necesario
-																};
-															}); // Ajusta el tiempo según sea necesario
-														});
-													}
-												},
-												{
-													text: 'Cerrar',
-													handler: function() {
-														popup.close();
-													}
-												}
-											]
-										});
+																setTimeout(function() {
+																	printWindow.print();
+																}); // Ajusta el tiempo según sea necesario
+															}
+														},
+														{
+															text: 'Cerrar',
+															handler: function() {
+																popup.close();
+															}
+														}
+													]
+												});
 							
-										popup.show();
+												popup.show();
+											}).catch(function(error) {
+												Ext.Msg.alert('Error', error.message);
+											});
+										};
 							
-										// Generar el código de barras usando JsBarcode
-										JsBarcode("#barcode", itemId, {
-											format: "CODE128",
-											lineColor: "#000000",
-											width: 2,
-											height: 100,
-											displayValue: true
-										});
-							
+										script.onerror = function() {
+											Ext.Msg.alert('Error', 'No se pudo cargar el script de generación de código de barras');
+										};
 									} else {
 										Ext.Msg.alert('Error', 'Debe seleccionar una fila primero');
 									}
 								}
 							}
+
 							,
 							"->",
 

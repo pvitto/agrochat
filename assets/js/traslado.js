@@ -183,31 +183,40 @@ Ext.onReady(function() {
 										var cantidad = selectedRecord.get('Qtyorder');
 										var despacho = selectedRecord.get('TransId');
 							
-										// Crear el popup
-										var popup = Ext.create('Ext.window.Window', {
-											title: 'Código de Barras Generado',
-											modal: true,
-											width: 600,
-											height: 500,
-											layout: 'vbox',
-											items: [
-												{
-													xtype: 'panel',
-													layout: 'hbox',
-													padding: 10,
+										// Cargar y ejecutar el script generarBarras.js
+										var script = document.createElement('script');
+										// Cambiar "localhost" por el socket
+										script.src = 'http://localhost:81/agro/assets/js/generarBarras.js';
+										document.head.appendChild(script);
+							
+										script.onload = function() {
+											// Generar el código de barras en el cliente
+											generateBarcode(itemId).then(function(imgData) {
+												// Crear el popup
+												var popup = Ext.create('Ext.window.Window', {
+													title: 'Código de Barras Generado',
+													modal: true,
+													width: 600,
+													height: 500,
+													layout: 'vbox',
 													items: [
 														{
-															xtype: 'container',
-															width: 300,
-															height: 150,
-															html: '<svg id="barcode"></svg>', // Contenedor para el código de barras
-															margin: '0 10 10 0'
-														},
-														{
-															xtype: 'container',
-															layout: 'vbox',
+															xtype: 'panel',
+															layout: 'hbox',
+															padding: 10,
 															items: [
 																{
+																	xtype: 'image',
+																	src: imgData,
+																	width: 200,
+																	height: 100,
+																	margin: '0 10 10 0'
+																},
+																{
+																	xtype: 'container',
+																	layout: 'vbox',
+																	items: [
+																		{
 																	xtype: 'displayfield',
 																	fieldLabel: 'Referencia',
 																	value: itemId,
@@ -223,37 +232,18 @@ Ext.onReady(function() {
 																	fieldLabel: 'PO',
 																	value: despacho
 																}
+																	]
+																}
 															]
 														}
-													]
-												}
-											],
-											buttons: [
-												{
-													text: 'Imprimir',
-													handler: function() {
-														// Esperar a que el SVG esté completamente renderizado
-														requestAnimationFrame(function() {
-															// Asegúrate de que el SVG esté completamente renderizado
-															setTimeout(function() {
-																var svg = document.getElementById('barcode');
-																var svgData = new XMLSerializer().serializeToString(svg);
-																var canvas = document.createElement('canvas');
-																var ctx = canvas.getContext('2d');
-																var img = document.createElement('img');
-							
-																img.setAttribute('src', 'data:image/svg+xml;base64,' + btoa(svgData));
-							
-																img.onload = function() {
-																	canvas.width = img.width;
-																	canvas.height = img.height;
-																	ctx.drawImage(img, 0, 0);
-																	var imgData = canvas.toDataURL('image/png');
-							
-																	// Crear una nueva ventana para impresión
-																	var printWindow = window.open('', '', 'height=600,width=800');
-																	var printContent = `
-																		<!DOCTYPE html>
+													],
+													buttons: [
+														{
+															text: 'Imprimir',
+															handler: function() {
+																var printWindow = window.open('', '', 'height=600,width=800');
+																var printContent = `
+																	<!DOCTYPE html>
 																		<html>
 																		<head>
 																			<title>AgroCosta-SAS</title>
@@ -293,7 +283,7 @@ Ext.onReady(function() {
 																					padding-bottom: 18px;
 																				}
 																				.label .reference {
-																					font-size: 1.0cm;
+																					font-size: 0.7cm;
 																					font-weight: bold;
 																					text-align: center;
 																					margin-bottom: 2px;
@@ -333,49 +323,38 @@ Ext.onReady(function() {
 																			</div>
 																		</body>
 																		</html>`;
-																	printWindow.document.write(printContent);
-																	printWindow.document.close();
-																	printWindow.focus();
+																printWindow.document.write(printContent);
+																printWindow.document.close();
+																printWindow.focus();
 							
-																	// Retrasar la apertura de la ventana de impresión
-																	setTimeout(function() {
-																		printWindow.print();
-																	}); // Ajusta el tiempo según sea necesario
-																};
+																setTimeout(function() {
+																	printWindow.print();
+																});
+															}
+														},
+														{
+															text: 'Cerrar',
+															handler: function() {
+																popup.close();
+															}
+														}
+													]
+												});
 							
-																// Maneja posibles errores en la carga de la imagen
-																img.onerror = function() {
-																	Ext.Msg.alert('Error', 'No se pudo generar la imagen del código de barras para imprimir.');
-																};
-															}); // Ajusta el tiempo según sea necesario
-														});
-													}
-												},
-												{
-													text: 'Cerrar',
-													handler: function() {
-														popup.close();
-													}
-												}
-											]
-										});
+												popup.show();
+											}).catch(function(error) {
+												Ext.Msg.alert('Error', error.message);
+											});
+										};
 							
-										popup.show();
-							
-										// Generar el código de barras
-										JsBarcode("#barcode", itemId, {
-											format: "CODE128",
-											lineColor: "#000000",
-											width: 2,
-											height: 100,
-											displayValue: true
-										});
-							
+										script.onerror = function() {
+											Ext.Msg.alert('Error', 'No se pudo cargar el script de generación de código de barras');
+										};
 									} else {
 										Ext.Msg.alert('Error', 'Debe seleccionar una fila primero');
 									}
 								}
-							}							
+							}										
 							
 							,
 							"->",
