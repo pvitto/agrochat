@@ -184,7 +184,7 @@ class localizaciones extends CI_Controller {
 
     public function generarCodigoDeBarras()
     {
-       $referencia = $this->input->post('Referencia');
+        $referencia = $this->input->post('Referencia');
     
         if (!$referencia) {
             $this->data = array('error' => 'Referencia no proporcionada');
@@ -194,21 +194,27 @@ class localizaciones extends CI_Controller {
     
         $output = null;
         $retval = null;
+
+        // Cambiar al directiorio donde esta el ejecutable de node
+        $node_path = '"C:/Program Files/nodejs/node.exe"';
+
+        chdir(__DIR__);
     
-        // Llama al script de Node.js para generar el código de barras
-        $command = escapeshellcmd("node application/controllers/js/generateBarcode.js $referencia");
+        $command = "$node_path generarBarras.js $referencia 2>&1";
         exec($command, $output, $retval);
-    
+
         if ($retval != 0) {
-            $this->data = array('error' => 'Error al generar el codigo de barras');
+            $this->data = array('error' => 'Error al generar el código de barras');
         } else {
-            // Captura la imagen base64 desde la salida del script de Node.js
-            $imagen_base64 = $output[0];
+            // Handle output; assuming the output is a base64 encoded image
+            $imagen_base64 = implode("\n", $output);
             $this->data = array('message' => 'Código de barras generado con éxito', 'imagen' => $imagen_base64);
         }
     
         $this->respuesta();
     }
+
+    
         
 }
 

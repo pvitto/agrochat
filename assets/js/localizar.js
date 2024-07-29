@@ -155,67 +155,74 @@ Ext.onReady(function() {
 										var cantidad = selectedRecord.get('Qtyorder');
 										var despacho = selectedRecord.get('TransId');
 							
-										// Cargar y ejecutar el script generarBarras.js
-										var script = document.createElement('script');
-										// Cambiar "localhost" por el socket
-										script.src = 'http://localhost:81/agro/assets/js/generarBarras.js';
-										document.head.appendChild(script);
+										// Realizar la llamada AJAX al controlador PHP
+										Ext.Ajax.request({
+											url: url + 'generarCodigoDeBarras',
+											method: 'POST',
+											params: {
+												Referencia: itemId
+											},
+											success: function(response) {
+												var responseData = Ext.decode(response.responseText);
 							
-										script.onload = function() {
-											// Generar el código de barras en el cliente
-											generateBarcode(itemId).then(function(imgData) {
-												// Crear el popup
-												var popup = Ext.create('Ext.window.Window', {
-													title: 'Código de Barras Generado',
-													modal: true,
-													width: 600,
-													height: 500,
-													layout: 'vbox',
-													items: [
-														{
-															xtype: 'panel',
-															layout: 'hbox',
-															padding: 10,
-															items: [
-																{
-																	xtype: 'image',
-																	src: imgData,
-																	width: 200,
-																	height: 100,
-																	margin: '0 10 10 0'
-																},
-																{
-																	xtype: 'container',
-																	layout: 'vbox',
-																	items: [
-																		{
-																	xtype: 'displayfield',
-																	fieldLabel: 'Referencia',
-																	value: itemId,
-																	margin: '0 0 10 0'
-																},
-																{
-																	xtype: 'displayfield',
-																	fieldLabel: 'Cantidad',
-																	value: cantidad
-																},
-																{
-																	xtype: 'displayfield',
-																	fieldLabel: 'PO',
-																	value: despacho
-																}
-																	]
-																}
-															]
-														}
-													],
-													buttons: [
-														{
-															text: 'Imprimir',
-															handler: function() {
-																var printWindow = window.open('', '', 'height=600,width=800');
-																var printContent = `
-																	<!DOCTYPE html>
+												if (responseData.error) {
+													Ext.Msg.alert('Error', responseData.error);
+												} else {
+													// Código de barras generado con éxito
+													var imgData = responseData.imagen;
+							
+													// Crear el popup
+													var popup = Ext.create('Ext.window.Window', {
+														title: 'Código de Barras Generado',
+														modal: true,
+														width: 600,
+														height: 500,
+														layout: 'vbox',
+														items: [
+															{
+																xtype: 'panel',
+																layout: 'hbox',
+																padding: 10,
+																items: [
+																	{
+																		xtype: 'image',
+																		src: imgData,
+																		width: 200,
+																		height: 100,
+																		margin: '0 10 10 0'
+																	},
+																	{
+																		xtype: 'container',
+																		layout: 'vbox',
+																		items: [
+																			{
+																				xtype: 'displayfield',
+																				fieldLabel: 'Referencia',
+																				value: itemId,
+																				margin: '0 0 10 0'
+																			},
+																			{
+																				xtype: 'displayfield',
+																				fieldLabel: 'Cantidad',
+																				value: cantidad
+																			},
+																			{
+																				xtype: 'displayfield',
+																				fieldLabel: 'PO',
+																				value: despacho
+																			}
+																		]
+																	}
+																]
+															}
+														],
+														buttons: [
+															{
+																text: 'Imprimir',
+																handler: function() {
+																	var printWindow = window.open('', '', 'height=600,width=800');
+																	var printContent = `
+																		<!DOCTYPE html>
 																		<html>
 																		<head>
 																			<title>AgroCosta-SAS</title>
@@ -295,39 +302,36 @@ Ext.onReady(function() {
 																			</div>
 																		</body>
 																		</html>`;
-																printWindow.document.write(printContent);
-																printWindow.document.close();
-																printWindow.focus();
+																	printWindow.document.write(printContent);
+																	printWindow.document.close();
+																	printWindow.focus();
 							
-																setTimeout(function() {
-																	printWindow.print();
-																});
+																	setTimeout(function() {
+																		printWindow.print();
+																	});
+																}
+															},
+															{
+																text: 'Cerrar',
+																handler: function() {
+																	popup.close();
+																}
 															}
-														},
-														{
-															text: 'Cerrar',
-															handler: function() {
-																popup.close();
-															}
-														}
-													]
-												});
+														]
+													});
 							
-												popup.show();
-											}).catch(function(error) {
-												Ext.Msg.alert('Error', error.message);
-											});
-										};
-							
-										script.onerror = function() {
-											Ext.Msg.alert('Error', 'No se pudo cargar el script de generación de código de barras');
-										};
+													popup.show();
+												}
+											},
+											failure: function(response) {
+												Ext.Msg.alert('Error', 'Error en la comunicación con el servidor');
+											}
+										});
 									} else {
 										Ext.Msg.alert('Error', 'Debe seleccionar una fila primero');
 									}
 								}
-							}					
-							
+							}							
 																						
 							,
 							"->",

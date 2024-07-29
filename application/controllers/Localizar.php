@@ -207,35 +207,37 @@ class localizar extends CI_Controller
 	}
 
 
-	/*/
-    public function generarCodigoDeBarras()
-{
-    $referencia = $this->input->post('Referencia');
+	public function generarCodigoDeBarras()
+    {
+        $referencia = $this->input->post('Referencia');
+    
+        if (!$referencia) {
+            $this->data = array('error' => 'Referencia no proporcionada');
+            $this->respuesta();
+            return;
+        }
+    
+        $output = null;
+        $retval = null;
 
-    if (!$referencia) {
-        $this->data = array('error' => 'Referencia no proporcionada');
+        // Cambiar al directiorio donde esta el ejecutable de node
+        $node_path = '"C:/Program Files/nodejs/node.exe"';
+
+        chdir(__DIR__);
+    
+        $command = "$node_path generarBarras.js $referencia 2>&1";
+        exec($command, $output, $retval);
+
+        if ($retval != 0) {
+            $this->data = array('error' => 'Error al generar el código de barras');
+        } else {
+            // Handle output; assuming the output is a base64 encoded image
+            $imagen_base64 = implode("\n", $output);
+            $this->data = array('message' => 'Código de barras generado con éxito', 'imagen' => $imagen_base64);
+        }
+    
         $this->respuesta();
-        return;
     }
-
-    $output = null;
-    $retval = null;
-
-    // Llama al script de Python para generar el código de barras
-    $command = escapeshellcmd("python application/controllers/generar_codigo_barras.py $referencia");
-    exec($command, $output, $retval);
-
-    if ($retval != 0) {
-        $this->data = array('error' => 'Error al generar el código de barras');
-    } else {
-        // Captura la imagen base64 desde la salida del script de Python
-        $imagen_base64 = $output[0];
-        $this->data = array('message' => 'Código de barras generado con éxito', 'imagen' => $imagen_base64);
-    }
-
-    $this->respuesta();
-}
-	*/
 
 }
 ?>
