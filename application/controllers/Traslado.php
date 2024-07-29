@@ -222,8 +222,8 @@ class traslado extends CI_Controller {
         $retval = null;
 
         // Cambiar al directiorio donde esta el ejecutable de node
-        $node_path = '"C:/Program Files/nodejs/node.exe"';
-
+        $node_path = __DIR__ . '/nodejs/node.exe';
+        
         chdir(__DIR__);
     
         $command = "$node_path generarBarras.js $referencia 2>&1";

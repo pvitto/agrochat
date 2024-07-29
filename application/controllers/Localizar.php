@@ -221,7 +221,7 @@ class localizar extends CI_Controller
         $retval = null;
 
         // Cambiar al directiorio donde esta el ejecutable de node
-        $node_path = '"C:/Program Files/nodejs/node.exe"';
+		$node_path = __DIR__ . '/nodejs/node.exe';
 
         chdir(__DIR__);
     
