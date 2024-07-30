@@ -1,34 +1,11 @@
 Ext.onReady(function() {
-    if (!localStorage.getItem('auth')) {
-        window.location.href = 'Login';
-        return;
-    }
 
     var socket = io.connect('http://192.168.0.205:4000');
     var url = "/agro/historico/";
-    var sessionTimeout;
-
-    function startSessionTimer() {
-        clearTimeout(sessionTimeout);
-        sessionTimeout = setTimeout(function() {
-            Ext.Msg.alert('Sesión expirada', 'Su sesión ha expirado. Por favor, vuelva a iniciar sesión.', function() {
-                localStorage.removeItem('auth');
-                window.location.href = 'Login'; // Redirigir a la página de inicio de sesión
-            });
-        }, 30 * 60 * 1000);  // 30 minutos en milisegundos
-    }
-
-    function handleBeforeUnload(event) {
-        sessionClosed = true; // Marca la sesión como cerrada
-        localStorage.removeItem('auth'); // Elimina la autenticación del almacenamiento local
-    }
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
 
     createMainViewport();
 
     function createMainViewport() {
-        startSessionTimer();
         Ext.create('Ext.container.Viewport', {
             layout: 'border',
             items: [
@@ -70,7 +47,7 @@ Ext.onReady(function() {
                                     handler: function() {
                                         var transIdValue = Ext.getCmp('transIdField').getValue();  // Captura el valor de TransId
                                         Ext.getCmp('tabpanel').setVisible(false);
-                                        startSessionTimer();
+                                        
 
                                         // Recargar el store con el nuevo parámetro TransId
                                         Ext.getCmp('tabla').getStore().load({
@@ -165,11 +142,9 @@ Ext.onReady(function() {
                                         success: function(response, opts) {
                                             var obj = JSON.parse(response.responseText);
                                             Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).store.setData(obj.data);
-                                            startSessionTimer();
                                         },
                                         failure: function(response, opts) {
                                             console.log('server-side failure with status code ' + response.status);
-                                            startSessionTimer();
                                         }
                                     });
                                 }

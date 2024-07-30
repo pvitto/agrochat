@@ -1,10 +1,51 @@
 <?php
 
+session_start();
+
+
 class Historico extends CI_Controller
 {
+    function conseguirUrl() {
+        // Obtener el protocolo (http o https)
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+    
+        // Obtener el host (nombre de dominio o IP)
+        $host = $_SERVER['HTTP_HOST'];
+    
+        // Obtener el nombre de la carpeta de la aplicación
+        $basePath = str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
+    
+        return $protocol . $host . $basePath;
+    }
+
+    function checkSessionExpired() {
+        if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] >60 )) {
+            // Si el usuario ha estado inactivo durante más de 30 minutos, se cierra la sesión
+            session_unset();     
+            session_destroy();   
+            header("Location: " . $this->conseguirUrl() . "login?msg=session_expired");
+            exit();
+        }
+        $_SESSION['LAST_ACTIVITY'] = time();
+
+        if(isset($_GET['cerrar'])) {
+            session_unset();     
+            session_destroy();   
+            header("Location: " . $this->conseguirUrl() . "login");
+            exit();
+        }
+    }
+    
 
     public function __construct()
 	{
+        if (!isset($_SESSION['idusuario'])) {
+            header("Location: " . $this->conseguirUrl() . "login");
+            exit();
+        }
+
+        $this->checkSessionExpired();
+
 		parent::__construct();
 		/*header('Access-Control-Allow-Origin: *');
         header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method");
@@ -19,6 +60,7 @@ class Historico extends CI_Controller
 
     public function respuesta()
     {
+
 		$this->output
 			->set_content_type('application/json','UTF-8')
 			->set_output(json_encode($this->data));	
@@ -33,6 +75,8 @@ class Historico extends CI_Controller
 
     public function obtenerPickedList()
 {
+    $this->checkSessionExpired();
+
     $this->data = array();
     $TransId = $this->input->get("TransId");
 
@@ -93,6 +137,7 @@ class Historico extends CI_Controller
 
     public function obtenerReferencias()
 	{
+        $this->checkSessionExpired();
 		$transid = $this->input->get("TransId");
 		$piso = $this->input->get("Piso");
 		$this->data = array();
@@ -128,6 +173,7 @@ class Historico extends CI_Controller
 
     public function obtenerUsuarios()
 	{
+        $this->checkSessionExpired();
 		$this->data = array();
 
 		//$this->load->view('welcome_message');
@@ -149,30 +195,6 @@ class Historico extends CI_Controller
 		return $this->data;
 		//$this->load->view('welcome_message');
 	}
-
-
-    public function chequearUsuario()
-    {
-        $usuario = $this->input->post("Usuario");
-        $contraseña = $this->input->post("Contraseña");
-    
-        $usuarios = $this->obtenerUsuarios();
-        $valid = false;
-    
-        foreach ($usuarios['data'] as $user) {
-            if ($user['UserName'] == $usuario && $user['Password'] == $contraseña) {
-                $valid = true;
-                break;
-            }
-        }
-    
-        if ($valid) {
-            echo json_encode(array('success' => true));
-        } else {
-            echo json_encode(array('success' => false));
-        }
-
-    }
 }
 
 

@@ -1,5 +1,5 @@
 Ext.onReady(function() {
-    var url = "/agro/historico/";
+    var url = "/agro/login/";
 
     var loginWindow = Ext.create('Ext.window.Window', {
         title: 'Inicio de Sesión',
@@ -47,7 +47,7 @@ Ext.onReady(function() {
                                 success: function(form, action) {
                                     var response = Ext.decode(action.response.responseText);
                                     if (response.success) {
-                                        localStorage.setItem('auth', true); // Guardar autenticación
+                                       
                                         window.location.href = 'historico'; // Redirigir a la página principal
                                     } else {
                                         Ext.Msg.alert('Error', 'Usuario o contraseña incorrectos');
