@@ -1,23 +1,10 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class traslado extends CI_Controller {
+class localizaciones_etiquetas extends CI_Controller {
 
-    /**
-     * Index Page for this controller.
-     *
-     * Maps to the following URL
-     * 		http://example.com/index.php/welcome
-     *	- or -
-     * 		http://example.com/index.php/welcome/index
-     *	- or -
-     * Since this controller is set as the default controller in
-     * config/routes.php, it's displayed at http://example.com/
-     *
-     * So any other public methods not prefixed with an underscore will
-     * map to /index.php/welcome/<method_name>
-     * @see https://codeigniter.com/user_guide/general/urls.html
-     */
+    
+
     public function __construct()
     {
         parent::__construct();
@@ -43,7 +30,7 @@ class traslado extends CI_Controller {
     public function index()
     {
         //echo base_url();
-        $this->load->view('traslado');
+        $this->load->view('localizaciones_Etiquetas');
     }
 	
     public function obtenerPickedList()
@@ -77,7 +64,7 @@ class traslado extends CI_Controller {
                 left join [AGR].[dbo].[AGRInTipoTransaccion] T on F.IdTransTipo=t.IdTransTipo
                 left join [TSM].[dbo].[User] S on s.UserId=F.IdUsuario
                 where f.transid="."'".$despacho."'"."";    */
-        $sql = sprintf("EXEC [AGR].[dbo].[HistorialLocalizarBodegaCargarTraslado] '%s'",$transid);
+        $sql = sprintf("EXEC [AGR].[dbo].[HistorialLocalizarBodegaCargarLocalizacion] '%s'",$transid);
         
         $query = $this->db->query($sql);
 
@@ -85,25 +72,11 @@ class traslado extends CI_Controller {
         {
             
             $this->data["data"][] = array(
-                "Id"=>$row->Id, 
-                "TransId"=>$row->TransId, 
-                "FechaTransaccion"=>$row->FechaTransaccion,
                 "Itemid"=>$row->Itemid,
                 "Descrip"=>$row->Descrip,
-                "Qtyorder"=>$row->Qtyorder,
-                "BinNum"=>$row->BinNum,
-                "BimNumold"=>$row->BimNumold,
-                "IdProceso"=>$row->IdProceso,
-                "VendorName"=>$row->VendorName, 
-                "Name"=>$row->Name, 
-                "TransType"=>$row->Proceso, 
-                "HoraInicial"=>$row->HoraInicial, 
                 "Piso"=>$row->Piso, 
-                "IdUsuario"=>$row->IdUsuario, 
-                "NombreUsuario"=>$row->NombreUsuario, 
-                "Observaciones"=>$row->Observaciones,
-                "RefEmpaque"=>$row->RefEmpaque,
-                "enMano"=>$row->enMano,
+                "BinNum"=>$row->BinNum,
+                "enMano"=>$row->enMano,                
                 "AliasProv"=>$row->AliasProv);
 
                 
@@ -197,7 +170,7 @@ class traslado extends CI_Controller {
         $this->datos = json_decode($this->input->post("datos"));
 
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialLocalizarBodega] %d,'%s', '%s', %d, '%s', '%s', '%s','%s' ",$this->datos->Id,$this->datos->TransId,$this->datos->Itemid ,$this->datos->IdTransTipo, $this->datos->IdPiso, $this->datos->IdUsuario, $this->datos->BinNum,$this->datos->Observaciones);
+        $sql = sprintf("EXEC [dbo].[HistorialLocalizarInventario] '%s', '%s', %d, '%s', '%s', '%s','%s' ",0,$this->datos->Itemid ,8, $this->datos->IdPiso, $this->datos->IdUsuario, $this->datos->BinNum,$this->datos->Observaciones);
 
         $query = $this->db->query($sql);
 
@@ -207,6 +180,7 @@ class traslado extends CI_Controller {
         $this->respuesta();
         //$this->load->view('welcome_message');
     }    
+
 
     public function generarCodigoDeBarras()
     {
@@ -223,7 +197,7 @@ class traslado extends CI_Controller {
 
         // Cambiar al directiorio donde esta el ejecutable de node
         $node_path = __DIR__ . '/nodejs/node.exe';
-        
+
         chdir(__DIR__);
     
         $command = "$node_path generarBarras.js $referencia 2>&1";
@@ -240,4 +214,8 @@ class traslado extends CI_Controller {
         $this->respuesta();
     }
 
+    
+        
 }
+
+?>

@@ -1,7 +1,7 @@
 <?php
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class localizar extends CI_Controller
+class localizar_etiquetas extends CI_Controller
 {
 
 	/**
@@ -44,7 +44,7 @@ class localizar extends CI_Controller
 	public function index()
 	{
 		//echo base_url();
-		$this->load->view('localizar');
+		$this->load->view('localizar_Etiquetas');
 	}
 
 	public function obtenerPickedList()

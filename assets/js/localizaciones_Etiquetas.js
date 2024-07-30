@@ -1,10 +1,10 @@
 Ext.onReady(function() {
 	var socket = io.connect('http://192.168.0.205:4000');
-	//var url = "http://192.168.0.251/agro/bodega/";
-	var url = "/agro/localizar/";
+	var url = "/agro/localizaciones_etiquetas/";
 
 	function restablecer(){
 		Ext.getCmp("form").getForm().reset();
+		//Ext.getCmp("tabla").getView().setDisabled(false);
 		Ext.getCmp('tabpanel').setVisible(false);
 		Ext.getCmp("tabla").getStore().reload();
 	};
@@ -17,19 +17,15 @@ Ext.onReady(function() {
 				width: '76%',
 				region: 'center',
 				iconCls: 'logo',
-				title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Aadmninistracion Bodega - PackingList',
+				title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Admninistracion Bodega - Inventario Localizaciones',
 				layout: 'fit',
 				rowLines: true,
 				split: true,
 				columnLines: true,
-				//autoLoad: true,
 				frame: true,
 				features: [{ftype:'grouping', 
-				// personalizar forma encabezado de grupo. muestra nombre y número de elementos. 
 				groupHeaderTpl: 'Grupo: {name} ({rows.length} elemento{[values.rows.length > 1 ? "s" : ""]})', 
-				startCollapsed: true
-				//showSummaryRow: true // agrega al agrupar una fila para calculos https://docs-devel.sencha.com/extjs/7.4.0/classic/Ext.grid.feature.Grouping.html
-				
+				startCollapsed: true				
 			}, 
 		],
 				
@@ -55,7 +51,8 @@ Ext.onReady(function() {
 								store: [
 									[0,'Todos'],
 									[1,'P1'],
-									[2,'P2']
+									[2,'P2'],
+									[3,'A']
 								],
 								listeners: {
 									select: function( combo, record, eOpts ) {
@@ -67,65 +64,29 @@ Ext.onReady(function() {
 										}else{
 											Ext.getCmp('tabla').getStore().filter("Piso",combo.getRawValue());
 										}	
-										
 										console.log(Ext.getCmp('tabla').getStore().getRange(0,100));
-									}
-								}
-							},
-
-
-							{
-								xtype: 'textfield',
-								typeAhead: true,
-								id: 'items',
-								width: 275,
-								labelWidth: 120,
-								fieldLabel: 'Seleccione Items',
-								//triggerAction: 'all',
-								value: "",
-								editable: true,
-								//maxlength:1,
-								listeners: {
-									change: function(textfield, e, eOpts) {
-										//console.log("Yes it works!!" + textfield.getRawValue());
-										Ext.getCmp("form").getForm().reset();
-										//Ext.getCmp("tabla").getView().setDisabled(false);
-										Ext.getCmp('tabpanel').setVisible(false);
-										if(textfield.getValue() == ""){
-											Ext.getCmp('tabla').getStore().clearFilter();
-										}else{
-											
-											
-											Ext.getCmp('tabla').getStore().filterBy(function(record) {
-												var fieldValue1 = record.get('Itemid');
-												var fieldValue2 = record.get('AliasProv');
-
-												 // Verificar si el texto introducido se encuentra en cualquiera de los dos campos
-												 return (typeof fieldValue1 === 'string' && fieldValue1.indexOf(textfield.getRawValue()) !== -1) ||
-           												(typeof fieldValue2 === 'string' && fieldValue2.indexOf(textfield.getRawValue()) !== -1);
-
-											});
-
-										}	
-										
 									}
 								}
 							},
 							"-",
 							{
 								xtype: 'textfield',
-								labelWidth: 160,
+								labelWidth: 190,
 								//anchor: '100%',
 								id: 'fecha',
-								fieldLabel: 'Consultar Despacho:',
+								fieldLabel: 'Consultar BinNum - ITEM:',
 								value: '',
 								//format: "d/m/Y",
 								editable: true,
 								width: 285,
 								listeners:{
+									afterrender: function(field) {
+											field.focus();
+									},
 									select: function( field, value, eOpts ) {
 										Ext.getCmp('tabla').getStore().clearFilter();
 										Ext.getCmp("form").getForm().reset();
+										//Ext.getCmp("tabla").getView().setDisabled(false);
 										Ext.getCmp('tabpanel').setVisible(false);
 									}
 								},
@@ -135,11 +96,12 @@ Ext.onReady(function() {
 								Ext.getCmp('tabla').getStore().clearFilter();
 								Ext.getCmp("pisos").setValue(0);
 								Ext.getCmp("form").getForm().reset();
-								Ext.getCmp("items").setValue("");
-								//Ext.getCmp("tabla").getView().setDisabled(false);
 								Ext.getCmp('tabpanel').setVisible(false);
 								Ext.getCmp('tabla').getStore().reload();
+
 								Ext.getCmp('tabla').getStore().load({params: {FechaTransaccion: Ext.getCmp('fecha').getRawValue()}});
+							
+
 							} },
 							"-",
 							{
@@ -152,8 +114,7 @@ Ext.onReady(function() {
 							
 									if (selectedRecord) {
 										var itemId = selectedRecord.get('Itemid');
-										var cantidad = selectedRecord.get('Qtyorder');
-										var despacho = selectedRecord.get('TransId');
+										var descripcion = selectedRecord.get('Descrip');
 							
 										// Realizar la llamada AJAX al controlador PHP
 										Ext.Ajax.request({
@@ -171,49 +132,103 @@ Ext.onReady(function() {
 													// Código de barras generado con éxito
 													var imgData = responseData.imagen;
 							
+													// Crear el contenido HTML para la impresión
+													var printContent = `
+														<!DOCTYPE html>
+														<html>
+														<head>
+															<title>AgroCosta-SAS</title>
+															<style>
+																@media print {
+																	.no-print { display: none; }
+																}
+																body { font-family: Arial, sans-serif; }
+																.container { width: 100%; margin: 0 auto; }
+																.label {
+																	display: flex;
+																	flex-direction: row;
+																	align-items: center;
+																	justify-content: center;
+																	width: 10cm;
+																	height: 5cm;
+																	border: 1px solid #000;
+																	padding: 5px;
+																	box-sizing: border-box;
+																	page-break-inside: avoid;
+																	position: relative;
+																	padding-bottom: 25px;
+																}
+																.label-left {
+																	flex: 1;
+																	text-align: center;
+																	display: flex;
+																	flex-direction: column;
+																	justify-content: center;
+																}
+																.label-right {
+																	position: absolute;
+																	top: 5px;
+																	right: 5px;
+																	text-align: right;
+																}
+																.label .reference {
+																	font-size: 0.9cm;
+																	font-weight: bold;
+																	margin-bottom: 2px;
+																}
+																.label .description {
+																	font-size: 0.3cm;
+																	margin-bottom: 2px;
+																	word-wrap: break-word;
+																	max-width: 7cm;
+																	align-self: center;
+																}
+																.label .code-bar {
+																	display: block;
+																	margin: 0 auto 2px auto;
+																	width: 7.0cm;
+																	height: 2cm;
+																}
+																.label .company-name {
+																	font-size: 0.3cm;
+																	font-weight: bold;
+																	padding-bottom: 25px;
+																}
+															</style>
+														</head>
+														<body>
+															<div class="container">
+																<div class="label">
+																	<div class="label-left">
+																		<p class="reference">${itemId}</p>
+																		<p class="description">${descripcion}</p>
+																		<img class="code-bar" src="${imgData}" />
+																	</div>
+																	<div class="label-right">
+																		<p class="company-name">Agro-Costa SAS</p>
+																	</div>
+																</div>
+															</div>
+														</body>
+														</html>
+													`;
+							
 													// Crear el popup
 													var popup = Ext.create('Ext.window.Window', {
 														title: 'Código de Barras Generado',
 														modal: true,
-														width: 600,
-														height: 500,
+														width: 393,
+														height: 288,
 														layout: 'vbox',
 														items: [
+															
 															{
 																xtype: 'panel',
-																layout: 'hbox',
-																padding: 10,
-																items: [
-																	{
-																		xtype: 'image',
-																		src: imgData,
-																		width: 200,
-																		height: 100,
-																		margin: '0 10 10 0'
-																	},
-																	{
-																		xtype: 'container',
-																		layout: 'vbox',
-																		items: [
-																			{
-																				xtype: 'displayfield',
-																				fieldLabel: 'Referencia',
-																				value: itemId,
-																				margin: '0 0 10 0'
-																			},
-																			{
-																				xtype: 'displayfield',
-																				fieldLabel: 'Cantidad',
-																				value: cantidad
-																			},
-																			{
-																				xtype: 'displayfield',
-																				fieldLabel: 'PO',
-																				value: despacho
-																			}
-																		]
-																	}
-																]
+																html: printContent,
+																width: '100%',
+																height: 300,
+																border: true,
+																autoScroll: true
 															}
 														],
 														buttons: [
@@ -221,94 +236,13 @@ Ext.onReady(function() {
 																text: 'Imprimir',
 																handler: function() {
 																	var printWindow = window.open('', '', 'height=600,width=800');
-																	var printContent = `
-																		<!DOCTYPE html>
-																		<html>
-																		<head>
-																			<title>AgroCosta-SAS</title>
-																			<style>
-																				@media print {
-																					.no-print { display: none; }
-																				}
-																				body { font-family: Arial, sans-serif; }
-																				.container { width: 100%; margin: 0 auto; }
-																				.label {
-																					display: flex;
-																					flex-direction: row;
-																					align-items: center;
-																					justify-content: center;
-																					width: 10cm;
-																					height: 5cm;
-																					border: 1px solid #000;
-																					padding: 5px;
-																					box-sizing: border-box;
-																					page-break-inside: avoid;
-																					position: relative;
-																					padding-right: 35px;
-																					padding-bottom: 30px;
-																				}
-																				.label-left {
-																					flex: 2;
-																					text-align: left;
-																					display: flex;
-																					flex-direction: column;
-																					justify-content: center;
-																				}
-																				.label-right {
-																					flex: 1;
-																					display: flex;
-																					flex-direction: column;
-																					justify-content: center;
-																					padding-bottom: 18px;
-																				}
-																				.label .reference {
-																					font-size: 0.7cm;
-																					font-weight: bold;
-																					text-align: center;
-																					margin-bottom: 2px;
-																				}
-																				.label .dispatch, .label .quantity {
-																					font-size: 0.4cm;
-																					margin-bottom: -13px;
-																					text-align: center;
-																				}
-																				.label .company-name {
-																					font-size: 0.35cm;
-																					margin-bottom: 20px;
-																					text-align: center;
-																					font-weight: bold;
-																				}
-																				.label .code-bar {
-																					display: block;
-																					margin: 0 auto 2px auto;
-																					width: 5.0cm;
-																					height: 1.5cm;
-																				}
-																			</style>
-																		</head>
-																		<body>
-																			<div class="container">
-																				<div class="label">
-																					<div class="label-left">
-																						<p class="reference">${itemId}</p>
-																						<img class="code-bar" src="${imgData}" />
-																					</div>
-																					<div class="label-right">
-																						<p class="company-name">Agro-Costa SAS</p>
-																						<p class="dispatch">PO: ${despacho}</p>
-																						<p class="quantity">Cantidad: ${cantidad}</p>
-																					</div>
-																				</div>
-																			</div>
-																		</body>
-																		</html>`;
 																	printWindow.document.write(printContent);
 																	printWindow.document.close();
 																	printWindow.focus();
 							
 																	setTimeout(function() {
 																		printWindow.print();
-																	});
+																	}); 
 																}
 															},
 															{
@@ -331,10 +265,13 @@ Ext.onReady(function() {
 										Ext.Msg.alert('Error', 'Debe seleccionar una fila primero');
 									}
 								}
-							}							
-																						
+							}
+							
+							
+
 							,
 							"->",
+
 							{
 								xtype: 'button',
 								text: '',
@@ -366,7 +303,6 @@ Ext.onReady(function() {
 									store.clearFilter();
 								}
 							}
-                           
 
 						]
 					}
@@ -384,7 +320,6 @@ Ext.onReady(function() {
 									autoLoad: false,
 									//groupField: "TransId",
 									fields: [
-										
 										{ name: 'Ruta', type: 'int' },
 										{ name: 'Referencia', type: 'string' },
 										{ name: 'Localizacion', type: 'string' },
@@ -450,7 +385,6 @@ Ext.onReady(function() {
 					listeners: {
 						expandbody: function (rowNode, record, expandRow, e) {
 							
-							
 							if(Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).getStore().count() === 0){
 								Ext.Ajax.request({
 									method: 'GET',
@@ -480,22 +414,12 @@ Ext.onReady(function() {
 					autoLoad: false,
 					//groupField: "TransId",
 					fields: [
-						{ name: 'TransId', type: 'string' },
-						{ name: 'RefEmpaque', type: 'string' },
 						{ name: 'Itemid', type: 'string' },
-						{ name: 'Qtyorder', type: 'int' },
-						{ name: 'enMano', type: 'int' },
-						{ name:'BinNum', type: 'string' },
-						{ name:'BimNumold', type: 'string' },
-						{ name: 'Id', type: 'int' },
-						{ name: 'IdProceso', type: 'int' },
-						{ name: 'VendorName', type: 'string' },
-						{ name: 'Name', type: 'string' },
-						{ name: 'FechaTransaccion', type: 'string' },		
-						{ name: 'HoraInicial', type: 'string' },
+						{ name: 'Descrip', type: 'string' },
 						{ name: 'Piso', type: 'string' },
-						{ name: 'NombreUsuario', type: 'string' },
-						{ name: 'Observaciones', type: 'string' }
+						{ name:'BinNum', type: 'string' },
+						{ name: 'enMano', type: 'int' },
+						{ name: 'AliasProv', type: 'string' }
 					],
 					proxy: {
 						timeout: 600000,
@@ -509,178 +433,69 @@ Ext.onReady(function() {
 					}
 				}),
 				columns: [
+				
 					{
-						header: 'Despacho',
-						dataIndex: 'TransId',
-						width: 120
-					}, 
-					{
-						header: 'RefEmpaque',
-						dataIndex: 'RefEmpaque',
-						width: 150//,
-						//stopSelection: false
-					},
-					{
+						//xtype: 'checkcolumn',
 						header: 'Itemid',
 						dataIndex: 'Itemid',
 						groupable: true,
 						headerCheckbox: true,
-						width: 150,//,
-						filter: 'string'
+						width: 150,
+						filter: 'string',
+						flex: 1
 						
 					}, 
 					{
-						header: 'Fecha Tansación',
-						dataIndex: 'FechaTransaccion',
+						//xtype: 'checkcolumn',
+						header: 'Descrip',
+						dataIndex: 'Descrip',
 						groupable: true,
-						hidden: true,
 						headerCheckbox: true,
-						width: 150//,
-						//stopSelection: false
-					},
+						width: 210,
+						filter: 'string',
+						flex: 1
+						
+					}, 
 					
 					
 					{
+						//xtype: 'checkcolumn',
 						header: 'Bodega',
 						dataIndex: 'Piso',
-						width: 100
+						//headerCheckbox: true,
+						width: 100,//,
+						flex: 1
+						//stopSelection: false
 					}, 
-					{
-						header: 'Cantidad',
-						dataIndex: 'Qtyorder',
-						width: 120
-					},
+					
 					{
 						//xtype: 'datecolumn',
 						header: 'Enmano',
 						dataIndex: 'enMano',
 						hidden: false,
 						//refenence: 'Name',
-						width: 120
+						width: 120,
+						flex: 1
 					},
 					{
 						//xtype: 'datecolumn',
 						header: 'BinNum',
 						dataIndex: 'BinNum',
 						//refenence: 'Name',
-						width: 120
+						width: 120,
+						flex: 1
 					}, 
-					{
-						//xtype: 'datecolumn',
-						header: 'BinOld',
-						dataIndex: 'BimNumold',
-						//refenence: 'Name',
-						width: 100
-					}, 
-					 
-					{
-						header: 'Id Proceso',
-						dataIndex: 'IdProceso',
-						hidden: true,
-						width: 100,
-						editor: {
-							xtype: 'combo',
-							typeAhead: true,
-							triggerAction: 'all',
-							store: [
-								['Shade','Shade'],
-								['Mostly Shady','Mostly Shady'],
-								['Sun or Shade','Sun or Shade'],
-								['Mostly Sunny','Mostly Sunny'],
-								['Sunny','Sunny']
-							]
-						}
-					}, 
-					{
-						header: 'Id',
-						dataIndex: 'Id',
-						hidden: true,
-						width: 100,
-						
-					}, 
-					{
-						header: 'Proceso',
-						dataIndex: 'TransType',
-						width: 140,
-						editor: {
-							xtype: 'combo',
-							typeAhead: true,
-							triggerAction: 'all',
-							store: [
-								['Shade','Shade'],
-								['Mostly Shady','Mostly Shady'],
-								['Sun or Shade','Sun or Shade'],
-								['Mostly Sunny','Mostly Sunny'],
-								['Sunny','Sunny']
-							]
-						},
-						renderer: function(value, metaData, record, rowIndex, colIndex, store, view){
-							var proc = record.get("IdProceso");
-
-							switch(proc) {
-								case 0:
-									metaData.tdCls = 'picked';
-									break;
-								case 1:
-									metaData.tdCls = 'recogiendo';
-									break;
-								case 2:
-									metaData.tdCls = 'recogiendo';
-									break;
-								case 3:
-									metaData.tdCls = 'empacando';
-									break;
-								case 8:
-									metaData.tdCls = 'empacado';
-									break;
-							}
-
-							return value;
-						}
-					}, 
-					
-					{
-						header: 'Proveedor',
-						dataIndex: 'VendorName',
-						flex: 1,
-						minWidth: 150,
-						align: 'center',
-					}, 
-				
-					
-					{
-						header: 'Fecha Localizado',
-						dataIndex: 'HoraInicial',
-						width: 190//,
-						//stopSelection: false
-					}, 
-					
-					{
-						header: 'Responsable',
-						dataIndex: 'NombreUsuario',
-
-						width: 130
-					},
-					{
-						header: 'Observacion',
-						dataIndex: 'Observaciones',
-						flex: 0.3,
-						minWidth: 125,
-						align: 'center',
-						
-					},
 					{
 						//xtype: 'datecolumn',
 						header: 'AliasProv',
 						dataIndex: 'AliasProv',
 						hidden: true,
 						//refenence: 'Name',
-						width: 120
-						
+						width: 120,
+						flex: 1
 					}
 					
 				],
-				
 				listeners: {			
 					afterrender: function( view, eOpts ){
 						Ext.getCmp("form").getForm().reset();
@@ -692,26 +507,28 @@ Ext.onReady(function() {
 					},
 					rowdblclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
 						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro8").setDisabled(true);
+						Ext.getCmp("pro8").setDisabled(false);
+						Ext.getCmp("pro8").setValue(true);
+						//Ext.getCmp("Observacion").setDisabled(true);
 						Ext.getCmp('Observacion').setValue(record.data.Observaciones);
+						
 						Ext.getCmp('tabpanel').setVisible(true);
+						Ext.getCmp("usuarios").focus();
 
 						if(record.data.IdUsuario != null){
 							Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
+							
 						}
 
-						if(record.data.IdProceso < 8){
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
-							Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
+						Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
 							Ext.getCmp('BinNum').setValue(record.data.BinNum);
-							//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + record.data.BinNum);
-							
-						}						
+
+								
 					},
 					rowclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
 						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro8").setDisabled(true);
+						Ext.getCmp("pro8").setDisabled(false);
+						Ext.getCmp("pro8").setValue(true);
 						Ext.getCmp('Observacion').setValue(record.data.Observaciones);
 						
 
@@ -719,12 +536,7 @@ Ext.onReady(function() {
 							Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
 						}
 
-						if(record.data.IdProceso < 8){
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
-							Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
-							Ext.getCmp('BinNum').setValue(record.data.BinNum);
-						}						
+									
 					}
 				}
 			}),
@@ -903,7 +715,6 @@ Ext.onReady(function() {
 								xtype: 'radiogroup',
 								fieldLabel: 'Proceso actual',
 								anchor: '98%',
-								// Arrange checkboxes into two columns, distributed vertically
 								columns: 1,
 								vertical: true,
 								allowBlank: false,
@@ -913,13 +724,9 @@ listeners: {
                             if (checkbox.checked) {
                                 resetBoxes(checkbox.ownerCt, checkbox.inputValue);
                             }
-                            /* not relevant for the understanding of the sample */
                             var panel = checkbox.ownerCt.ownerCt;
                             var f = panel.down('displayfield');
                             checkbox.checked ? checkbox.inputValue : 'none';
-                        
-                            /* so you can delete this, with the displayfield too */
-
                         }
                     },
 
@@ -928,14 +735,7 @@ listeners: {
 									{ boxLabel: 'Localizar', name: 'IdProceso', id: "pro8", inputValue: 8, disabled: true }
 								]
 							},
-							{
-								xtype: 'textareafield',
-								id: 'Observacion',
-								grow: true,
-								fieldLabel: 'Observación',
-								allowBlank: true,
-								anchor: '98%'
-							},
+							
 							{
 								xtype: 'combo',
 								id: 'BinNum',
@@ -947,11 +747,11 @@ listeners: {
 								anchor: '98%',
 								displayField: 'BinNum',
     							valueField: 'BinNum',
+								
 								store: Ext.create('Ext.data.Store', {
 									autoLoad: false,
 									fields: [
 										{ name: 'BinNum', type: 'string' }
-										
 									],
 									proxy: {
 										timeout: 600000,
@@ -963,7 +763,22 @@ listeners: {
 											rootProperty: 'data'
 										}
 									}
-								})
+								}),
+
+									listeners: {
+										focus: function(field) {
+											field.selectAll();
+										}
+									}
+							},
+
+							{
+								xtype: 'textareafield',
+								id: 'Observacion',
+								grow: true,
+								fieldLabel: 'Observación',
+								allowBlank: true,
+								anchor: '98%'
 							},
 						]
 					}

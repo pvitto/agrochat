@@ -1,6 +1,14 @@
 Ext.onReady(function() {
 	var socket = io.connect('http://192.168.0.205:4000');
-	var url = "/agro/localizaciones/";
+	//new Date().toJSON().split("T")[0].split("-").reverse().join("/")
+	/**
+	 * This example shows how to enable inline editing of grid cells.
+	 *
+	 * Note that cell editing is ideal for mouse/keyboard users and is not
+	 * recommended on touch devices.
+	 */
+	//var url = "http://192.168.0.251/agro/bodega/";
+	var url = "/agro/traslado_etiquetas/";
 
 	function restablecer(){
 		Ext.getCmp("form").getForm().reset();
@@ -17,16 +25,26 @@ Ext.onReady(function() {
 				width: '76%',
 				region: 'center',
 				iconCls: 'logo',
-				title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Admninistracion Bodega - Inventario Localizaciones',
+				title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Admninistracion Bodega - Traslados entre Bodegas',
 				layout: 'fit',
 				rowLines: true,
 				split: true,
 				columnLines: true,
+				//autoLoad: true,
 				frame: true,
 				features: [{ftype:'grouping', 
+				// personalizar forma encabezado de grupo. muestra nombre y número de elementos. 
 				groupHeaderTpl: 'Grupo: {name} ({rows.length} elemento{[values.rows.length > 1 ? "s" : ""]})', 
-				startCollapsed: true				
+				startCollapsed: true
+				//showSummaryRow: true // agrega al agrupar una fila para calculos https://docs-devel.sencha.com/extjs/7.4.0/classic/Ext.grid.feature.Grouping.html
+				
 			}, 
+			
+			/*{
+				ftype: 'summary',  // Habilita la funcionalidad de resumen
+				dock: 'bottom'
+			}*/
+			
 		],
 				
 				dockedItems: [
@@ -51,8 +69,7 @@ Ext.onReady(function() {
 								store: [
 									[0,'Todos'],
 									[1,'P1'],
-									[2,'P2'],
-									[3,'A']
+									[2,'P2']
 								],
 								listeners: {
 									select: function( combo, record, eOpts ) {
@@ -64,17 +81,62 @@ Ext.onReady(function() {
 										}else{
 											Ext.getCmp('tabla').getStore().filter("Piso",combo.getRawValue());
 										}	
+										//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + Ext.getCmp('tabla').getStore().data.BinNum + Ext.getCmp('tabla').getStore().getModel().getFields('BinNum').getValue);
+										//console.log(Ext.getCmp('tabla').getStore().getModel().getFields);
 										console.log(Ext.getCmp('tabla').getStore().getRange(0,100));
 									}
+								}
+							},
+
+
+							{
+								xtype: 'textfield',
+								typeAhead: true,
+								id: 'items',
+								width: 275,
+								labelWidth: 120,
+								fieldLabel: 'Seleccione Items',
+								//triggerAction: 'all',
+								value: "",
+								editable: true,
+								//maxlength:1,
+								listeners: {
+									change: function(textfield, e, eOpts) {
+										//console.log("Yes it works!!" + textfield.getRawValue());
+										Ext.getCmp("form").getForm().reset();
+										//Ext.getCmp("tabla").getView().setDisabled(false);
+										Ext.getCmp('tabpanel').setVisible(false);
+										if(textfield.getValue() == ""){
+											Ext.getCmp('tabla').getStore().clearFilter();
+										}else{
+											
+											//esta funciona lo cambie solo para filtrar x 2 campos
+											//Ext.getCmp('tabla').getStore().filter("Itemid",textfield.getRawValue());
+											Ext.getCmp('tabla').getStore().filterBy(function(record) {
+												var fieldValue1 = record.get('Itemid');
+												var fieldValue2 = record.get('AliasProv');
+
+												 // Verificar si el texto introducido se encuentra en cualquiera de los dos campos
+												 return (typeof fieldValue1 === 'string' && fieldValue1.indexOf(textfield.getRawValue()) !== -1) ||
+           												(typeof fieldValue2 === 'string' && fieldValue2.indexOf(textfield.getRawValue()) !== -1);
+
+											});
+
+										}	
+										//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + Ext.getCmp('tabla').getStore().data.BinNum + Ext.getCmp('tabla').getStore().getModel().getFields('BinNum').getValue);
+										//console.log(Ext.getCmp('tabla').getStore().getModel().getFields);
+										//console.log(Ext.getCmp('tabla').getStore().getRange(0,100));
+									}
+									
 								}
 							},
 							"-",
 							{
 								xtype: 'textfield',
-								labelWidth: 190,
+								labelWidth: 160,
 								//anchor: '100%',
 								id: 'fecha',
-								fieldLabel: 'Consultar BinNum - ITEM:',
+								fieldLabel: 'Consultar Traslado:',
 								value: '',
 								//format: "d/m/Y",
 								editable: true,
@@ -88,19 +150,23 @@ Ext.onReady(function() {
 										Ext.getCmp("form").getForm().reset();
 										//Ext.getCmp("tabla").getView().setDisabled(false);
 										Ext.getCmp('tabpanel').setVisible(false);
+										//Ext.getCmp('tabla').getStore().load({params: {FechaTransaccion: field.getRawValue()}});
 									}
 								},
+								//maxValue: new Date()  // limited to the current date or prior
 							},
 							"-",
 							{ minWidth: 80, text: 'Consultar', iconCls: 'fas fa-sync-alt', hidden: false, id: 'Consultar', handler: function(){
 								Ext.getCmp('tabla').getStore().clearFilter();
 								Ext.getCmp("pisos").setValue(0);
 								Ext.getCmp("form").getForm().reset();
+								Ext.getCmp("items").setValue("");
+								//Ext.getCmp("tabla").getView().setDisabled(false);
 								Ext.getCmp('tabpanel').setVisible(false);
 								Ext.getCmp('tabla').getStore().reload();
 
 								Ext.getCmp('tabla').getStore().load({params: {FechaTransaccion: Ext.getCmp('fecha').getRawValue()}});
-							
+							//	Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + Ext.getCmp('fecha').getRawValue() );
 
 							} },
 							"-",
@@ -114,7 +180,8 @@ Ext.onReady(function() {
 							
 									if (selectedRecord) {
 										var itemId = selectedRecord.get('Itemid');
-										var descripcion = selectedRecord.get('Descrip');
+										var cantidad = selectedRecord.get('Qtyorder');
+										var despacho = selectedRecord.get('TransId');
 							
 										// Realizar la llamada AJAX al controlador PHP
 										Ext.Ajax.request({
@@ -132,53 +199,9 @@ Ext.onReady(function() {
 													// Código de barras generado con éxito
 													var imgData = responseData.imagen;
 							
-													// Crear el popup
-													var popup = Ext.create('Ext.window.Window', {
-														title: 'Código de Barras Generado',
-														modal: true,
-														width: 600,
-														height: 500,
-														layout: 'vbox',
-														items: [
-															{
-																xtype: 'panel',
-																layout: 'hbox',
-																padding: 10,
-																items: [
-																	{
-																		xtype: 'image',
-																		src: imgData,
-																		width: 200,
-																		height: 100,
-																		margin: '0 10 10 0'
-																	},
-																	{
-																		xtype: 'container',
-																		layout: 'vbox',
-																		items: [
-																			{
-																				xtype: 'displayfield',
-																				fieldLabel: 'Referencia',
-																				value: itemId,
-																				margin: '0 0 10 0'
-																			},
-																			{
-																				xtype: 'displayfield',
-																				fieldLabel: 'Desc',
-																				value: descripcion
-																			}
-																		]
-																	}
-																]
-															}
-														],
-														buttons: [
-															{
-																text: 'Imprimir',
-																handler: function() {
-																	var printWindow = window.open('', '', 'height=600,width=800');
-																	var printContent = `
-																		<!DOCTYPE html>
+													// Crear el contenido HTML para la impresión
+													var printContent = `
+													<!DOCTYPE html>
 																		<html>
 																		<head>
 																			<title>AgroCosta-SAS</title>
@@ -200,43 +223,45 @@ Ext.onReady(function() {
 																					box-sizing: border-box;
 																					page-break-inside: avoid;
 																					position: relative;
-																					padding-bottom: 25px;
+																					padding-right: 35px;
+																					padding-bottom: 30px;
 																				}
 																				.label-left {
-																					flex: 1;
-																					text-align: center;
+																					flex: 2;
+																					text-align: left;
 																					display: flex;
 																					flex-direction: column;
 																					justify-content: center;
 																				}
 																				.label-right {
-																					position: absolute;
-																					top: 5px;
-																					right: 5px;
-																					text-align: right;
+																					flex: 1;
+																					display: flex;
+																					flex-direction: column;
+																					justify-content: center;
+																					padding-bottom: 18px;
 																				}
 																				.label .reference {
-																					font-size: 0.9cm;
+																					font-size: 0.7cm;
 																					font-weight: bold;
+																					text-align: center;
 																					margin-bottom: 2px;
 																				}
-																				.label .description {
-																					font-size: 0.3cm;
-																					margin-bottom: 2px;
-																					word-wrap: break-word;
-																					max-width: 7cm;
-																					align-self: center;
+																				.label .dispatch, .label .quantity {
+																					font-size: 0.4cm;
+																					margin-bottom: -13px;
+																					text-align: center;
+																				}
+																				.label .company-name {
+																					font-size: 0.35cm;
+																					margin-bottom: 20px;
+																					text-align: center;
+																					font-weight: bold;
 																				}
 																				.label .code-bar {
 																					display: block;
 																					margin: 0 auto 2px auto;
-																					width: 7.0cm;
-																					height: 2cm;
-																				}
-																				.label .company-name {
-																					font-size: 0.3cm;
-																					font-weight: bold;
-																					padding-bottom: 25px;
+																					width: 5.0cm;
+																					height: 1.5cm;
 																				}
 																			</style>
 																		</head>
@@ -245,24 +270,49 @@ Ext.onReady(function() {
 																				<div class="label">
 																					<div class="label-left">
 																						<p class="reference">${itemId}</p>
-																						<p class="description">${descripcion}</p>
 																						<img class="code-bar" src="${imgData}" />
 																					</div>
 																					<div class="label-right">
 																						<p class="company-name">Agro-Costa SAS</p>
+																						<p class="dispatch">PO: ${despacho}</p>
+																						<p class="quantity">Cantidad: ${cantidad}</p>
 																					</div>
 																				</div>
 																			</div>
 																		</body>
 																		</html>
-																	`;
+													`;
+							
+													// Crear el popup
+													var popup = Ext.create('Ext.window.Window', {
+														title: 'Código de Barras Generado',
+														modal: true,
+														width: 393,
+														height: 288,
+														layout: 'vbox',
+														items: [
+															
+															{
+																xtype: 'panel',
+																html: printContent,
+																width: '100%',
+																height: 300,
+																border: true,
+																autoScroll: true
+															}
+														],
+														buttons: [
+															{
+																text: 'Imprimir',
+																handler: function() {
+																	var printWindow = window.open('', '', 'height=600,width=800');
 																	printWindow.document.write(printContent);
 																	printWindow.document.close();
 																	printWindow.focus();
 							
 																	setTimeout(function() {
 																		printWindow.print();
-																	}); // Ajusta el tiempo según sea necesario
+																	}); 
 																}
 															},
 															{
@@ -285,12 +335,9 @@ Ext.onReady(function() {
 										Ext.Msg.alert('Error', 'Debe seleccionar una fila primero');
 									}
 								}
-							}
-							
-
+							}														
 							,
 							"->",
-
 							{
 								xtype: 'button',
 								text: '',
@@ -320,6 +367,8 @@ Ext.onReady(function() {
 									XLSX.writeFile(workbook, 'tabla.xlsx');
 
 									store.clearFilter();
+
+								
 								}
 							}
 
@@ -339,6 +388,8 @@ Ext.onReady(function() {
 									autoLoad: false,
 									//groupField: "TransId",
 									fields: [
+										//{ name: 'TransId', type: 'string' },
+										//{ name: 'Piso', type: 'string' },
 										{ name: 'Ruta', type: 'int' },
 										{ name: 'Referencia', type: 'string' },
 										{ name: 'Localizacion', type: 'string' },
@@ -403,6 +454,8 @@ Ext.onReady(function() {
 				viewConfig: {
 					listeners: {
 						expandbody: function (rowNode, record, expandRow, e) {
+							//console.log(record);
+							//Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).store.load({params: {TransId: record.data.TransId, Piso: record.data.Piso}});
 							
 							if(Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).getStore().count() === 0){
 								Ext.Ajax.request({
@@ -433,12 +486,23 @@ Ext.onReady(function() {
 					autoLoad: false,
 					//groupField: "TransId",
 					fields: [
+						{ name: 'Id', type: 'int' },
+						{ name: 'TransId', type: 'string' },
+						{ name: 'FechaTransaccion', type: 'string' },
 						{ name: 'Itemid', type: 'string' },
 						{ name: 'Descrip', type: 'string' },
-						{ name: 'Piso', type: 'string' },
-						{ name:'BinNum', type: 'string' },
+						{ name: 'Qtyorder', type: 'int' },
 						{ name: 'enMano', type: 'int' },
-						{ name: 'AliasProv', type: 'string' }
+						{ name:'BinNum', type: 'string' },
+						{ name:'BimNumold', type: 'string' },
+						{ name: 'IdProceso', type: 'int' },
+						{ name: 'VendorName', type: 'string' },
+						{ name: 'Name', type: 'string' },	
+						{ name: 'HoraInicial', type: 'string' },
+						{ name: 'Piso', type: 'string' },
+						{ name: 'NombreUsuario', type: 'string' },
+						{ name: 'Observaciones', type: 'string' },
+						{ name: 'RefEmpaque', type: 'string' }
 					],
 					proxy: {
 						timeout: 600000,
@@ -452,16 +516,48 @@ Ext.onReady(function() {
 					}
 				}),
 				columns: [
-				
+					{
+						header: 'Id',
+						dataIndex: 'Id',
+						hidden: true,
+						width: 100,
+						
+					}, 
+					{
+						header: 'Traslado',
+						dataIndex: 'TransId',
+						width: 120//,
+						//editor: {
+							//allowBlank: false
+						//}
+					}, 
+					{
+						//xtype: 'checkcolumn',
+						header: 'Fecha Tansación',
+						dataIndex: 'FechaTransaccion',
+						groupable: true,
+						hidden: true,
+						headerCheckbox: true,
+						width: 150//,
+						//stopSelection: false
+					},
+					/*{
+						//xtype: 'checkcolumn',
+						header: 'RefEmpaque',
+						dataIndex: 'RefEmpaque',
+						width: 150//,
+						//stopSelection: false
+					},*/
 					{
 						//xtype: 'checkcolumn',
 						header: 'Itemid',
 						dataIndex: 'Itemid',
 						groupable: true,
 						headerCheckbox: true,
-						width: 150,
-						filter: 'string',
-						flex: 1
+						width: 150,//,
+						//summaryType: 'count',  // Agrega resumen de recuento al final de la columna
+						//stopSelection: false
+						filter: 'string'
 						
 					}, 
 					{
@@ -470,9 +566,10 @@ Ext.onReady(function() {
 						dataIndex: 'Descrip',
 						groupable: true,
 						headerCheckbox: true,
-						width: 210,
-						filter: 'string',
-						flex: 1
+						width: 210,//,
+						//summaryType: 'count',  // Agrega resumen de recuento al final de la columna
+						//stopSelection: false
+						filter: 'string'
 						
 					}, 
 					
@@ -482,38 +579,165 @@ Ext.onReady(function() {
 						header: 'Bodega',
 						dataIndex: 'Piso',
 						//headerCheckbox: true,
-						width: 100,//,
-						flex: 1
+						width: 100//,
 						//stopSelection: false
 					}, 
-					
+					{
+						//xtype: 'datecolumn',
+						header: 'Cantidad',
+						dataIndex: 'Qtyorder',
+						//refenence: 'Name',
+						width: 120
+						//format: 'M d, Y',
+						/*editor: {
+							xtype: 'datefield',
+							format: 'm/d/y',
+							minValue: '01/01/06',
+							disabledDays: [0, 6],
+							disabledDaysText: 'Plants are not available on the weekends'
+						}*/
+					},
 					{
 						//xtype: 'datecolumn',
 						header: 'Enmano',
 						dataIndex: 'enMano',
 						hidden: false,
 						//refenence: 'Name',
-						width: 120,
-						flex: 1
+						width: 120
+						//format: 'M d, Y',
+						/*editor: {
+							xtype: 'datefield',
+							format: 'm/d/y',
+							minValue: '01/01/06',
+							disabledDays: [0, 6],
+							disabledDaysText: 'Plants are not available on the weekends'
+						}*/
 					},
 					{
 						//xtype: 'datecolumn',
 						header: 'BinNum',
 						dataIndex: 'BinNum',
 						//refenence: 'Name',
-						width: 120,
-						flex: 1
+						width: 120
+						//format: 'M d, Y',
+						/*editor: {
+							xtype: 'datefield',
+							format: 'm/d/y',
+							minValue: '01/01/06',
+							disabledDays: [0, 6],
+							disabledDaysText: 'Plants are not available on the weekends'
+						}*/
 					}, 
+					{
+						//xtype: 'datecolumn',
+						header: 'BinOld',
+						dataIndex: 'BimNumold',
+						//refenence: 'Name',
+						width: 100
+						//format: 'M d, Y',
+						/*editor: {
+							xtype: 'datefield',
+							format: 'm/d/y',
+							minValue: '01/01/06',
+							disabledDays: [0, 6],
+							disabledDaysText: 'Plants are not available on the weekends'
+						}*/
+					}, 
+					 
+					{
+						header: 'Id Proceso',
+						dataIndex: 'IdProceso',
+						hidden: true,
+						width: 100,
+						editor: {
+							xtype: 'combo',
+							typeAhead: true,
+							triggerAction: 'all',
+							store: [
+								['Shade','Shade'],
+								['Mostly Shady','Mostly Shady'],
+								['Sun or Shade','Sun or Shade'],
+								['Mostly Sunny','Mostly Sunny'],
+								['Sunny','Sunny']
+							]
+						}
+					}, 
+					
+					{
+						header: 'Proceso',
+						dataIndex: 'TransType',
+						width: 140,
+						editor: {
+							xtype: 'combo',
+							typeAhead: true,
+							triggerAction: 'all',
+							store: [
+								['Shade','Shade'],
+								['Mostly Shady','Mostly Shady'],
+								['Sun or Shade','Sun or Shade'],
+								['Mostly Sunny','Mostly Sunny'],
+								['Sunny','Sunny']
+							]
+						},
+						renderer: function(value, metaData, record, rowIndex, colIndex, store, view){
+							var proc = record.get("IdProceso");
+
+							switch(proc) {
+								case 0:
+									metaData.tdCls = 'picked';
+									break;
+								case 1:
+									metaData.tdCls = 'recogiendo';
+									break;
+								case 2:
+									metaData.tdCls = 'recogiendo';
+									break;
+								case 3:
+									metaData.tdCls = 'empacando';
+									break;
+								case 8:
+									metaData.tdCls = 'empacado';
+									break;
+							}
+
+							return value;
+						}
+					}, 
+					
+					{
+						//xtype: 'checkcolumn',
+						header: 'Fecha Localizado',
+						dataIndex: 'HoraInicial',
+						//headerCheckbox: true,
+						width: 190//,
+						//stopSelection: false
+					}, 
+					
+					{
+						//xtype: 'checkcolumn',
+						header: 'Responsable',
+						dataIndex: 'NombreUsuario',
+						//headerCheckbox: true,
+						width: 130,//,
+						flex: 0.5
+						//stopSelection: false
+					},
+					{
+						header: 'Observacion',
+						dataIndex: 'Observaciones',
+						flex: 0.5,
+						minWidth: 125,
+						align: 'center',
+					},
 					{
 						//xtype: 'datecolumn',
 						header: 'AliasProv',
 						dataIndex: 'AliasProv',
 						hidden: true,
 						//refenence: 'Name',
-						width: 120,
-						flex: 1
+						width: 120
+
 					}
-					
 				],
 				listeners: {			
 					afterrender: function( view, eOpts ){
@@ -526,11 +750,9 @@ Ext.onReady(function() {
 					},
 					rowdblclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
 						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro8").setDisabled(false);
-						Ext.getCmp("pro8").setValue(true);
+						Ext.getCmp("pro8").setDisabled(true);
 						//Ext.getCmp("Observacion").setDisabled(true);
 						Ext.getCmp('Observacion').setValue(record.data.Observaciones);
-						
 						Ext.getCmp('tabpanel').setVisible(true);
 						Ext.getCmp("usuarios").focus();
 
@@ -539,23 +761,37 @@ Ext.onReady(function() {
 							
 						}
 
-						Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
+						if(record.data.IdProceso < 8){
+							Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
+							Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
+							Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
 							Ext.getCmp('BinNum').setValue(record.data.BinNum);
-
-								
+							//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + record.data.BinNum);
+							
+						}						
 					},
 					rowclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
 						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro8").setDisabled(false);
-						Ext.getCmp("pro8").setValue(true);
+						Ext.getCmp("pro8").setDisabled(true);
 						Ext.getCmp('Observacion').setValue(record.data.Observaciones);
-						
+						//Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
+						/*Ext.getCmp("pro1").setDisabled(true);
+						Ext.getCmp("pro2").setDisabled(true);
+						Ext.getCmp("pro3").setDisabled(true);
+						Ext.getCmp("pro4").setDisabled(true);*/
+						//Ext.getCmp("tabla").getView().setDisabled(true);
+						//Ext.getCmp('tabpanel').setVisible(true);
 
 						if(record.data.IdUsuario != null){
 							Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
 						}
 
-									
+						if(record.data.IdProceso < 8){
+							Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
+							Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
+							Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
+							Ext.getCmp('BinNum').setValue(record.data.BinNum);
+						}						
 					}
 				}
 			}),
@@ -617,7 +853,15 @@ Ext.onReady(function() {
 											});
 											return false;
 										}
-										
+										/*if(Ext.getCmp("proceso").getValue().IdProceso==7 && Ext.getCmp("Observacion").getValue().trim()==""){
+											Ext.Msg.show({
+												title:'Atención!',
+												message: 'Si vas a cancelar/activar un pedido digita la observacion',
+												buttons: Ext.Msg.OK,
+												icon: Ext.Msg.WARNING
+											});
+											return false;
+										}*/
 										else{
 											var datos = {};
 											datos.Id = fila.Id;
@@ -734,6 +978,7 @@ Ext.onReady(function() {
 								xtype: 'radiogroup',
 								fieldLabel: 'Proceso actual',
 								anchor: '98%',
+								// Arrange checkboxes into two columns, distributed vertically
 								columns: 1,
 								vertical: true,
 								allowBlank: false,
@@ -743,14 +988,22 @@ listeners: {
                             if (checkbox.checked) {
                                 resetBoxes(checkbox.ownerCt, checkbox.inputValue);
                             }
+                            /* not relevant for the understanding of the sample */
                             var panel = checkbox.ownerCt.ownerCt;
                             var f = panel.down('displayfield');
                             checkbox.checked ? checkbox.inputValue : 'none';
+                        
+                            /* so you can delete this, with the displayfield too */
+
                         }
                     },
 
 								items: [
-									
+									/*{ boxLabel: 'Recogiendo', name: 'IdProceso', id: "pro1", inputValue: 1, disabled: true },
+									{ boxLabel: 'Recogido', name: 'IdProceso', id: "pro2", inputValue: 2, disabled: true },
+									{ boxLabel: 'Empacando', name: 'IdProceso', id: "pro3", inputValue: 3, disabled: true },
+									{ boxLabel: 'Empacado', name: 'IdProceso', id: "pro4", inputValue: 4, disabled: true },
+	                                { boxLabel: 'Cancelado', name: 'IdProceso', id: "pro7", inputValue: 7, disabled: false },*/
 									{ boxLabel: 'Localizar', name: 'IdProceso', id: "pro8", inputValue: 8, disabled: true }
 								]
 							},
@@ -771,6 +1024,8 @@ listeners: {
 									autoLoad: false,
 									fields: [
 										{ name: 'BinNum', type: 'string' }
+										/*,{ name: 'UserName', type: 'string' },
+										{ name: 'Password', type: 'string' }*/
 									],
 									proxy: {
 										timeout: 600000,

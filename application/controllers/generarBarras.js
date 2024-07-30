@@ -1,7 +1,6 @@
 
 const JsBarcode = require('jsbarcode');
 const { createCanvas } = require('canvas');
-const fs = require('fs');
 
 // Recupera la referencia del primer argumento (pasado por el controlador PHP)
 const referencia = process.argv[2];

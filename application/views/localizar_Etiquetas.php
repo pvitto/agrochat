@@ -23,15 +23,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             background-size: 100%;
             background-repeat: no-repeat;
          } 
-         .x-panel-header-default-framed {
-         border: 5px solid #060600 !important;
-         }
-         .x-panel-header-default-framed-top {
-         background-color: #060600 !important;
-         }
-         .x-panel-default-framed {
-         border-color: #0e0e0e !important;
-      }
       </style>
       <meta charset="UTF-8">
       <link rel = "stylesheet" type = "text/css" href = "assets/js/ext/build/classic/theme-neptune-touch/resources/theme-neptune-touch-all.css" />
@@ -41,7 +32,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
       <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
       <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-      <script type="text/javascript" src="assets/js/traslado.js"></script>
+      <script type="text/javascript" src="assets/js/localizar_Etiquetas.js"></script>
       <script type="text/javascript" src="assets/js/generarBarras.js"></script>
       <title>AGRO-COSTA SAS</title>
       <link rel="shortcut icon" href="assets/img/favicon.ico" type="image/x-icon">
