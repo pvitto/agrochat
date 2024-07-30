@@ -57,6 +57,26 @@ Ext.onReady(function() {
                                             }
                                         });
                                     }
+                                },
+                                "->",
+                                {
+                                    xtype: 'button',
+                                    minWidth: 80,
+                                    text: 'Cerrar sesión',
+                                    iconCls: 'fas fa-sign-out-alt',
+                                    handler: function() {
+                                        Ext.Ajax.request({
+                                            url: url + 'cerrarSesion', // URL para cerrar sesión
+                                            method: 'POST',
+                                            success: function(response) {
+                                                window.location.href = 'login';
+                                            },
+                                            failure: function(response) {
+                                                // Manejar el caso en que la solicitud falle
+                                                Ext.Msg.alert('Error', 'No se pudo cerrar sesión. Inténtelo de nuevo.');
+                                            }
+                                        });
+                                    }
                                 }
                             ]
                         }

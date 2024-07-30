@@ -4,39 +4,7 @@ session_start();
 
 
 class Historico extends CI_Controller
-{
-    function conseguirUrl() {
-        // Obtener el protocolo (http o https)
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-    
-        // Obtener el host (nombre de dominio o IP)
-        $host = $_SERVER['HTTP_HOST'];
-    
-        // Obtener el nombre de la carpeta de la aplicación
-        $basePath = str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
-    
-        return $protocol . $host . $basePath;
-    }
-
-    function checkSessionExpired() {
-        if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] >60 )) {
-            // Si el usuario ha estado inactivo durante más de 30 minutos, se cierra la sesión
-            session_unset();     
-            session_destroy();   
-            header("Location: " . $this->conseguirUrl() . "login?msg=session_expired");
-            exit();
-        }
-        $_SESSION['LAST_ACTIVITY'] = time();
-
-        if(isset($_GET['cerrar'])) {
-            session_unset();     
-            session_destroy();   
-            header("Location: " . $this->conseguirUrl() . "login");
-            exit();
-        }
-    }
-    
-
+{   
     public function __construct()
 	{
         if (!isset($_SESSION['idusuario'])) {
@@ -44,7 +12,7 @@ class Historico extends CI_Controller
             exit();
         }
 
-        $this->checkSessionExpired();
+        $this->revisarSesion();
 
 		parent::__construct();
 		/*header('Access-Control-Allow-Origin: *');
@@ -75,7 +43,7 @@ class Historico extends CI_Controller
 
     public function obtenerPickedList()
 {
-    $this->checkSessionExpired();
+    $this->revisarSesion();
 
     $this->data = array();
     $TransId = $this->input->get("TransId");
@@ -137,7 +105,7 @@ class Historico extends CI_Controller
 
     public function obtenerReferencias()
 	{
-        $this->checkSessionExpired();
+        $this->revisarSesion();
 		$transid = $this->input->get("TransId");
 		$piso = $this->input->get("Piso");
 		$this->data = array();
@@ -173,7 +141,7 @@ class Historico extends CI_Controller
 
     public function obtenerUsuarios()
 	{
-        $this->checkSessionExpired();
+        $this->revisarSesion();
 		$this->data = array();
 
 		//$this->load->view('welcome_message');
@@ -195,6 +163,47 @@ class Historico extends CI_Controller
 		return $this->data;
 		//$this->load->view('welcome_message');
 	}
+
+
+    // Funciones utilizadas para manejo de sesion
+
+    function conseguirUrl() {
+        // Obtener el protocolo (http o https)
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+    
+        // Obtener el host (nombre de dominio o IP)
+        $host = $_SERVER['HTTP_HOST'];
+    
+        // Obtener el nombre de la carpeta de la aplicación
+        $basePath = str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
+    
+        return $protocol . $host . $basePath;
+    }
+
+    function revisarSesion() {
+        if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] >1800 )) {
+            // Si el usuario ha estado inactivo durante más de 30 minutos, se cierra la sesión
+            session_unset();     
+            session_destroy();   
+            header("Location: " . $this->conseguirUrl() . "login");
+            exit();
+        }
+        $_SESSION['LAST_ACTIVITY'] = time();
+
+        if(isset($_GET['cerrar'])) {
+            session_unset();     
+            session_destroy();   
+            header("Location: " . $this->conseguirUrl() . "login");
+            exit();
+        }
+    }
+
+    function cerrarSesion()
+    {
+        session_unset();     
+        session_destroy();   
+        header("Location: " . $this->conseguirUrl() . "login");
+    }
 }
 
 
