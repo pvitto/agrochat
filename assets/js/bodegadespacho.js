@@ -1,14 +1,6 @@
 Ext.onReady(function() {
 	var socket = io.connect('http://192.168.0.205:4000');
-	//new Date().toJSON().split("T")[0].split("-").reverse().join("/")
-	/**
-	 * This example shows how to enable inline editing of grid cells.
-	 *
-	 * Note that cell editing is ideal for mouse/keyboard users and is not
-	 * recommended on touch devices.
-	 */
-	//var url = "http://192.168.0.251/agro/bodega/";
-	var url = "/agro/bodega/";
+	var url = "/agro/BodegaDespacho/";
 
 	function restablecer(){
 		Ext.getCmp("form").getForm().reset();
@@ -16,24 +8,6 @@ Ext.onReady(function() {
 		Ext.getCmp('tabpanel').setVisible(false);
 		Ext.getCmp("tabla").getStore().reload();
 	};
-
-	function mostrarOpciones(recordId) {
-		var record = Ext.getCmp('tabla').getStore().getById(recordId);
-		if (!record) return;
-	
-		Ext.Msg.prompt('Opciones adicionales', 'Ingrese la localización o el nombre del transportista:', function(btn, text) {
-			if (btn === 'ok') {
-				// Guardar la opción elegida en el registro
-				if (text.trim() !== '') {
-					record.set('Localizacion', text.trim());
-					record.set('Transportista', '');  // Limpiar el otro campo si se llenó uno
-				}
-				// Actualizar el registro en la grilla
-				record.commit();
-			}
-		});
-	}
-	
 	 
 	Ext.create('Ext.container.Viewport', {
 		layout: 'border',
@@ -43,7 +17,7 @@ Ext.onReady(function() {
 				width: '76%',
 				region: 'center',
 				iconCls: 'logo',
-				title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Admninistracion Bodega',
+				title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Admninistracion Bodega - Administrador',
 				layout: 'fit',
 				rowLines: true,
 				split: true,
@@ -65,15 +39,16 @@ Ext.onReady(function() {
 								typeAhead: true,
 								id: 'pisos',
 								width: 225,
-								labelWidth: 120,
-								fieldLabel: 'Seleccione Piso',
+								labelWidth: 130,
+								fieldLabel: 'Seleccione Bodega',
 								triggerAction: 'all',
 								value: 0,
 								editable: false,
 								store: [
 									[0,'Todos'],
-									[1,'1er Piso'],
-									[2,'2do Piso']
+									[1,'P1'],
+									[2,'A'],
+									//[3,'A']
 								],
 								listeners: {
 									select: function( combo, record, eOpts ) {
@@ -83,7 +58,7 @@ Ext.onReady(function() {
 										if(combo.getValue() == 0){
 											Ext.getCmp('tabla').getStore().clearFilter();
 										}else{
-											Ext.getCmp('tabla').getStore().filter("Piso",combo.getRawValue());
+											Ext.getCmp('tabla').getStore().filter("Bodega",combo.getRawValue());
 										}	
 									}
 								}
@@ -111,14 +86,15 @@ Ext.onReady(function() {
 								maxValue: new Date()  // limited to the current date or prior
 							},
 							"-",
-							{ minWidth: 80, text: 'Actualizar', iconCls: 'fas fa-sync-alt', hidden: false, handler: function(){
-								Ext.getCmp('tabla').getStore().clearFilter();
-								Ext.getCmp("pisos").setValue(0);
-								Ext.getCmp("form").getForm().reset();
-								//Ext.getCmp("tabla").getView().setDisabled(false);
-								Ext.getCmp('tabpanel').setVisible(false);
-								Ext.getCmp('tabla').getStore().reload();
-							} }
+							{ 	
+								minWidth: 80, text: 'Actualizar', iconCls: 'fas fa-sync-alt', hidden: false, handler: function(){
+									Ext.getCmp('tabla').getStore().clearFilter();
+									Ext.getCmp("pisos").setValue(0);
+									Ext.getCmp("form").getForm().reset();
+									Ext.getCmp('tabpanel').setVisible(false);
+									Ext.getCmp('tabla').getStore().reload();
+								} 
+							}
 						]
 					}
 				],
@@ -129,23 +105,12 @@ Ext.onReady(function() {
 					},
 					{
 						ptype: 'rowwidget',			
-
-						// The widget definition describes a widget to be rendered into the expansion row.
-						// It has access to the application's ViewModel hierarchy. Its immediate ViewModel
-						// contains a record and recordIndex property. These, or any property of the record
-						// (including association stores) may be bound to the widget.
-						//
-						// See the Order model definition with the association declared to Company.
-						// Every Company record will be decorated with an "orders" method which,
-						// when called yields a store containing associated orders.
 						widget: {	
 							bind: {
 								store: Ext.create('Ext.data.Store', {
 									autoLoad: false,
 									//groupField: "TransId",
 									fields: [
-										//{ name: 'TransId', type: 'string' },
-										//{ name: 'Piso', type: 'string' },
 										{ name: 'Ruta', type: 'int' },
 										{ name: 'Referencia', type: 'string' },
 										{ name: 'Localizacion', type: 'string' },
@@ -155,31 +120,13 @@ Ext.onReady(function() {
 										{ name: 'Comprt', type: 'int' },
 										{ name: 'Disp', type: 'int' },
 										{ name: 'Referencia_Equivalente', type: 'string' }
-									]/*,
-									proxy: {
-										timeout: 600000,
-										useDefaultXhrHeader: false,
-										type: 'ajax',
-										url: url+"obtenerReferencias",
-										reader: {
-											type: 'json',
-											rootProperty: 'data'
-										}
-									}*/,
+									],
 									data: []
 								})
 							},
 							xtype: 'grid',
 							header: false,
-							columns: [/*{
-								text: 'TransId',
-								dataIndex: 'TransId',
-								flex: 1
-							}, {
-								text: 'Piso',
-								dataIndex: 'Piso',
-								flex: 1
-							},*/ {
+							columns: [{
 								text: 'Ruta',
 								dataIndex: 'Ruta',
 								flex: 1
@@ -221,21 +168,17 @@ Ext.onReady(function() {
 								text: 'Referencia Equivalente',
 								dataIndex: 'Referencia_Equivalente',
 								flex: 1
-							}]
+							}]						
 						}
 					}
 				],
 				viewConfig: {
 					listeners: {
 						expandbody: function (rowNode, record, expandRow, e) {
-							//console.log(record);
-							//Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).store.load({params: {TransId: record.data.TransId, Piso: record.data.Piso}});
-							
-							if(Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).getStore().count() === 0){
 								Ext.Ajax.request({
 									method: 'GET',
 									url: url+"obtenerReferencias",
-									params: { TransId: record.data.TransId, Piso: record.data.Piso },
+									params: { TransId: record.data.TransId, Piso: record.data.Piso, Bodega: record.data.Bodega },
 									headers:
 									{
 										'Content-Type': 'application/json'
@@ -249,7 +192,7 @@ Ext.onReady(function() {
 										console.log('server-side failure with status code ' + response.status);
 									}
 								});
-							}
+							//}
 						},
 						collapsebody: function () {
 							//console.log('Main Grid Collapse Body')
@@ -269,12 +212,12 @@ Ext.onReady(function() {
 						{ name: 'HoraInicial', type: 'string' },
 						{ name: 'HoraFinal', type: 'string' },
 						{ name: 'Piso', type: 'string' },
+						{ name: 'Bodega', type: 'string' },
 						{ name: 'FechaTransaccion', type: 'string' },
 						{ name: 'FechaImpresion', type: 'string' },
 						{ name: 'NombreUsuario', type: 'string' },
 						{ name: 'Observaciones', type: 'string' },
-						{ name: 'Localizacion', type: 'string' },
-						{ name: 'Transportista', type: 'string' }
+						{ name: 'TipoEnvio', type: 'string' }
 					],
 					proxy: {
 						timeout: 600000,
@@ -295,16 +238,12 @@ Ext.onReady(function() {
 						groupable: true,
 						hidden: true,
 						headerCheckbox: true,
-						width: 150//,
-						//stopSelection: false
+						width: 150
 					},
 					{
 						header: 'Remisión',
 						dataIndex: 'TransId',
-						width: 100//,
-						//editor: {
-							//allowBlank: false
-						//}
+						width: 100
 					}, 
 					{
 						header: 'Id Proceso',
@@ -341,24 +280,18 @@ Ext.onReady(function() {
 							]
 						},
 						renderer: function(value, metaData, record, rowIndex, colIndex, store, view){
-							var proc = record.get("IdProceso"); 
+							var proc = record.get("IdProceso");
 
 							switch(proc) {
 								case 0:
 									metaData.tdCls = 'picked';
 									break;
 								case 1:
-									metaData.tdCls = 'recogiendo';
+									metaData.tdCls = 'verificado';
 									break;
 								case 2:
-									metaData.tdCls = 'recogiendo';
+									metaData.tdCls = 'despachado';
 									break;
-								case 3:
-									metaData.tdCls = 'empacando';
-									break;
-								case 4:
-									metaData.tdCls = 'empacado';
-									return '<a href="#" onclick="mostrarOpciones(\'' + record.getId() + '\')">Ver opciones</a>';
 							}
 
 							return value;
@@ -368,27 +301,17 @@ Ext.onReady(function() {
 						header: 'Orden Proceso',
 						dataIndex: 'Orden',
 						hidden: true,
-						width: 100/*,
-						editor: {
-							xtype: 'combo',
-							typeAhead: true,
-							triggerAction: 'all',
-							store: [
-								['Shade','Shade'],
-								['Mostly Shady','Mostly Shady'],
-								['Sun or Shade','Sun or Shade'],
-								['Mostly Sunny','Mostly Sunny'],
-								['Sunny','Sunny']
-							]
-						}*/
+						width: 100
 					}, 
 					{
-						//xtype: 'checkcolumn',
+						header: 'Bodega',
+						dataIndex: 'Bodega',
+						width: 100
+					}, 
+					{
 						header: 'Piso',
 						dataIndex: 'Piso',
-						//headerCheckbox: true,
-						width: 100//,
-						//stopSelection: false
+						width: 100
 					}, 
 					{
 						header: 'Cliente',
@@ -396,137 +319,76 @@ Ext.onReady(function() {
 						flex: 1,
 						minWidth: 200,
 						align: 'center',
-						//formatter: 'usMoney',
-						/*editor: {
-							xtype: 'numberfield',
-
-							allowBlank: false,
-							minValue: 0,
-							maxValue: 100000
-						}*/
 					}, 
+					
 					{
 						//xtype: 'datecolumn',
 						header: 'Vendedor',
 						dataIndex: 'Name',
 						refenence: 'Name',
-						width: 200
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}*/
 					}, 
 					{
 						//xtype: 'checkcolumn',
+						header: 'Envio',
+						dataIndex: 'TipoEnvio',
+						width: 100
+					},
+					{
 						header: 'Fecha Impresión',
 						dataIndex: 'FechaImpresion',
 						groupable: true,
 						headerCheckbox: true,
-						width: 150//,
-						//stopSelection: false
+						width: 150
 					}, 
 					{
 						//xtype: 'checkcolumn',
 						header: 'Fecha Inicial',
-						dataIndex: 'HoraInicial'/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
-						//headerCheckbox: true,
+						dataIndex: 'HoraInicial',
 						width: 190//,
 						//stopSelection: false
 					}, 
 					{
 						//xtype: 'checkcolumn',
 						header: 'Fecha Final',
-						dataIndex: 'HoraFinal'/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
+						dataIndex: 'HoraFinal', 
 						//headerCheckbox: true,
-						width: 190//,
-						//stopSelection: false
+						width: 190
 					}, 
 					{
 						//xtype: 'checkcolumn',
 						header: 'Responsable',
-						dataIndex: 'NombreUsuario'/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
-						//headerCheckbox: true,
-						width: 130//,
-						//stopSelection: false
+						dataIndex: 'NombreUsuario',
+						width: 130
 					},
 					{
 						//xtype: 'checkcolumn',
 						header: 'Observaciones',
 						dataIndex: 'Observaciones',
-						headerCheckbox: true/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
+						headerCheckbox: true,
 						//headerCheckbox: true,
-						width: 190//,
-						//stopSelection: false
-					}/*, {
-						xtype: 'actioncolumn',
-						width: 30,
-						sortable: false,
-						menuDisabled: true,
-						items: [{
-							iconCls: 'far fa-trash-alt',
-							tooltip: 'Delete Plant',
-							handler: 'onRemoveClick'
-						}]
-					}*/
-				],
-				/*viewConfig: {
-					getRowClass: function(record, rowIndex, rowParams, store){
-						var proc = record.get("IdProceso");
-
-						switch(proc) {
-							case 0:
-								return 'picked';
-							case 1:
-								return 'recogiendo';
-							case 2:
-								return 'recogiendo';
-							case 3:
-								return 'empacando';
-							case 3:
-								return 'empacado';
+						width: 190,
+						editor: {
+							xtype: 'textfield',
+							typeAhead: true,
+							triggerAction: 'all'
+							
+						},
+						
+						listeners: {
+							beforeedit: function (editor, context) {
+								// Cancelamos el evento de edición para evitar que se inicie el modo de edición
+								return false;
+							},
+							// Manejador del evento de clic en la celda para mostrar el texto completo
+							click: function (grid, cell, cellIndex, record, row, rowIndex, e) {
+								Ext.Msg.alert('Observaciones', cell.innerHTML.toLowerCase());
+							}
 						}
+						
+						
 					}
-				},*/
+				],
+				
 				listeners: {			
 					afterrender: function( view, eOpts ){
 						Ext.getCmp("form").getForm().reset();
@@ -535,21 +397,21 @@ Ext.onReady(function() {
 						var fe = Ext.getCmp("fecha").getRawValue();
 						view.getStore().load({params: {FechaTransaccion: fe}});					
 						Ext.getCmp('usuarios').getStore().load();
+						Ext.getCmp('Operarios').getStore().load();
+						
 					},
 					rowdblclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
 						Ext.getCmp("form").getForm().reset();
 						Ext.getCmp("pro1").setDisabled(true);
 						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp("pro4").setDisabled(true);
 						//Ext.getCmp("tabla").getView().setDisabled(true);
 						Ext.getCmp('tabpanel').setVisible(true);
 
 						if(record.data.IdUsuario != null){
-							Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
+							Ext.getCmp("Operarios").setValue(record.data.IdUsuario);
 						}
 
-						if(record.data.IdProceso < 4){
+						if(record.data.IdProceso < 2){
 							Ext.getCmp("pro"+(record.data.IdProceso+1)).setDisabled(false);
 						}						
 					},
@@ -557,16 +419,12 @@ Ext.onReady(function() {
 						Ext.getCmp("form").getForm().reset();
 						Ext.getCmp("pro1").setDisabled(true);
 						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp("pro4").setDisabled(true);
-						//Ext.getCmp("tabla").getView().setDisabled(true);
-						//Ext.getCmp('tabpanel').setVisible(true);
 
 						if(record.data.IdUsuario != null){
-							Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
+							Ext.getCmp("Operarios").setValue(record.data.IdUsuario);
 						}
 
-						if(record.data.IdProceso < 4){
+						if(record.data.IdProceso < 2){
 							Ext.getCmp("pro"+(record.data.IdProceso+1)).setDisabled(false);
 						}						
 					}
@@ -620,7 +478,6 @@ Ext.onReady(function() {
 											});
 											return false;
 										}
-
 										if(Ext.getCmp("usuarios").getSelection().data.Password != Ext.getCmp("password").getValue().trim()){
 											Ext.Msg.show({
 												title:'Atención!',
@@ -645,7 +502,8 @@ Ext.onReady(function() {
 											datos.IdTransTipo = Ext.getCmp("proceso").getValue().IdProceso;
 											datos.IdPiso = fila.Piso;
 											datos.IdUsuario = Ext.getCmp("usuarios").getValue();
-											datos.Observaciones = Ext.getCmp("Observacion").getValue().trim();
+											datos.Idoperario = Ext.getCmp("Operarios").getValue();
+											datos.Observaciones ='';
 
 											var dat = Ext.getCmp("tabla").getStore().getDataSource().items.filter(x => x.data.TransId == fila.TransId && x.data.IdProceso !== datos.IdTransTipo && x.data.Piso != fila.Piso);
 
@@ -659,13 +517,31 @@ Ext.onReady(function() {
 													var res = Ext.util.JSON.decode(result.responseText);
 
 													//console.log(res);
-													if(res.mensaje == 'Ok'){
+													//if(res.mensaje == 'Ok'){
+													if(res.mensaje.substring(0,2)=='Ok'){
 														Ext.Msg.show({
 															title:'Atención!',
 															message: 'Registro guardado con éxito',
 															buttons: Ext.Msg.OK,
 															icon: Ext.Msg.INFO
 														});
+
+														if(res.mensaje=='Ok-recogido'){
+
+															
+															Ext.defer(function(){
+																Ext.Msg.show({
+																	title:'Atención!',
+																	message: 'Este Pedido fue recogido anteriormente, Verifica si ya ha sido despachado',
+																	buttons: Ext.Msg.OK,
+																	icon: Ext.Msg.INFO
+																});
+
+															},1000);
+
+															console.log("ENTRAAA EN RECOGIDO YA");	
+
+														}
 
 														restablecer();
 														if(dat.length == 1){ 
@@ -729,7 +605,7 @@ Ext.onReady(function() {
 										timeout: 600000,
 										useDefaultXhrHeader: false,
 										type: 'ajax',
-										url: url+"obtenerUsuarios",
+										url: url+"obtenerUsuariosAdmin",
 										reader: {
 											type: 'json',
 											rootProperty: 'data'
@@ -747,44 +623,47 @@ Ext.onReady(function() {
 							},
 							{
 								id: 'proceso',
-								xtype: 'radiogroup',
+								xtype: 'checkboxgroup',
 								fieldLabel: 'Proceso actual',
 								anchor: '98%',
 								// Arrange checkboxes into two columns, distributed vertically
 								columns: 1,
 								vertical: true,
 								allowBlank: false,
-listeners: {
-                        scope: this,
-                        change: function(checkbox) {
-                            if (checkbox.checked) {
-                                resetBoxes(checkbox.ownerCt, checkbox.inputValue);
-                            }
-                            /* not relevant for the understanding of the sample */
-                            var panel = checkbox.ownerCt.ownerCt;
-                            var f = panel.down('displayfield');
-                            checkbox.checked ? checkbox.inputValue : 'none';
-                        
-                            /* so you can delete this, with the displayfield too */
-
-                        }
-                    },
-
 								items: [
-									{ boxLabel: 'Recogiendo', name: 'IdProceso', id: "pro1", inputValue: 1, disabled: true },
-									{ boxLabel: 'Recogido', name: 'IdProceso', id: "pro2", inputValue: 2, disabled: true },
-									{ boxLabel: 'Empacando', name: 'IdProceso', id: "pro3", inputValue: 3, disabled: true },
-									{ boxLabel: 'Empacado', name: 'IdProceso', id: "pro4", inputValue: 4, disabled: true },
-	                                                                { boxLabel: 'Cancelado', name: 'IdProceso', id: "pro7", inputValue: 7, disabled: false }
-
+									{ boxLabel: 'Verificado', name: 'IdProceso', id: "pro1", inputValue: 1, disabled: true },
+									{ boxLabel: 'Despachado', name: 'IdProceso', id: "pro2", inputValue: 2, disabled: true },
 								]
 							},
 							{
-								xtype: 'textareafield',
-								id: 'Observacion',
-								grow: true,
-								fieldLabel: 'Observación',
-								anchor: '98%'
+								xtype: 'combo',
+								id: 'Operarios',
+								typeAhead: true,
+								fieldLabel: 'Transportadora:',
+								triggerAction: 'all', 
+								queryMode: 'local',
+								allowBlank: false,
+								anchor: '98%',
+								displayField: 'UserName',
+    							valueField: 'UserId',
+								store: Ext.create('Ext.data.Store', {
+									autoLoad: false,
+									fields: [
+										{ name: 'UserId', type: 'int' },
+										{ name: 'UserName', type: 'string' },
+										{ name: 'Password', type: 'string' }
+									],
+									proxy: {
+										timeout: 600000,
+										useDefaultXhrHeader: false,
+										type: 'ajax',
+										url: url+"obtenerUsuarios",
+										reader: {
+											type: 'json',
+											rootProperty: 'data'
+										}
+									}
+								})
 							}
 						]
 					}

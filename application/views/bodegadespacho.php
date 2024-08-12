@@ -32,7 +32,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
       <script type = "text/javascript" src = "assets/js/ext/build/ext-all.js"> </script>
       <script type = "text/javascript" src = "assets/js/ext/build/classic/locale/locale-es.js"> </script>	  
       <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
-      <script type="text/javascript" src="assets/js/bodegaAdmin.js"></script>
+      <script type="text/javascript" src="assets/js/bodegadespacho.js"></script>
       <title>AGRO-COSTA SAS</title>
       <link rel="shortcut icon" href="assets/img/favicon.ico" type="image/x-icon">
    </head>
