@@ -8,20 +8,13 @@ class Historico extends CI_Controller
     public function __construct()
 	{
         if (!isset($_SESSION['idusuario'])) {
-            header("Location: " . $this->conseguirUrl() . "login");
+            header("Location: " . $this->conseguirUrl() . "login?pagina=historico");
             exit();
         }
 
         $this->revisarSesion();
 
 		parent::__construct();
-		/*header('Access-Control-Allow-Origin: *');
-        header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method");
-        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-        $method = $_SERVER['REQUEST_METHOD'];
-        if($method == "OPTIONS") {
-            die();
-        }*/
 
 		$this->data = null;
 	}
@@ -185,7 +178,7 @@ class Historico extends CI_Controller
             // Si el usuario ha estado inactivo durante más de 30 minutos, se cierra la sesión
             session_unset();     
             session_destroy();   
-            header("Location: " . $this->conseguirUrl() . "login");
+            header("Location: " . $this->conseguirUrl() . "login?pagina=historico");
             exit();
         }
         $_SESSION['LAST_ACTIVITY'] = time();
@@ -193,7 +186,7 @@ class Historico extends CI_Controller
         if(isset($_GET['cerrar'])) {
             session_unset();     
             session_destroy();   
-            header("Location: " . $this->conseguirUrl() . "login");
+            header("Location: " . $this->conseguirUrl() . "login?pagina=historico");
             exit();
         }
     }
@@ -202,7 +195,8 @@ class Historico extends CI_Controller
     {
         session_unset();     
         session_destroy();   
-        header("Location: " . $this->conseguirUrl() . "login");
+        header("Location: " . $this->conseguirUrl() . "login?pagina=historico");
+        exit();
     }
 }
 

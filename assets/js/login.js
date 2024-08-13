@@ -1,6 +1,9 @@
 Ext.onReady(function() {
     var url = "/agro/login/";
 
+    var queryParams = new URLSearchParams(window.location.search);
+    var pagina = queryParams.get('pagina');
+
     var loginWindow = Ext.create('Ext.window.Window', {
         title: 'Inicio de Sesión',
         modal: true,
@@ -48,7 +51,7 @@ Ext.onReady(function() {
                                     var response = Ext.decode(action.response.responseText);
                                     if (response.success) {
                                        
-                                        window.location.href = 'historico'; // Redirigir a la página principal
+                                        window.location.href = pagina + response.url;
                                     } else {
                                         Ext.Msg.alert('Error', 'Usuario o contraseña incorrectos');
                                     }

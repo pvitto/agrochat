@@ -1,6 +1,9 @@
 Ext.onReady(function() {
 	var socket = io.connect('http://192.168.0.205:4000');
 	var url = "/agro/BodegaItem/";
+
+	var queryParams = new URLSearchParams(window.location.search);
+	var id = queryParams.get('id');
 	 
 	Ext.create('Ext.container.Viewport', {
 		layout: 'border',
@@ -96,13 +99,14 @@ Ext.onReady(function() {
 						clicksToEdit: 1
 					},
 					{
-						ptype: 'rowwidget',			
-
-						widget: {	
+						ptype: 'rowwidget',
+						widget: {
 							bind: {
 								store: Ext.create('Ext.data.Store', {
 									autoLoad: false,
 									fields: [
+										{ name: 'Orden', type: 'int' },
+										{ name: 'TransId', type: 'string' },
 										{ name: 'Ruta', type: 'int' },
 										{ name: 'Referencia', type: 'string' },
 										{ name: 'Localizacion', type: 'string' },
@@ -111,87 +115,76 @@ Ext.onReady(function() {
 										{ name: 'Existencias', type: 'int' },
 										{ name: 'Comprt', type: 'int' },
 										{ name: 'Disp', type: 'int' },
-										{ name: 'Referencia_Equivalente', type: 'string' }
+										{ name: 'Referencia_Equivalente', type: 'string' },
+										{ name: 'Picked', type: 'int' }
 									],
 									data: []
 								})
 							},
 							xtype: 'grid',
 							header: false,
-							columns: [{
-								text: 'Ruta',
-								dataIndex: 'Ruta',
-								flex: 1
-							}, {
-								flex: 1,
-								text: 'Referencia',
-								dataIndex: 'Referencia'
-							}, {
-								text: 'Localizacion',
-								dataIndex: 'Localizacion',
-								flex: 1
-							}, {
-								text: 'Descr',
-								dataIndex: 'Descr',
-								flex: 1
-							}, {
-								text: 'Cantidad Pedida',
-								dataIndex: 'Cantidad_Pedida',
-								flex: 1
-							}, {
-
-								text: 'Existencias',
-								dataIndex: 'Existencias',
-								flex: 1
-							},{
-
-								text: 'Comprt',
-								dataIndex: 'Comprt',
-								flex: 1
-
-							},{
-
-								text: 'Disp',
-								dataIndex: 'Disp',
-								flex: 1
-
-							},{
-
-								text: 'Referencia Equivalente',
-								dataIndex: 'Referencia_Equivalente',
-								flex: 1
-							}]						
+							columns: [
+								{ text: 'Orden', dataIndex: 'Orden', flex: 1 },
+								{ text: 'TransId', dataIndex: 'TransId', flex: 1 },
+								{ text: 'Ruta', dataIndex: 'Ruta', flex: 1 },
+								{ text: 'Referencia', dataIndex: 'Referencia', flex: 1 },
+								{ text: 'Localizacion', dataIndex: 'Localizacion', flex: 1 },
+								{ text: 'Descr', dataIndex: 'Descr', flex: 1 },
+								{ text: 'Cantidad Pedida', dataIndex: 'Cantidad_Pedida', flex: 1 },
+								{ text: 'Existencias', dataIndex: 'Existencias', flex: 1 },
+								{ text: 'Comprt', dataIndex: 'Comprt', flex: 1 },
+								{ text: 'Disp', dataIndex: 'Disp', flex: 1 },
+								{ text: 'Picked', dataIndex: 'Picked', flex: 1 }, // Columna para Picked
+								{ text: 'Referencia Equivalente', dataIndex: 'Referencia_Equivalente', flex: 1 }
+							]
 						}
 					}
 				],
 				viewConfig: {
 					listeners: {
 						expandbody: function (rowNode, record, expandRow, e) {
-							
-								Ext.Ajax.request({
-									method: 'GET',
-									url: url+"obtenerReferencias",
-									params: { TransId: record.data.TransId, Piso: record.data.Piso, Bodega: record.data.Bodega },
-									headers:
-									{
-										'Content-Type': 'application/json'
-									},
-									success: function(response, opts) {
-										var obj = JSON.parse(response.responseText);
-										//console.log(obj);
-										Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).store.setData(obj.data);
-									},
-									failure: function(response, opts) {
-										console.log('server-side failure with status code ' + response.status);
-									}
-								});
-							//}
+							Ext.Ajax.request({
+								method: 'GET',
+								url: url + "obtenerReferenciasYPicked",
+								params: {
+									TransId: record.data.TransId,
+									Piso: record.data.Piso,
+									Bodega: record.data.Bodega
+								},
+								headers: {
+									'Content-Type': 'application/json'
+								},
+								success: function (response, opts) {
+									var obj = Ext.decode(response.responseText);
+				
+									// Asegúrate de que `obj.data` contiene los datos de referencias y picked
+									var referencias = obj.referencias || [];
+									var picked = obj.picked || {};
+				
+									// Agregar campo Picked a cada referencia
+									Ext.each(referencias, function (item) {
+										if (picked.hasOwnProperty(item.Referencia)) {
+											item.Picked = picked[item.Referencia];
+										} else {
+											item.Picked = null; // O un valor predeterminado si no existe
+										}
+									});
+				
+									// Cargar los datos en el store
+									var gridStore = Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).store;
+									gridStore.setData(referencias);
+								},
+								failure: function (response, opts) {
+									console.log('server-side failure with status code ' + response.status);
+								}
+							});
 						},
 						collapsebody: function () {
-							//console.log('Main Grid Collapse Body')
+							// Puedes agregar aquí lógica adicional si es necesario
 						}
 					}
-				},				
+				}
+				,				
 				store: Ext.create('Ext.data.Store', {
 					autoLoad: false,
 					//groupField: "TransId",
@@ -424,7 +417,8 @@ Ext.onReady(function() {
 										params: {
 											transid: transid,
 											piso: piso,
-											bodega: bodega
+											bodega: bodega,
+											id: id
 										},
 										success: function(response) {
 											var result = Ext.decode(response.responseText);

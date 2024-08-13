@@ -5,8 +5,19 @@ class Login extends CI_Controller
 {
     public function index()
 	{
-		//echo base_url();
-		$this->load->view('login');
+        $pagina = $this->input->get('pagina');
+
+        if (!empty($pagina)) {
+            // Pasar los datos a la vista o al modelo según sea necesario
+            $data = array(
+                'pagina' => $pagina,
+            );
+
+            $this->load->view('login', $data);
+        } else {
+            // Manejar el caso donde los parámetros no son válidos
+            show_error('Parámetros de login no válidos.');
+        }
 	}
 
 	public function obtenerUsuarios()
@@ -44,13 +55,17 @@ class Login extends CI_Controller
         foreach ($usuarios['data'] as $user) {
             if ($user['UserName'] == $usuario && $user['Password'] == $contraseña) {
                 $valid = true;
+                $id = $user['UserId'];
                 $_SESSION['idusuario'] = $usuario;
                 break;
             }
         }
     
         if ($valid) {
-            echo json_encode(array('success' => true));
+            echo json_encode([
+                'success' => true,
+                'url' => '?id=' . urlencode($id)
+            ]);
         } else {
             echo json_encode(array('success' => false));
         }

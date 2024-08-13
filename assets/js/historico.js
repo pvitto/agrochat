@@ -69,7 +69,7 @@ Ext.onReady(function() {
                                             url: url + 'cerrarSesion', // URL para cerrar sesión
                                             method: 'POST',
                                             success: function(response) {
-                                                window.location.href = 'login';
+                                                window.location.href = 'login?pagina=historico';
                                             },
                                             failure: function(response) {
                                                 // Manejar el caso en que la solicitud falle

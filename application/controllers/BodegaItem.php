@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+session_start();
+
 class BodegaItem extends CI_Controller {
 
     /**
@@ -20,14 +22,14 @@ class BodegaItem extends CI_Controller {
      */
     public function __construct()
     {
+        if (!isset($_SESSION['idusuario'])) {
+            header("Location: " . $this->conseguirUrl() . "login?pagina=bodegaitem");
+            exit();
+        }
+
+        $this->revisarSesion();
+
         parent::__construct();
-        /*header('Access-Control-Allow-Origin: *');
-        header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method");
-        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-        $method = $_SERVER['REQUEST_METHOD'];
-        if($method == "OPTIONS") {
-            die();
-        }*/
 
         $this->data = null;
     }
@@ -52,6 +54,7 @@ class BodegaItem extends CI_Controller {
         $this->data = array();
         //$this->load->view('welcome_message');
         $fecha = $this->input->get("FechaTransaccion");
+        $usuario = $this->input->get("NombreUsuario");
         $sql = "Select
                 f.TransId,
                 CONVERT(VARCHAR,F.FechaTransaccion,103) [FechaTransaccion],
@@ -76,7 +79,7 @@ class BodegaItem extends CI_Controller {
             where
                 convert(varchar,f.FechaPicked,103) = convert(varchar,"."'".$fecha."'".",103) and
                 g.transtype=5
-                and F.Estado=0 and g.Voidyn='0'      
+                and F.Estado=0 and g.Voidyn='0'
             order by
                 F.FechaPicked desc";
 
@@ -155,72 +158,22 @@ class BodegaItem extends CI_Controller {
 
         $this->respuesta();
         //$this->load->view('welcome_message');
-    } 
-	
-    public function obtenerReferencias()
-    {
-		$transid = $this->input->get("TransId");
-		$piso = $this->input->get("Piso");
-        $bodega = $this->input->get("Bodega");
-        $this->data = array();
-
-        //$this->load->view('welcome_message');
-		$sql = sprintf("select d.entrynum,e.cf_Ruta Ruta, d.ItemId Referencia, e.ExtLocID Localizacion, d.Descr,  d.QtyOrdSell Cantidad_Pedida, i.[cf_Referencia Equivalente] [Referencia_Equivalente],
-(select QtyOnHand from trav_InItemOnHand_view a where a.itemid=d.ItemId and a.LocId=d.LocId) Existencias,
-(select SUM(Qty) AS Comprt from tblInQty a where a.itemid=d.itemid and a.LocId=d.locid and a.LinkID='SO' and Qty>0) Comprt,
-
-(select QtyOnHand from trav_InItemOnHand_view a where a.itemid=d.ItemId and a.LocId=d.LocId) - 
-(select SUM(Qty) AS Comprt from tblInQty a where a.itemid=d.itemid and a.LocId=d.locid and a.LinkID='SO' and Qty>0) Disp
-			from tblSoTransHeader H
-			inner join tblSoTransDetail d on d.TransID=H.TransId
-			inner join trav_tblInItem_view I on d.ItemId=I.ItemId
-			inner join tblInItemLoc l on  d.ItemId=l.ItemId and d.LocId=l.LocId
-			left join trav_tblWmExtLoc_view E on l.DfltBinNum=e.ExtLocID
-			where H.TransId='%s' and (e.[cf_Ubicacion Fisica]='%s' or e.[cf_Ubicacion Fisica] is NULL) and d.[status]='0' and h.Voidyn='0' and d.LocId='%s'
-			group by H.TransID, [cf_Ubicacion Fisica], d.ItemId, e.ExtLocID, d.Descr, d.QtyOrdSell, i.[cf_Referencia Equivalente], e.cf_Ruta, d.LocId, d.entrynum
-			order by e.cf_Ruta",$transid, $piso,$bodega);
-
-        $query = $this->db->query($sql);
-
-        foreach ($query->result() as $row)
-        {
-            $this->data["data"][] = array("Ruta"=>$row->Ruta, "Referencia"=>$row->Referencia, "Localizacion"=>$row->Localizacion, "Descr"=>$row->Descr, "Cantidad_Pedida"=>$row->Cantidad_Pedida,
- "Existencias"=>$row->Existencias,"Comprt"=>$row->Comprt,"Disp"=>$row->Disp, "Referencia_Equivalente"=>$row->Referencia_Equivalente);
-        }
-
-        $this->respuesta();
-        //$this->load->view('welcome_message');
-    }    	
-
-    public function guardarHistorialPicked()
-    {
-
-        $this->data = json_decode($this->input->post("datos"));
-
-        //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialProcesoBodegaAdmin] '%s', %d, '%s', %d, %d,'%s'",$this->data->TransId, $this->data->IdTransTipo, $this->data->IdPiso, $this->data->IdUsuario,$this->data->Idoperario, $this->data->Observaciones );
-
-        $query = $this->db->query($sql);
-
-        $this->data = array();
-        $this->data["mensaje"] = $query->row()->Mensaje;
-
-        $this->respuesta();
-        //$this->load->view('welcome_message');
-    }    
+    }   		
 
     public function iniciarPicking() {
         // Obtener los datos enviados por POST
         $transid = $this->input->post('transid');
         $piso = $this->input->post('piso');
         $bodega = $this->input->post('bodega');
+        $observaciones = $this->input->post('observaciones');
+        $id = $this->input->post('id');
     
         // Validar los datos
         if (!empty($transid) && !empty($piso) && !empty($bodega)) {
             // Redirigir a la página de remisión con los parámetros adicionales
             echo json_encode([
                 'success' => true,
-                'url' => 'remision?transid=' . urlencode($transid) . '&piso=' . urlencode($piso) . '&bodega=' . urlencode($bodega)
+                'url' => 'remision?transid=' . urlencode($transid) . '&piso=' . urlencode($piso) . '&bodega=' . urlencode($bodega) . '&observaciones=' . urlencode($observaciones) . '&id=' . urlencode($id)         
             ]);
         } else {
             // Enviar un mensaje de error si los datos no son válidos
@@ -231,23 +184,131 @@ class BodegaItem extends CI_Controller {
         }
     }
 
-    public function recibirConfirmacion()
+    function revisarSesion() {
+        if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] >1800 )) {
+            // Si el usuario ha estado inactivo durante más de 30 minutos, se cierra la sesión
+            session_unset();     
+            session_destroy();   
+            header("Location: " . $this->conseguirUrl() . "login?pagina=bodegaitem");
+            exit();
+        }
+        $_SESSION['LAST_ACTIVITY'] = time();
+
+        if(isset($_GET['cerrar'])) {
+            session_unset();     
+            session_destroy();   
+            header("Location: " . $this->conseguirUrl() . "login?pagina=bodegaitem");
+            exit();
+        }
+    }
+
+    function cerrarSesion()
     {
-        $transid = $this->input->post('transid');
-
-        if (!empty($transid)) {
-            // Redirigir a la página de remisión con los parámetros adicionales
-            echo json_encode([
-                'success' => true,
-                'message' => 'Confirmación recibida correctamente'
-            ]);
-        } else {
-            // Enviar un mensaje de error si los datos no son válidos
-            echo json_encode([
-                'success' => false,
-                'message' => 'Datos inválidos'
-            ]);
-        }
+        session_unset();     
+        session_destroy();   
+        header("Location: " . $this->conseguirUrl() . "login?pagina=bodegaitem");
     }
+
+    function conseguirUrl() {
+        // Obtener el protocolo (http o https)
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+    
+        // Obtener el host (nombre de dominio o IP)
+        $host = $_SERVER['HTTP_HOST'];
+    
+        // Obtener el nombre de la carpeta de la aplicación
+        $basePath = str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
+    
+        return $protocol . $host . $basePath;
+    }
+    
+
+    public function obtenerReferenciasYPicked() {
+        $transid = $this->input->get("TransId");
+        $piso = $this->input->get("Piso");
+        $bodega = $this->input->get("Bodega");
+        
+        // Validar que todos los parámetros necesarios están presentes
+        if (!$transid || !$piso || !$bodega) {
+            $this->data["mensaje"] = "Parámetros faltantes";
+            return $this->respuesta();
+        }
+        
+        $this->data = array();
+    
+        // Consultar las referencias
+        $sqlReferencias = sprintf(
+            "SELECT d.entrynum AS Orden, e.cf_Ruta AS Ruta, d.ItemId AS Referencia, e.ExtLocID AS Localizacion, d.Descr, d.QtyOrdSell AS Cantidad_Pedida, 
+                    i.[cf_Referencia Equivalente] AS Referencia_Equivalente,
+                    (SELECT QtyOnHand FROM trav_InItemOnHand_view a WHERE a.itemid = d.ItemId AND a.LocId = d.LocId) AS Existencias,
+                    (SELECT SUM(Qty) FROM tblInQty a WHERE a.itemid = d.itemid AND a.LocId = d.locid AND a.LinkID = 'SO' AND Qty > 0) AS Comprt,
+                    (SELECT QtyOnHand FROM trav_InItemOnHand_view a WHERE a.itemid = d.ItemId AND a.LocId = d.LocId) - 
+                    (SELECT SUM(Qty) FROM tblInQty a WHERE a.itemid = d.itemid AND a.LocId = d.locid AND a.LinkID = 'SO' AND Qty > 0) AS Disp
+            FROM tblSoTransHeader H
+            INNER JOIN tblSoTransDetail d ON d.TransID = H.TransId
+            INNER JOIN trav_tblInItem_view I ON d.ItemId = I.ItemId
+            INNER JOIN tblInItemLoc l ON d.ItemId = l.ItemId AND d.LocId = l.LocId
+            LEFT JOIN trav_tblWmExtLoc_view E ON l.DfltBinNum = e.ExtLocID
+            WHERE H.TransId = '%s' AND (e.[cf_Ubicacion Fisica] = '%s' OR e.[cf_Ubicacion Fisica] IS NULL) AND d.[status] = '0' AND h.Voidyn = '0' AND d.LocId = '%s'
+            GROUP BY H.TransID, [cf_Ubicacion Fisica], d.ItemId, e.ExtLocID, d.Descr, d.QtyOrdSell, i.[cf_Referencia Equivalente], e.cf_Ruta, d.LocId, d.entrynum
+            ORDER BY e.cf_Ruta",
+            $this->db->escape_str($transid),
+            $this->db->escape_str($piso),
+            $this->db->escape_str($bodega)
+        );
+        
+        $queryReferencias = $this->db->query($sqlReferencias);
+        
+        // Arreglo para almacenar referencias y ordenes
+        $referencias = array();
+        $ordenes = array();
+        
+        foreach ($queryReferencias->result() as $row) {
+            $referencias[] = $row->Referencia;
+            $ordenes[] = $row->Orden;
+            
+            $this->data["referencias"][] = array(
+                "Orden" => $row->Orden, 
+                "Ruta" => $row->Ruta, 
+                "Referencia" => $row->Referencia, 
+                "Localizacion" => $row->Localizacion, 
+                "Descr" => $row->Descr, 
+                "Cantidad_Pedida" => $row->Cantidad_Pedida,
+                "Existencias" => $row->Existencias,
+                "Comprt" => $row->Comprt,
+                "Disp" => $row->Disp, 
+                "Referencia_Equivalente" => $row->Referencia_Equivalente, 
+                "TransId" => $transid
+            );
+        }
+    
+        // Consultar el valor de 'picked' para cada combinación de referencia y orden
+        $this->data["picked"] = array();
+        
+        foreach ($referencias as $index => $ref) {
+            $orden = $ordenes[$index]; // Obtener el orden correspondiente para cada referencia
+            
+            $sqlPicked = sprintf(
+                "SELECT picked FROM tblSoTransDetail WHERE TransID='%s' AND ItemId='%s' AND EntryNum='%d'",
+                $this->db->escape_str($transid),
+                $this->db->escape_str($ref),
+                intval($orden)
+            );
+            
+            $queryPicked = $this->db->query($sqlPicked);
+            
+            if ($queryPicked->num_rows() > 0) {
+                $row = $queryPicked->row();
+                $this->data["picked"][$ref] = $row->picked;
+            } else {
+                $this->data["picked"][$ref] = null;
+            }
+        }
+    
+        $this->data["mensaje"] = "Consulta exitosa";
+    
+        $this->respuesta();
+    }
+    
     
 }
