@@ -227,88 +227,64 @@ class BodegaItem extends CI_Controller {
         $transid = $this->input->get("TransId");
         $piso = $this->input->get("Piso");
         $bodega = $this->input->get("Bodega");
-        
-        // Validar que todos los parámetros necesarios están presentes
-        if (!$transid || !$piso || !$bodega) {
-            $this->data["mensaje"] = "Parámetros faltantes";
-            return $this->respuesta();
-        }
-        
         $this->data = array();
     
-        // Consultar las referencias
-        $sqlReferencias = sprintf(
-            "SELECT d.entrynum AS Orden, e.cf_Ruta AS Ruta, d.ItemId AS Referencia, e.ExtLocID AS Localizacion, d.Descr, d.QtyOrdSell AS Cantidad_Pedida, 
-                    i.[cf_Referencia Equivalente] AS Referencia_Equivalente,
-                    (SELECT QtyOnHand FROM trav_InItemOnHand_view a WHERE a.itemid = d.ItemId AND a.LocId = d.LocId) AS Existencias,
-                    (SELECT SUM(Qty) FROM tblInQty a WHERE a.itemid = d.itemid AND a.LocId = d.locid AND a.LinkID = 'SO' AND Qty > 0) AS Comprt,
-                    (SELECT QtyOnHand FROM trav_InItemOnHand_view a WHERE a.itemid = d.ItemId AND a.LocId = d.LocId) - 
-                    (SELECT SUM(Qty) FROM tblInQty a WHERE a.itemid = d.itemid AND a.LocId = d.locid AND a.LinkID = 'SO' AND Qty > 0) AS Disp
-            FROM tblSoTransHeader H
-            INNER JOIN tblSoTransDetail d ON d.TransID = H.TransId
-            INNER JOIN trav_tblInItem_view I ON d.ItemId = I.ItemId
-            INNER JOIN tblInItemLoc l ON d.ItemId = l.ItemId AND d.LocId = l.LocId
-            LEFT JOIN trav_tblWmExtLoc_view E ON l.DfltBinNum = e.ExtLocID
-            WHERE H.TransId = '%s' AND (e.[cf_Ubicacion Fisica] = '%s' OR e.[cf_Ubicacion Fisica] IS NULL) AND d.[status] = '0' AND h.Voidyn = '0' AND d.LocId = '%s'
-            GROUP BY H.TransID, [cf_Ubicacion Fisica], d.ItemId, e.ExtLocID, d.Descr, d.QtyOrdSell, i.[cf_Referencia Equivalente], e.cf_Ruta, d.LocId, d.entrynum
-            ORDER BY e.cf_Ruta",
-            $this->db->escape_str($transid),
-            $this->db->escape_str($piso),
-            $this->db->escape_str($bodega)
-        );
-        
-        $queryReferencias = $this->db->query($sqlReferencias);
-        
-        // Arreglo para almacenar referencias y ordenes
-        $referencias = array();
-        $ordenes = array();
-        
-        foreach ($queryReferencias->result() as $row) {
-            $referencias[] = $row->Referencia;
-            $ordenes[] = $row->Orden;
-            
+        // Consulta para obtener las referencias
+        $sql_referencias = sprintf("select d.entrynum Orden,e.cf_Ruta Ruta, d.ItemId Referencia, e.ExtLocID Localizacion, d.Descr,  d.QtyOrdSell Cantidad_Pedida, i.[cf_Referencia Equivalente] [Referencia_Equivalente],
+        (select QtyOnHand from trav_InItemOnHand_view a where a.itemid=d.ItemId and a.LocId=d.LocId) Existencias,
+        (select SUM(Qty) AS Comprt from tblInQty a where a.itemid=d.itemid and a.LocId=d.locid and a.LinkID='SO' and Qty>0) Comprt,
+    
+        (select QtyOnHand from trav_InItemOnHand_view a where a.itemid=d.ItemId and a.LocId=d.LocId) - 
+        (select SUM(Qty) AS Comprt from tblInQty a where a.itemid=d.itemid and a.LocId=d.locid and a.LinkID='SO' and Qty>0) Disp
+                    from tblSoTransHeader H
+                    inner join tblSoTransDetail d on d.TransID=H.TransId
+                    inner join trav_tblInItem_view I on d.ItemId=I.ItemId
+                    inner join tblInItemLoc l on  d.ItemId=l.ItemId and d.LocId=l.LocId
+                    left join trav_tblWmExtLoc_view E on l.DfltBinNum=e.ExtLocID
+                    where H.TransId='%s' and (e.[cf_Ubicacion Fisica]='%s' or e.[cf_Ubicacion Fisica] is NULL) and d.[status]='0' and h.Voidyn='0' and d.LocId='%s'
+                    group by H.TransID, [cf_Ubicacion Fisica], d.ItemId, e.ExtLocID, d.Descr, d.QtyOrdSell, i.[cf_Referencia Equivalente], e.cf_Ruta, d.LocId, d.entrynum
+                    order by e.cf_Ruta", $transid, $piso, $bodega);
+    
+        $query_referencias = $this->db->query($sql_referencias);
+        $referencias = $query_referencias->result();
+    
+        // Consulta para obtener los valores de Picked
+        $sql_picked = sprintf("SELECT ItemId Referencia, EntryNum Orden, picked FROM tblSoTransDetail WHERE TransID='%s'", $transid);
+        $query_picked = $this->db->query($sql_picked);
+        $picked_data = $query_picked->result();
+    
+        // Mapeo de valores Picked usando Referencia + Orden como clave
+        $picked_map = array();
+        foreach ($picked_data as $picked_row) {
+            $key = $picked_row->Referencia . '-' . $picked_row->Orden; // Clave única
+            $picked_map[$key] = $picked_row->picked;
+        }
+    
+        // Construir el resultado final
+        foreach ($referencias as $row) {
+            $key = $row->Referencia . '-' . $row->Orden; // Clave única para cada referencia y orden
+            $picked_value = isset($picked_map[$key]) ? $picked_map[$key] : null; // Verificar si hay un valor de picked
             $this->data["referencias"][] = array(
-                "Orden" => $row->Orden, 
-                "Ruta" => $row->Ruta, 
-                "Referencia" => $row->Referencia, 
-                "Localizacion" => $row->Localizacion, 
-                "Descr" => $row->Descr, 
+                "Orden" => $row->Orden,
+                "Ruta" => $row->Ruta,
+                "Referencia" => $row->Referencia,
+                "Localizacion" => $row->Localizacion,
+                "Descr" => $row->Descr,
                 "Cantidad_Pedida" => $row->Cantidad_Pedida,
                 "Existencias" => $row->Existencias,
                 "Comprt" => $row->Comprt,
-                "Disp" => $row->Disp, 
-                "Referencia_Equivalente" => $row->Referencia_Equivalente, 
-                "TransId" => $transid
+                "Disp" => $row->Disp,
+                "Referencia_Equivalente" => $row->Referencia_Equivalente,
+                "Picked" => $picked_value // Agregar el valor de picked
             );
         }
     
-        // Consultar el valor de 'picked' para cada combinación de referencia y orden
-        $this->data["picked"] = array();
-        
-        foreach ($referencias as $index => $ref) {
-            $orden = $ordenes[$index]; // Obtener el orden correspondiente para cada referencia
-            
-            $sqlPicked = sprintf(
-                "SELECT picked FROM tblSoTransDetail WHERE TransID='%s' AND ItemId='%s' AND EntryNum='%d'",
-                $this->db->escape_str($transid),
-                $this->db->escape_str($ref),
-                intval($orden)
-            );
-            
-            $queryPicked = $this->db->query($sqlPicked);
-            
-            if ($queryPicked->num_rows() > 0) {
-                $row = $queryPicked->row();
-                $this->data["picked"][$ref] = $row->picked;
-            } else {
-                $this->data["picked"][$ref] = null;
-            }
-        }
-    
-        $this->data["mensaje"] = "Consulta exitosa";
+        // También devolver el mapa de picked para el cliente
+        $this->data["picked"] = $picked_map;
     
         $this->respuesta();
     }
+    
     
     
 }

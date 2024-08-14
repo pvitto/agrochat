@@ -116,7 +116,7 @@ Ext.onReady(function() {
 										{ name: 'Comprt', type: 'int' },
 										{ name: 'Disp', type: 'int' },
 										{ name: 'Referencia_Equivalente', type: 'string' },
-										{ name: 'Picked', type: 'int' }
+										{ name: 'Picked', type: 'int' } // Campo Picked
 									],
 									data: []
 								})
@@ -157,17 +157,15 @@ Ext.onReady(function() {
 								success: function (response, opts) {
 									var obj = Ext.decode(response.responseText);
 				
-									// Asegúrate de que `obj.data` contiene los datos de referencias y picked
+									// Asegúrate de que `obj.referencias` contiene los datos de referencias y `obj.picked` contiene los valores de picked
 									var referencias = obj.referencias || [];
-									var picked = obj.picked || {};
-				
+									var pickedData = obj.picked || {}; // Mapea de la referencia y orden a picked
+									
 									// Agregar campo Picked a cada referencia
 									Ext.each(referencias, function (item) {
-										if (picked.hasOwnProperty(item.Referencia)) {
-											item.Picked = picked[item.Referencia];
-										} else {
-											item.Picked = null; // O un valor predeterminado si no existe
-										}
+										// Crear una clave única combinando referencia y orden
+										var key = item.Referencia + '-' + item.Orden;
+										item.Picked = pickedData[key] !== undefined ? pickedData[key] : null; // O un valor predeterminado si no existe
 									});
 				
 									// Cargar los datos en el store
@@ -184,6 +182,7 @@ Ext.onReady(function() {
 						}
 					}
 				}
+				
 				,				
 				store: Ext.create('Ext.data.Store', {
 					autoLoad: false,
