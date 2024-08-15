@@ -244,10 +244,10 @@ var store = Ext.create('Ext.data.Store', {
                                                 }
                                             );
                                         } else {
-                                            Ext.Msg.alert('Error', 'No se puede agregar más items de esta referencia a la remisión. Prueba');
+                                            Ext.Msg.alert('Error', 'No se puede agregar más items de esta referencia a la remisión.');
                                         }
                                     } else {
-                                        Ext.Msg.alert('Error', 'Referencia ingresada no se encuentra en esta remisión. Prueba');
+                                        Ext.Msg.alert('Error', 'Referencia ingresada no se encuentra en esta remisión.');
                                     }
                                 }
                             }

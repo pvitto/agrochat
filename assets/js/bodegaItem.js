@@ -163,34 +163,18 @@ Ext.onReady(function() {
 						expandbody: function (rowNode, record, expandRow, e) {
 							Ext.Ajax.request({
 								method: 'GET',
-								url: url + "obtenerReferenciasYPicked",
-								params: {
-									TransId: record.data.TransId,
-									Piso: record.data.Piso,
-									Bodega: record.data.Bodega
-								},
-								headers: {
+								url: url+"obtenerReferencias",
+								params: { TransId: record.data.TransId, Piso: record.data.Piso, Bodega: record.data.Bodega },
+								headers:
+								{
 									'Content-Type': 'application/json'
 								},
-								success: function (response, opts) {
-									var obj = Ext.decode(response.responseText);
-				
-									// Asegúrate de que `obj.referencias` contiene los datos de referencias y `obj.picked` contiene los valores de picked
-									var referencias = obj.referencias || [];
-									var pickedData = obj.picked || {}; // Mapea de la referencia y orden a picked
-									
-									// Agregar campo Picked a cada referencia
-									Ext.each(referencias, function (item) {
-										// Crear una clave única combinando referencia y orden
-										var key = item.Referencia + '-' + item.Orden;
-										item.Picked = pickedData[key] !== undefined ? pickedData[key] : null; // O un valor predeterminado si no existe
-									});
-				
-									// Cargar los datos en el store
-									var gridStore = Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).store;
-									gridStore.setData(referencias);
+								success: function(response, opts) {
+									var obj = JSON.parse(response.responseText);
+									//console.log(obj);
+									Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).store.setData(obj.data);
 								},
-								failure: function (response, opts) {
+								failure: function(response, opts) {
 									console.log('server-side failure with status code ' + response.status);
 								}
 							});
@@ -429,7 +413,7 @@ Ext.onReady(function() {
 							function(buttonId) {
 								if (buttonId === 'yes') {
 									Ext.Ajax.request({
-										url: '/agro/BodegaItem/iniciarPicking',
+										url: url + 'iniciarPicking',
 										method: 'POST',
 										params: {
 											transid: transid,
