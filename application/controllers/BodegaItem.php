@@ -4,25 +4,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 session_start();
 
 class BodegaItem extends CI_Controller {
-
-    /**
-     * Index Page for this controller.
-     *
-     * Maps to the following URL
-     * 		http://example.com/index.php/welcome
-     *	- or -
-     * 		http://example.com/index.php/welcome/index
-     *	- or -
-     * Since this controller is set as the default controller in
-     * config/routes.php, it's displayed at http://example.com/
-     *
-     * So any other public methods not prefixed with an underscore will
-     * map to /index.php/welcome/<method_name>
-     * @see https://codeigniter.com/user_guide/general/urls.html
-     */
     public function __construct()
     {
-        if (!isset($_SESSION['idusuario'])) {
+        if (!isset($_SESSION['usuario_bodegaitem'])) {
             header("Location: " . $this->conseguirUrl() . "login?pagina=bodegaitem");
             exit();
         }
@@ -50,11 +34,12 @@ class BodegaItem extends CI_Controller {
 	
     public function obtenerPickedList()
     {
-        
+        $this->revisarSesion();
+
         $this->data = array();
         //$this->load->view('welcome_message');
         $fecha = $this->input->get("FechaTransaccion");
-        $usuario = $_SESSION['idusuario'];
+        $usuario = $_SESSION['usuario_bodegaitem'];
         $sql = "Select
                 f.TransId,
                 CONVERT(VARCHAR,F.FechaTransaccion,103) [FechaTransaccion],
@@ -113,6 +98,7 @@ class BodegaItem extends CI_Controller {
 
     public function obtenerUsuarios()
     {
+        $this->revisarSesion();
         $this->data = array();
 
         //$this->load->view('welcome_message');
@@ -138,6 +124,7 @@ class BodegaItem extends CI_Controller {
     
     public function obtenerUsuariosAdmin()
     {
+        $this->revisarSesion();
         $this->data = array();
 
         //$this->load->view('welcome_message');
@@ -162,6 +149,7 @@ class BodegaItem extends CI_Controller {
     }   		
 
     public function iniciarPicking() {
+        $this->revisarSesion();
         // Obtener los datos enviados por POST
         $transid = $this->input->post('transid');
         $piso = $this->input->post('piso');
@@ -223,6 +211,8 @@ class BodegaItem extends CI_Controller {
     
 
     public function obtenerReferenciasYPicked() {
+        $this->revisarSesion();
+
         $transid = $this->input->get("TransId");
         $piso = $this->input->get("Piso");
         $bodega = $this->input->get("Bodega");

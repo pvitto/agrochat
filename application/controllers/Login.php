@@ -5,19 +5,7 @@ class Login extends CI_Controller
 {
     public function index()
 	{
-        $pagina = $this->input->get('pagina');
-
-        if (!empty($pagina)) {
-            // Pasar los datos a la vista o al modelo según sea necesario
-            $data = array(
-                'pagina' => $pagina,
-            );
-
-            $this->load->view('login', $data);
-        } else {
-            // Manejar el caso donde los parámetros no son válidos
-            show_error('Parámetros de login no válidos.');
-        }
+        $this->load->view('login');
 	}
 
 	public function obtenerUsuarios()
@@ -56,8 +44,20 @@ class Login extends CI_Controller
         foreach ($usuarios['data'] as $user) {
             if ($user['UserName'] == $usuario && $user['Password'] == $contraseña) {
                 $valid = true;
-                $_SESSION['idusuario'] = $usuario;
-                $_SESSION['id'] =  $user['UserId'];
+
+                if ($pagina == "bodegaitem")
+                {
+                    $_SESSION['usuario_bodegaitem'] = $usuario;
+                    $_SESSION['idusuario_bodegaitem'] =  $user['UserId'];
+                }
+                else if ($pagina == "historico")
+                {
+                    $_SESSION['usuario_historico'] = $usuario;
+                    $_SESSION['idusuario_historico'] =  $user['UserId'];
+                }
+                else
+                    $valid = false;
+                
                 break;
             }
         }

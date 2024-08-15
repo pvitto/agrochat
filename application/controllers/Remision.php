@@ -25,30 +25,6 @@ class Remision extends CI_Controller {
 
         $this->load->view('remision');
 
-
-        /*
-        // Obtener los parámetros de la URL
-        $transid = $this->input->get('transid');
-        $piso = $this->input->get('piso');
-        $bodega = $this->input->get('bodega');
-
-        // Validar los parámetros
-        if (!empty($transid) && !empty($piso) && !empty($bodega)) {
-            // Pasar los datos a la vista o al modelo según sea necesario
-            $data = array(
-                'transid' => $transid,
-                'piso' => $piso,
-                'bodega' => $bodega,
-                // Puedes agregar otros datos que necesites cargar en la vista
-            );
-
-            // Cargar la vista con los datos
-           
-        } else {
-            // Manejar el caso donde los parámetros no son válidos
-            show_error('Parámetros de remisión no válidos.');
-        }*/
-
     }
 
     public function obtenerReferencias()
@@ -104,7 +80,7 @@ class Remision extends CI_Controller {
         $orden = $this->input->post('orden');
         $transid = $this->input->post('transid');
         $piso = $this->input->post('piso');
-        $IdUsuario = $_SESSION['id'];
+        $IdUsuario = $_SESSION['idusuario_bodegaitem'];
         $this->data = array();
     
         // Validar que todos los parámetros necesarios están presentes
@@ -158,51 +134,12 @@ class Remision extends CI_Controller {
         }
 
     }    
-    
-    
-    public function obtenerPicked() {
-        $referencia = $this->input->get('referencia');
-        $orden = $this->input->get('orden');
-        $transid = $this->input->get('transid');
-        $this->data = array();
-    
-        // Validar que todos los parámetros necesarios están presentes
-        if (!$referencia || !$orden || !$transid) {
-            $this->data["mensaje"] = "Parámetros faltantes";
-            return $this->respuesta();
-        }
-    
-        // Asegurarse de que 'orden' es un entero
-        $orden = intval($orden);
-    
-        // Construir la consulta usando sprintf para seleccionar el valor de 'picked'
-        $sql = sprintf(
-            "SELECT picked FROM tblSoTransDetail WHERE TransID='%s' AND ItemId='%s' AND EntryNum='%d'",
-            $this->db->escape_str($transid),
-            $this->db->escape_str($referencia),
-            $orden
-        );
-    
-        // Ejecutar la consulta
-        $query = $this->db->query($sql);
-    
-        // Verificar si la consulta retornó algún resultado
-        if ($query->num_rows() > 0) {
-            $row = $query->row();
-            $this->data["picked"] = $row->picked;
-            $this->data["mensaje"] = "Consulta exitosa";
-        } else {
-            $this->data["mensaje"] = "No se encontró el valor de 'picked' para los parámetros proporcionados";
-        }
-    
-        $this->respuesta();
-    }
 
     public function finalizarPicking()
     {
         $transid = $this->input->post('transid');
         $piso = $this->input->post('piso');
-        $IdUsuario = $_SESSION['id'];
+        $IdUsuario = $_SESSION['idusuario_bodegaitem'];
 
         $result = $this->guardarHistorialPicked($transid, 2, $piso, $IdUsuario);
 

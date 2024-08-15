@@ -2,8 +2,6 @@ Ext.onReady(function() {
     var socket = io.connect('http://192.168.0.205:4000');
     var url = "/agro/Remision/";
 
-    var  obtenerReferencias
-
     // Obtener los parámetros de la URL
     var queryParams = new URLSearchParams(window.location.search);
     var transid = queryParams.get('transid');
@@ -15,119 +13,109 @@ Ext.onReady(function() {
     // Objeto para guardar los ordenes de las repeteciones de las referencias
     var duplicados = {};
 
-    function actulizarRecogidos(reference) {
-        var store = Ext.getCmp('tabla').getStore(); // Obtén la tienda asociada a la tabla
+    function actualizarRecogidos(reference) {
+        var store = Ext.getCmp('tabla').getStore();
         var found = false;
-        var repetido_agregado = false;
         var picked = false;
+
+        var value_picked = null;
+        var orden_picked = null;
+        var referencia_picked = null;
     
         store.each(function(record) {
             var ref = record.get('Referencia');
             var orden = record.get('Orden');
+    
             if (ref === reference) {
-                if (found && !duplicados[ref])  // Primera referencia repetida
-                {
-                    duplicados[ref] = [];
-                    duplicados[ref].push(orden);
-                    repetido_agregado = true;
-                }
-                else if (found && duplicados[ref])
-                {
-                    // Condicional para asegurar que en caso de referencias repetidas, estas sean actualizadas una a la vez
-                    if (!duplicados[ref].includes(orden) && !repetido_agregado && record.get('Picked') == 0) // Preparar la siguiente referencia repetida a ser actualizada
-                    {
-                        duplicados[ref].push(orden);
-                        repetido_agregado = true;
-                    }
-                    else if (duplicados[ref].includes(orden))
-                    {
-                        var currentPickedValue = pickedCounts[orden][ref];
-                        var newPickedValue = currentPickedValue + record.get('Cantidad_Pedida');
-            
-                        // Asegurarse de que 'Picked' no sea mayor que 'Cantidad Pedida'
-                        if (newPickedValue > record.get('Cantidad_Pedida') || newPickedValue > record.get('Existencias')) {
-                            record.set('Picked', pickedCounts[orden][ref]);
-                        } else if (!picked){
-                            pickedCounts[orden][ref] = newPickedValue;
-                            record.set('Picked', newPickedValue);
-                            
-                            Ext.Ajax.request({
-                                url: url + 'actualizarPicked', 
-                                method: 'POST',
-                                params: {
-                                    referencia: reference,
-                                    cantidadAgregada: newPickedValue,
-                                    orden: orden,
-                                    transid: transid,
-                                    piso: piso
-                                },
-                                success: function(response) {
-                                    console.log('Cantidad agregada enviada exitosamente.');
-                                },
-                                failure: function(response) {
-                                    console.error('Error al enviar la cantidad agregada.');
-                                }
-                            });
+                found = true;
 
-                            picked = true;
-                        }
-                    }
+                if (!pickedCounts[orden]) {
+                    pickedCounts[orden] = {};
                 }
-                else
-                {
-                    found = true; // Se encontró la referencia
-        
+                
+                if (!pickedCounts[orden][ref]) {
+                    pickedCounts[orden][ref] = record.get('Picked'); 
+                }
+    
+                // Si la referencia ya fue encontrada antes y no está en duplicados, inicializa duplicados[ref]
+                if (!duplicados[ref]) {
+                    duplicados[ref] = [];
+                }
+    
+                // Añadir la orden si no está en duplicados[ref] y ordenar
+                if (!duplicados[ref].includes(orden)) {
+                    duplicados[ref].push(orden);
+                    duplicados[ref].sort((a, b) => a - b); // Ordenar ascendentemente
+                }
+    
+                // Obtener la orden con el número más pequeño (primera posición del array)
+                var menorOrden = duplicados[ref][0];
+    
+                // Solo actualiza si es la orden más pequeña
+                if (orden === menorOrden) {
                     var currentPickedValue = pickedCounts[orden][ref];
                     var newPickedValue = currentPickedValue + record.get('Cantidad_Pedida');
-        
-                    // Asegurarse de que 'Picked' no sea mayor que 'Cantidad Pedida'
+    
+                    // Asegurarse de que 'Picked' no sea mayor que 'Cantidad Pedida' o 'Existencias'
                     if (newPickedValue > record.get('Cantidad_Pedida') || newPickedValue > record.get('Existencias')) {
                         record.set('Picked', pickedCounts[orden][ref]);
-                    } else if (!picked){
-                        pickedCounts[orden][ref] = newPickedValue;
-                        record.set('Picked', newPickedValue);
+                        duplicados[ref].shift();
+                    }
+                    else
+                    {
+                        value_picked = newPickedValue;
+                        orden_picked = orden;
+                        referencia_picked = ref;
 
-                        Ext.Ajax.request({
-                            url: url + 'actualizarPicked', // URL del controlador
-                            method: 'POST',
-                            params: {
-                                referencia: reference,
-                                cantidadAgregada: newPickedValue,
-                                orden: orden,
-                                transid: transid,
-                                piso: piso
-                            },
-                            success: function(response) {
-                                console.log('Cantidad agregada enviada exitosamente.');
-                            },
-                            failure: function(response) {
-                                console.error('Error al enviar la cantidad agregada.');
-                            }
-                        });
                         picked = true;
                     }
-                } 
+                        
+                }
             } else if (pickedCounts[record.get('Orden')] && pickedCounts[record.get('Orden')][ref]) {
                 record.set('Picked', pickedCounts[record.get('Orden')][ref]); // Mantén el valor de 'Picked' si ya fue modificado previamente
             }
         });
-
     
-        if (!picked)
-        {
+        if (!picked) {
             Ext.Msg.alert('Advertencia', 'No se puede agregar más items de esta referencia a la remisión.');
         }
+        else
+        {
+            pickedCounts[orden_picked][referencia_picked] = value_picked;
+            
+            enviarCantidad(referencia_picked, value_picked, duplicados[referencia_picked][0]);
+
+            duplicados[referencia_picked].shift();
+
+            store.commitChanges();
+            store.reload();
+        }
     
-        // Mostrar mensaje si no se encontró la referencia
         if (!found) {
             Ext.Msg.alert('Error', 'Referencia ingresada no se encuentra en esta remisión.');
         }
-
-        
     }
     
-
-
+    function enviarCantidad(reference, newPickedValue, orden) {
+        Ext.Ajax.request({
+            url: url + 'actualizarPicked', 
+            method: 'POST',
+            params: {
+                referencia: reference,
+                cantidadAgregada: newPickedValue,
+                orden: orden,
+                transid: transid,
+                piso: piso
+            },
+            success: function(response) {
+                console.log('Cantidad agregada enviada exitosamente.');
+            },
+            failure: function(response) {
+                console.error('Error al enviar la cantidad agregada.');
+            }
+        });
+    }
+    
 var store = Ext.create('Ext.data.Store', {
     autoLoad: true, 
     fields: [
@@ -204,65 +192,66 @@ var store = Ext.create('Ext.data.Store', {
                                     var found = false;
                                     var picked = false;
                                     var full = false;
-                                    var cantidadPedida = null;
-                                    var cantidadPicked = null;
-                                    var existencias = null;
-
-                                    var cantidadPedida_Picked = null;
+                                    var siguienteCantidadPedida = null;
+                                    var siguienteOrden = null;
                             
-                                    // Buscar la referencia en el store y obtener su Cantidad_Pedida
                                     store.each(function(record) {
-                                        cantidadPicked = record.get('Picked');
-                                        if (record.get('Referencia') === reference) {
+                                        var ref = record.get('Referencia');
+                                        var cantidad = record.get('Cantidad_Pedida');
+                                        var pickedValue = record.get('Picked');
+                                        var existenciasValue = record.get('Existencias');
+                            
+                                        if (ref === reference) {
                                             found = true;
-                                            
-                                            cantidadPedida = record.get('Cantidad_Pedida');
-                                            existencias = record.get('Existencias');
-
-                                            if (cantidadPicked == 0 && !picked)
-                                            {
+                            
+                                            if (pickedValue == 0) {
                                                 picked = true;
-
-                                                cantidadPedida_Picked = cantidadPedida;
-
                                                 full = false;
                                             }
-
-                                            
-                                            if (cantidadPedida <= cantidadPicked || cantidadPedida > existencias)
-                                            {
-                                                if (!picked)
+                            
+                                            if (cantidad <= pickedValue || cantidad > existenciasValue) {
+                                                if (!picked) {
                                                     full = true;
+                                                }
                                             }
                                         }
                                     });
-
+                            
                                     if (found) {
-                                        if (!full)
-                                        {
-                                            if (cantidadPedida_Picked)
-                                                cantidadPedida = cantidadPedida_Picked;
-
+                                        // Encontrar el siguiente registro a ser actualizado
+                                        store.each(function(record) {
+                                            var ref = record.get('Referencia');
+                                            var orden = record.get('Orden');
+                                            var cantidad = record.get('Cantidad_Pedida');
+                                            var pickedValue = record.get('Picked');
+                            
+                                            if (ref === reference && pickedValue == 0 && (siguienteCantidadPedida === null || orden < siguienteOrden)) {
+                                                siguienteCantidadPedida = cantidad;
+                                                siguienteOrden = orden;
+                                            }
+                                        });
+                            
+                                        if (!full) {
+                            
                                             Ext.Msg.confirm(
                                                 'Confirmar Cantidad',
-                                                '¿Quiere confirmar ' + cantidadPedida + ' de la referencia: ' + reference + '?',
+                                                '¿Quiere confirmar ' + siguienteCantidadPedida + ' de la referencia: ' + reference + ' de orden ' + siguienteOrden + '?',
                                                 function(buttonId) {
                                                     if (buttonId === 'yes') {
                                                         // Llamar a la función actualizarRecogidos() si el usuario confirma
-                                                        actulizarRecogidos(reference);
+                                                        actualizarRecogidos(reference);
                                                     }
                                                 }
                                             );
-                                        }
-                                        else
-                                        {
+                                        } else {
                                             Ext.Msg.alert('Error', 'No se puede agregar más items de esta referencia a la remisión. Prueba');
                                         }
                                     } else {
                                         Ext.Msg.alert('Error', 'Referencia ingresada no se encuentra en esta remisión. Prueba');
                                     }
                                 }
-                            },
+                            }
+                            ,
                             "-",
                                 {
                                     xtype: 'button',
@@ -344,7 +333,25 @@ var store = Ext.create('Ext.data.Store', {
                                         Ext.Msg.alert('Advertencia', 'Picking incompleto, cantidad de items recogidos no coincide con los pedidos.');
                                     }
                                 }
+                            },
+                            "-",
+                        {
+                            xtype: 'button',
+                            minWidth: 80,
+                            text: 'Inicio',
+                            iconCls: 'fas fa-home',
+                            handler: function() {
+                                Ext.Msg.confirm(
+                                    'Volver al Menú de Bodega',
+                                    '¿Está seguro que desea volver al menú de Bodega?',
+                                    function(buttonId) {
+                                        if (buttonId === 'yes') {
+                                            window.location.href = 'bodegaitem'; 
+                                        }
+                                    }
+                                );
                             }
+                        }
                         ]
                     }
                 ],
@@ -395,50 +402,7 @@ var store = Ext.create('Ext.data.Store', {
                         dataIndex: 'Referencia_Equivalente',
                         flex: 1
                     }
-                ],
-                listeners: {            
-                    afterrender: function(view, eOpts) {
-                        store.load({
-                            callback: function() {
-                                // Después de cargar, restaura los valores de 'Picked' desde el objeto pickedCounts
-                                store.each(function(record) {
-                                    var referencia = record.get('Referencia');
-                                    var orden = record.get('Orden');
-                                    Ext.Ajax.request({
-                                        url: url + 'obtenerPicked', // URL del controlador
-                                        method: 'GET',
-                                        params: {
-                                            referencia: referencia,
-                                            orden: orden,
-                                            transid: transid
-                                        },
-                                        success: function(response) {
-                                            var data = Ext.decode(response.responseText);
-                    
-                                            // Si la consulta fue exitosa, asigna el valor de 'Picked'
-                                            if (data && data.picked) {
-                                                record.set('Picked', data.picked);
-                                            } else {
-                                                record.set('Picked', 0); 
-                                            }
-                    
-                                            if (!pickedCounts[orden]) {
-                                                pickedCounts[orden] = {};
-                                            }
-                                            
-                                            if (!pickedCounts[orden][referencia]) {
-                                                pickedCounts[orden][referencia] = record.get('Picked'); 
-                                            }
-                                        },
-                                        failure: function(response) {
-                                            console.error('Error al obtener el valor de Picked para la referencia:', referencia);
-                                        }
-                                    });
-                                });
-                            }
-                        });
-                    }
-                }
+                ]
             }),
         ]
     });
