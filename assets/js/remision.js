@@ -2,13 +2,13 @@ Ext.onReady(function() {
     var socket = io.connect('http://192.168.0.205:4000');
     var url = "/agro/Remision/";
 
+    var  obtenerReferencias
+
     // Obtener los parámetros de la URL
     var queryParams = new URLSearchParams(window.location.search);
     var transid = queryParams.get('transid');
     var piso = queryParams.get('piso');
     var bodega = queryParams.get('bodega');
-    var observaciones = queryParams.get('observaciones');
-    var id = queryParams.get('id');
 
     // Objeto para almacenar los valores de 'Picked'
     var pickedCounts = {};
@@ -19,7 +19,7 @@ Ext.onReady(function() {
         var store = Ext.getCmp('tabla').getStore(); // Obtén la tienda asociada a la tabla
         var found = false;
         var repetido_agregado = false;
-        var error = false;
+        var picked = false;
     
         store.each(function(record) {
             var ref = record.get('Referencia');
@@ -29,11 +29,12 @@ Ext.onReady(function() {
                 {
                     duplicados[ref] = [];
                     duplicados[ref].push(orden);
+                    repetido_agregado = true;
                 }
                 else if (found && duplicados[ref])
                 {
                     // Condicional para asegurar que en caso de referencias repetidas, estas sean actualizadas una a la vez
-                    if (!duplicados[ref].includes(orden) && !repetido_agregado) // Preparar la siguiente referencia repetida a ser actualizada
+                    if (!duplicados[ref].includes(orden) && !repetido_agregado && record.get('Picked') == 0) // Preparar la siguiente referencia repetida a ser actualizada
                     {
                         duplicados[ref].push(orden);
                         repetido_agregado = true;
@@ -45,9 +46,8 @@ Ext.onReady(function() {
             
                         // Asegurarse de que 'Picked' no sea mayor que 'Cantidad Pedida'
                         if (newPickedValue > record.get('Cantidad_Pedida') || newPickedValue > record.get('Existencias')) {
-                            error = true;
                             record.set('Picked', pickedCounts[orden][ref]);
-                        } else {
+                        } else if (!picked){
                             pickedCounts[orden][ref] = newPickedValue;
                             record.set('Picked', newPickedValue);
                             
@@ -59,9 +59,7 @@ Ext.onReady(function() {
                                     cantidadAgregada: newPickedValue,
                                     orden: orden,
                                     transid: transid,
-                                    piso: piso,
-                                    observaciones: observaciones,
-                                    id: id
+                                    piso: piso
                                 },
                                 success: function(response) {
                                     console.log('Cantidad agregada enviada exitosamente.');
@@ -71,7 +69,7 @@ Ext.onReady(function() {
                                 }
                             });
 
-                            error = false;
+                            picked = true;
                         }
                     }
                 }
@@ -84,9 +82,8 @@ Ext.onReady(function() {
         
                     // Asegurarse de que 'Picked' no sea mayor que 'Cantidad Pedida'
                     if (newPickedValue > record.get('Cantidad_Pedida') || newPickedValue > record.get('Existencias')) {
-                        error = true;
                         record.set('Picked', pickedCounts[orden][ref]);
-                    } else {
+                    } else if (!picked){
                         pickedCounts[orden][ref] = newPickedValue;
                         record.set('Picked', newPickedValue);
 
@@ -98,9 +95,7 @@ Ext.onReady(function() {
                                 cantidadAgregada: newPickedValue,
                                 orden: orden,
                                 transid: transid,
-                                piso: piso,
-                                observaciones: observaciones,
-                                id: id
+                                piso: piso
                             },
                             success: function(response) {
                                 console.log('Cantidad agregada enviada exitosamente.');
@@ -109,8 +104,7 @@ Ext.onReady(function() {
                                 console.error('Error al enviar la cantidad agregada.');
                             }
                         });
-
-                        error = false;
+                        picked = true;
                     }
                 } 
             } else if (pickedCounts[record.get('Orden')] && pickedCounts[record.get('Orden')][ref]) {
@@ -119,7 +113,7 @@ Ext.onReady(function() {
         });
 
     
-        if (error)
+        if (!picked)
         {
             Ext.Msg.alert('Advertencia', 'No se puede agregar más items de esta referencia a la remisión.');
         }
@@ -161,56 +155,6 @@ var store = Ext.create('Ext.data.Store', {
             type: 'json',
             rootProperty: 'data'
         }
-    },
-    listeners: {
-        load: function(store) {
-            // Iterar sobre los registros cargados
-            store.each(function(record) {
-                var referencia = record.get('Referencia');
-                var orden = record.get('Orden');
-
-                if (!pickedCounts[orden]) {
-                    pickedCounts[orden] = {};
-                }
-                if (!pickedCounts[orden][referencia]) {
-                    pickedCounts[orden][referencia] = record.get('Picked'); 
-                }
-
-                // Realizar una solicitud AJAX para obtener el valor de 'Picked'
-                Ext.Ajax.request({
-                    url: url + 'obtenerPicked', // URL del controlador
-                    method: 'GET',
-                    params: {
-                        referencia: referencia,
-                        orden: orden,
-                        transid: transid
-                    },
-                    success: function(response) {
-                        var data = Ext.decode(response.responseText);
-
-                        // Si la consulta fue exitosa, asigna el valor de 'Picked'
-                        if (data && data.picked) {
-                            record.set('Picked', data.picked);
-                        } else {
-                            record.set('Picked', 0); 
-                        }
-
-                        if (!pickedCounts[orden]) {
-                            pickedCounts[orden] = {};
-                        }
-                        
-                        if (!pickedCounts[orden][referencia]) {
-                            pickedCounts[orden][referencia] = record.get('Picked'); 
-                        }
-                    },
-                    failure: function(response) {
-                        console.error('Error al obtener el valor de Picked para la referencia:', referencia);
-                    }
-                });
-
-
-            });
-        }
     }
 });
 
@@ -249,22 +193,110 @@ var store = Ext.create('Ext.data.Store', {
                                 width: 285
                             },
                             "-",
-                            { 
+                            {
                                 minWidth: 80, 
                                 text: 'Confirmar', 
                                 iconCls: 'fas fa-sync-alt', 
                                 hidden: false, 
                                 handler: function() {
                                     var reference = Ext.getCmp('fecha').getValue();
-                                    // Limpiar filtro y recargar la tienda
-                                    Ext.getCmp('tabla').getStore().reload({
-                                        callback: function() {
-                                            // Actualizar los conteos después de recargar los datos
-                                            actulizarRecogidos(reference);
+                                    var store = Ext.getCmp('tabla').getStore();
+                                    var found = false;
+                                    var picked = false;
+                                    var full = false;
+                                    var cantidadPedida = null;
+                                    var cantidadPicked = null;
+                                    var existencias = null;
+
+                                    var cantidadPedida_Picked = null;
+                            
+                                    // Buscar la referencia en el store y obtener su Cantidad_Pedida
+                                    store.each(function(record) {
+                                        cantidadPicked = record.get('Picked');
+                                        if (record.get('Referencia') === reference) {
+                                            found = true;
+                                            
+                                            cantidadPedida = record.get('Cantidad_Pedida');
+                                            existencias = record.get('Existencias');
+
+                                            if (cantidadPicked == 0 && !picked)
+                                            {
+                                                picked = true;
+
+                                                cantidadPedida_Picked = cantidadPedida;
+
+                                                full = false;
+                                            }
+
+                                            
+                                            if (cantidadPedida <= cantidadPicked || cantidadPedida > existencias)
+                                            {
+                                                if (!picked)
+                                                    full = true;
+                                            }
                                         }
                                     });
-                                } 
+
+                                    if (found) {
+                                        if (!full)
+                                        {
+                                            if (cantidadPedida_Picked)
+                                                cantidadPedida = cantidadPedida_Picked;
+
+                                            Ext.Msg.confirm(
+                                                'Confirmar Cantidad',
+                                                '¿Quiere confirmar ' + cantidadPedida + ' de la referencia: ' + reference + '?',
+                                                function(buttonId) {
+                                                    if (buttonId === 'yes') {
+                                                        // Llamar a la función actualizarRecogidos() si el usuario confirma
+                                                        actulizarRecogidos(reference);
+                                                    }
+                                                }
+                                            );
+                                        }
+                                        else
+                                        {
+                                            Ext.Msg.alert('Error', 'No se puede agregar más items de esta referencia a la remisión. Prueba');
+                                        }
+                                    } else {
+                                        Ext.Msg.alert('Error', 'Referencia ingresada no se encuentra en esta remisión. Prueba');
+                                    }
+                                }
                             },
+                            "-",
+                                {
+                                    xtype: 'button',
+                                    minWidth: 80,
+                                    text: 'Reiniciar Picking',
+                                    iconCls: 'fas fa-sign-out-alt',
+                                    handler: function() {
+                                        Ext.Msg.confirm(
+                                            'Reiniciar Picking',
+                                            '¿Quieres Reiniciar el picking de la orden ' + transid + '?',
+                                            function(buttonId) {
+                                                if (buttonId === 'yes') {
+                                                    Ext.Ajax.request({
+                                                        url: url + 'reiniciarPicking',
+                                                        method: 'POST',
+                                                        params: {
+                                                            transid: transid
+                                                        },
+                                                        success: function(response) {
+                                                            var result = Ext.decode(response.responseText);
+                                                            if (result.success) {
+                                                                window.location.reload();
+                                                            } else {
+                                                                Ext.Msg.alert('Error', result.message);
+                                                            }
+                                                        },
+                                                        failure: function(response) {
+                                                            Ext.Msg.alert('Error', 'No se pudo completar la solicitud.');
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                    }
+                                },
                             "->",
                             {
                                 minWidth: 80,
@@ -292,9 +324,7 @@ var store = Ext.create('Ext.data.Store', {
                                                         method: 'POST',
                                                         params: {
                                                             transid: transid,
-                                                            piso: piso,
-                                                            observaciones: observaciones,
-                                                            id: id
+                                                            piso: piso
                                                         },
                                                         success: function(response) {
                                                             var result = Ext.decode(response.responseText);
@@ -323,8 +353,7 @@ var store = Ext.create('Ext.data.Store', {
                     {
                         text: 'Orden',
                         dataIndex: 'Orden',
-                        flex: 1,
-                        hidden: true
+                        flex: 1
                     },
                     {
                         text: 'Ruta',

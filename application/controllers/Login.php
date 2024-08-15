@@ -48,6 +48,7 @@ class Login extends CI_Controller
     {
         $usuario = $this->input->post("Usuario");
         $contraseña = $this->input->post("Contraseña");
+        $pagina = $this->input->post("Pagina");
     
         $usuarios = $this->obtenerUsuarios();
         $valid = false;
@@ -55,8 +56,8 @@ class Login extends CI_Controller
         foreach ($usuarios['data'] as $user) {
             if ($user['UserName'] == $usuario && $user['Password'] == $contraseña) {
                 $valid = true;
-                $id = $user['UserId'];
                 $_SESSION['idusuario'] = $usuario;
+                $_SESSION['id'] =  $user['UserId'];
                 break;
             }
         }
@@ -64,7 +65,7 @@ class Login extends CI_Controller
         if ($valid) {
             echo json_encode([
                 'success' => true,
-                'url' => '?id=' . urlencode($id)
+                'url' => urlencode($pagina)
             ]);
         } else {
             echo json_encode(array('success' => false));

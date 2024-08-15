@@ -45,13 +45,13 @@ Ext.onReady(function() {
                                 method: 'POST',
                                 params: {
                                     Usuario: form.findField('username').getValue(),
-                                    Contraseña: form.findField('password').getValue()
+                                    Contraseña: form.findField('password').getValue(),
+                                    Pagina: pagina
                                 },
                                 success: function(form, action) {
                                     var response = Ext.decode(action.response.responseText);
                                     if (response.success) {
-                                       
-                                        window.location.href = pagina + response.url;
+                                        window.location.href = response.url;
                                     } else {
                                         Ext.Msg.alert('Error', 'Usuario o contraseña incorrectos');
                                     }

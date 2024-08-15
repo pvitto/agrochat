@@ -1,6 +1,8 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+session_start();
+
 class Remision extends CI_Controller {
 
     public function respuesta()
@@ -19,6 +21,12 @@ class Remision extends CI_Controller {
     }
 
     public function index() {
+
+
+        $this->load->view('remision');
+
+
+        /*
         // Obtener los parámetros de la URL
         $transid = $this->input->get('transid');
         $piso = $this->input->get('piso');
@@ -35,11 +43,12 @@ class Remision extends CI_Controller {
             );
 
             // Cargar la vista con los datos
-            $this->load->view('remision', $data);
+           
         } else {
             // Manejar el caso donde los parámetros no son válidos
             show_error('Parámetros de remisión no válidos.');
-        }
+        }*/
+
     }
 
     public function obtenerReferencias()
@@ -50,7 +59,7 @@ class Remision extends CI_Controller {
         $this->data = array();
 
         //$this->load->view('welcome_message');
-		$sql = sprintf("select d.entrynum Orden,e.cf_Ruta Ruta, d.ItemId Referencia, e.ExtLocID Localizacion, d.Descr,  d.QtyOrdSell Cantidad_Pedida, i.[cf_Referencia Equivalente] [Referencia_Equivalente],
+		$sql = sprintf("select d.entrynum Orden,e.cf_Ruta Ruta, d.ItemId Referencia, e.ExtLocID Localizacion, d.Descr,  d.QtyOrdSell Cantidad_Pedida, d.picked as Picked, i.[cf_Referencia Equivalente] [Referencia_Equivalente],
 (select QtyOnHand from trav_InItemOnHand_view a where a.itemid=d.ItemId and a.LocId=d.LocId) Existencias,
 (select SUM(Qty) AS Comprt from tblInQty a where a.itemid=d.itemid and a.LocId=d.locid and a.LinkID='SO' and Qty>0) Comprt,
 
@@ -62,15 +71,27 @@ class Remision extends CI_Controller {
 			inner join tblInItemLoc l on  d.ItemId=l.ItemId and d.LocId=l.LocId
 			left join trav_tblWmExtLoc_view E on l.DfltBinNum=e.ExtLocID
 			where H.TransId='%s' and (e.[cf_Ubicacion Fisica]='%s' or e.[cf_Ubicacion Fisica] is NULL) and d.[status]='0' and h.Voidyn='0' and d.LocId='%s'
-			group by H.TransID, [cf_Ubicacion Fisica], d.ItemId, e.ExtLocID, d.Descr, d.QtyOrdSell, i.[cf_Referencia Equivalente], e.cf_Ruta, d.LocId, d.entrynum
+			group by H.TransID, [cf_Ubicacion Fisica], d.ItemId, e.ExtLocID, d.Descr, d.QtyOrdSell, i.[cf_Referencia Equivalente], e.cf_Ruta, d.LocId, d.entrynum,Picked
 			order by e.cf_Ruta",$transid, $piso,$bodega);
 
         $query = $this->db->query($sql);
 
         foreach ($query->result() as $row)
         {
-            $this->data["data"][] = array("Orden"=>$row->Orden, "Ruta"=>$row->Ruta, "Referencia"=>$row->Referencia, "Localizacion"=>$row->Localizacion, "Descr"=>$row->Descr, "Cantidad_Pedida"=>$row->Cantidad_Pedida,
- "Existencias"=>$row->Existencias,"Comprt"=>$row->Comprt,"Disp"=>$row->Disp, "Referencia_Equivalente"=>$row->Referencia_Equivalente);
+            $this->data["data"][] = array(
+                "Orden"=>$row->Orden, 
+                "Ruta"=>$row->Ruta, 
+                "Referencia"=>$row->Referencia, 
+                "Localizacion"=>$row->Localizacion, 
+                "Descr"=>$row->Descr, 
+                "Cantidad_Pedida"=>$row->Cantidad_Pedida,
+                "Existencias"=>$row->Existencias,
+                "Comprt"=>$row->Comprt,
+                "Disp"=>$row->Disp, 
+                "Referencia_Equivalente"=>$row->Referencia_Equivalente,
+                "Picked"=>$row->Picked
+
+);
         }
 
         $this->respuesta();
@@ -83,8 +104,7 @@ class Remision extends CI_Controller {
         $orden = $this->input->post('orden');
         $transid = $this->input->post('transid');
         $piso = $this->input->post('piso');
-        $observaciones = $this->input->post('observaciones');
-        $IdUsuario = $this->input->post('id');
+        $IdUsuario = $_SESSION['id'];
         $this->data = array();
     
         // Validar que todos los parámetros necesarios están presentes
@@ -115,31 +135,30 @@ class Remision extends CI_Controller {
             $this->data["mensaje"] = "Error en la actualización o no hubo cambios";
         }
 
-        $this->guardarHistorialPicked($transid, 1, $piso, $IdUsuario, $IdUsuario, $observaciones);
+        $this->guardarHistorialPicked($transid, 1, $piso, $IdUsuario);
     
         $this->respuesta();
     }
 
-    public function guardarHistorialPicked($transid, $IdTransTipo, $IdPiso, $IdUsuario, $IdOperario, $Observaciones)
+    public function guardarHistorialPicked($transid, $IdTransTipo, $IdPiso, $IdUsuario)
     {
 
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialProcesoBodegaAdmin] '%s', %d, '%s', %d, %d,'%s'",$transid, $IdTransTipo, $IdPiso, $IdUsuario,$IdOperario, $Observaciones );
+        $sql = sprintf("EXEC [dbo].[HistorialProcesoBodegaAdmin] '%s', %d, '%s', %d, %d,'%s'",$transid, $IdTransTipo, $IdPiso, '',$IdUsuario, '' );
 
         $query = $this->db->query($sql);
 
         if ($query->num_rows() > 0)
         {
-            $message = "Estado de picking actualizado exitosamente.";
+            return true;
         }
         else
         {
-            $message = "Error al actualizar estado de picking.";
+            return false;
         }
 
-        echo "<script>console.log('".addslashes($message)."');</script>";
-
     }    
+    
     
     public function obtenerPicked() {
         $referencia = $this->input->get('referencia');
@@ -183,10 +202,52 @@ class Remision extends CI_Controller {
     {
         $transid = $this->input->post('transid');
         $piso = $this->input->post('piso');
-        $observaciones = $this->input->post('observaciones');
-        $IdUsuario = $this->input->post('id');
+        $IdUsuario = $_SESSION['id'];
 
-        $this->guardarHistorialPicked($transid, 2, $piso, $IdUsuario, $IdUsuario, $observaciones);
+        $result = $this->guardarHistorialPicked($transid, 2, $piso, $IdUsuario);
+
+        if ($result) {
+            $this->data["mensaje"] = "Actualización exitosa";
+            $this->data["success"] = true;
+        } else {
+            $this->data["mensaje"] = "Error en la actualización o no hubo cambios";
+            $this->data["success"] = false;
+        }
+
+        $this->respuesta();
+    }
+
+    public function reiniciarPicking()
+    {
+        $transid = $this->input->post('transid');
+
+        $sql_picked = sprintf(
+            "UPDATE tblSoTransDetail SET Picked='0' where TransID='%s'",
+            $this->db->escape_str($transid)
+        );
+
+        // Ejecutar la consulta
+        $query_picked = $this->db->query($sql_picked);
+
+        $sql_proceso = sprintf(
+            "UPDATE AGRInProcesoInventario SET idtranstipo='0' where TransID='%s'",
+            $this->db->escape_str($transid)
+        );
+
+        $query_proceso = $this->db->query($sql_proceso);
+
+        if ($this->db->affected_rows() > 0)
+        {
+            $this->data["message"] = "Consulta exitosa";
+            $this->data["success"] = true;
+        }
+        else
+        {
+            $this->data["message"] = "Error en la consulta";
+            $this->data["success"] = false;
+        }
+
+        $this->respuesta();
     }
     
     

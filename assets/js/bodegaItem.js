@@ -1,9 +1,7 @@
 Ext.onReady(function() {
 	var socket = io.connect('http://192.168.0.205:4000');
 	var url = "/agro/BodegaItem/";
-
-	var queryParams = new URLSearchParams(window.location.search);
-	var id = queryParams.get('id');
+  
 	 
 	Ext.create('Ext.container.Viewport', {
 		layout: 'border',
@@ -89,7 +87,27 @@ Ext.onReady(function() {
 								//Ext.getCmp("tabla").getView().setDisabled(false);
 								////Ext.getCmp('tabpanel').setVisible(false);
 								Ext.getCmp('tabla').getStore().reload();
-							} }
+							} },
+							"->",
+                                {
+                                    xtype: 'button',
+                                    minWidth: 80,
+                                    text: 'Cerrar sesión',
+                                    iconCls: 'fas fa-sign-out-alt',
+                                    handler: function() {
+                                        Ext.Ajax.request({
+                                            url: url + 'cerrarSesion', // URL para cerrar sesión
+                                            method: 'POST',
+                                            success: function(response) {
+                                                window.location.href = 'login?pagina=bodegaitem';
+                                            },
+                                            failure: function(response) {
+                                                // Manejar el caso en que la solicitud falle
+                                                Ext.Msg.alert('Error', 'No se pudo cerrar sesión. Inténtelo de nuevo.');
+                                            }
+                                        });
+                                    }
+                                }
 						]
 					}
 				],

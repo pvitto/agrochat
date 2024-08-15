@@ -26,7 +26,7 @@ class BodegaItem extends CI_Controller {
             header("Location: " . $this->conseguirUrl() . "login?pagina=bodegaitem");
             exit();
         }
-
+  
         $this->revisarSesion();
 
         parent::__construct();
@@ -54,7 +54,7 @@ class BodegaItem extends CI_Controller {
         $this->data = array();
         //$this->load->view('welcome_message');
         $fecha = $this->input->get("FechaTransaccion");
-        $usuario = $this->input->get("NombreUsuario");
+        $usuario = $_SESSION['idusuario'];
         $sql = "Select
                 f.TransId,
                 CONVERT(VARCHAR,F.FechaTransaccion,103) [FechaTransaccion],
@@ -80,6 +80,7 @@ class BodegaItem extends CI_Controller {
                 convert(varchar,f.FechaPicked,103) = convert(varchar,"."'".$fecha."'".",103) and
                 g.transtype=5
                 and F.Estado=0 and g.Voidyn='0'
+                and S.UserName="."'".$usuario."'"."
             order by
                 F.FechaPicked desc";
 
@@ -165,15 +166,13 @@ class BodegaItem extends CI_Controller {
         $transid = $this->input->post('transid');
         $piso = $this->input->post('piso');
         $bodega = $this->input->post('bodega');
-        $observaciones = $this->input->post('observaciones');
-        $id = $this->input->post('id');
     
         // Validar los datos
         if (!empty($transid) && !empty($piso) && !empty($bodega)) {
             // Redirigir a la página de remisión con los parámetros adicionales
             echo json_encode([
                 'success' => true,
-                'url' => 'remision?transid=' . urlencode($transid) . '&piso=' . urlencode($piso) . '&bodega=' . urlencode($bodega) . '&observaciones=' . urlencode($observaciones) . '&id=' . urlencode($id)         
+                'url' => 'remision?transid=' . urlencode($transid) . '&piso=' . urlencode($piso) . '&bodega=' . urlencode($bodega)         
             ]);
         } else {
             // Enviar un mensaje de error si los datos no son válidos
@@ -284,7 +283,4 @@ class BodegaItem extends CI_Controller {
     
         $this->respuesta();
     }
-    
-    
-    
 }
