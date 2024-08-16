@@ -46,7 +46,7 @@ Ext.onReady(function() {
 								],
 								listeners: {
 									select: function( combo, record, eOpts ) {
-										Ext.getCmp("form").getForm().reset();
+	
 										//Ext.getCmp("tabla").getView().setDisabled(false);
 										//Ext.getCmp('tabpanel').setVisible(false);
 										if(combo.getValue() == 0){
@@ -71,7 +71,7 @@ Ext.onReady(function() {
 								listeners:{
 									select: function( field, value, eOpts ) {
 										Ext.getCmp('tabla').getStore().clearFilter();
-										Ext.getCmp("form").getForm().reset();
+	
 										//Ext.getCmp("tabla").getView().setDisabled(false);
 										////Ext.getCmp('tabpanel').setVisible(false);
 										Ext.getCmp('tabla').getStore().load({params: {FechaTransaccion: field.getRawValue()}});
@@ -83,7 +83,6 @@ Ext.onReady(function() {
 							{ minWidth: 80, text: 'Actualizar', iconCls: 'fas fa-sync-alt', hidden: false, handler: function(){
 								Ext.getCmp('tabla').getStore().clearFilter();
 								Ext.getCmp("pisos").setValue(0);
-								Ext.getCmp("form").getForm().reset();
 								//Ext.getCmp("tabla").getView().setDisabled(false);
 								////Ext.getCmp('tabpanel').setVisible(false);
 								Ext.getCmp('tabla').getStore().reload();
@@ -134,7 +133,7 @@ Ext.onReady(function() {
 										{ name: 'Comprt', type: 'int' },
 										{ name: 'Disp', type: 'int' },
 										{ name: 'Referencia_Equivalente', type: 'string' },
-										{ name: 'Picked', type: 'int' } // Campo Picked
+										{ name: 'Picked', type: 'int' }
 									],
 									data: []
 								})
@@ -395,171 +394,85 @@ Ext.onReady(function() {
 				],
 				listeners: {			
 					afterrender: function( view, eOpts ){
-						Ext.getCmp("form").getForm().reset();
 						var fe = Ext.getCmp("fecha").getRawValue();
 						view.getStore().load({params: {FechaTransaccion: fe}});					
-						Ext.getCmp('usuarios').getStore().load();
-						Ext.getCmp('Operarios').getStore().load();
 						
 					},
 					rowdblclick: function(viewTable, record, element, rowIndex, e, eOpts) {
 						var transid = record.get('TransId');
 						var piso = record.get('Piso');
 						var bodega = record.get('Bodega');
-					
-						Ext.Msg.confirm(
-							'Confirmar Picking',
-							'¿Quieres iniciar el picking de la orden ' + transid + '?',
-							function(buttonId) {
-								if (buttonId === 'yes') {
-									Ext.Ajax.request({
-										url: url + 'iniciarPicking',
-										method: 'POST',
-										params: {
-											transid: transid,
-											piso: piso,
-											bodega: bodega,
-											id: id
-										},
-										success: function(response) {
-											var result = Ext.decode(response.responseText);
-											if (result.success) {
-												window.location.href = result.url;
-											} else {
-												Ext.Msg.alert('Error', result.message);
+						var proceso = record.get('IdProceso');
+
+						if (proceso < 2)
+						{
+							Ext.Msg.confirm(
+								'Confirmar Picking',
+								'¿Quieres iniciar el picking de la orden ' + transid + '?',
+								function(buttonId) {
+									if (buttonId === 'yes') {
+										Ext.Ajax.request({
+											url: url + 'iniciarTrabajo',
+											method: 'POST',
+											params: {
+												transid: transid,
+												piso: piso,
+												bodega: bodega,
+												id: id,
+												proceso: proceso
+											},
+											success: function(response) {
+												var result = Ext.decode(response.responseText);
+												if (result.success) {
+													window.location.href = result.url;
+												} else {
+													Ext.Msg.alert('Error', result.message);
+												}
+											},
+											failure: function(response) {
+												Ext.Msg.alert('Error', 'No se pudo completar la solicitud.');
 											}
-										},
-										failure: function(response) {
-											Ext.Msg.alert('Error', 'No se pudo completar la solicitud.');
-										}
-									});
+										});
+									}
 								}
-							}
-						);
-					}
-					,
-					rowclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
-						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro1").setDisabled(true);
-						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp("pro4").setDisabled(true);
-
-						if(record.data.IdUsuario != null){
-							Ext.getCmp("Operarios").setValue(record.data.IdUsuario);
+							);
 						}
-
-						if(record.data.IdProceso < 4){
-							Ext.getCmp("pro"+(record.data.IdProceso+1)).setDisabled(false);
-						}						
+						else
+						{
+							Ext.Msg.confirm(
+								'Confirmar Empacado',
+								'¿Quieres iniciar el empacado de la orden ' + transid + '?',
+								function(buttonId) {
+									if (buttonId === 'yes') {
+										Ext.Ajax.request({
+											url: url + 'iniciarTrabajo',
+											method: 'POST',
+											params: {
+												transid: transid,
+												piso: piso,
+												bodega: bodega,
+												id: id,
+												proceso: proceso
+											},
+											success: function(response) {
+												var result = Ext.decode(response.responseText);
+												if (result.success) {
+													window.location.href = result.url;
+												} else {
+													Ext.Msg.alert('Error', result.message);
+												}
+											},
+											failure: function(response) {
+												Ext.Msg.alert('Error', 'No se pudo completar la solicitud.');
+											}
+										});
+									}
+								}
+							);
+						}
+						
 					}
 				}
-			}),
-			Ext.create('Ext.panel.Panel',{
-				hidden: true,
-				split: true,
-				id: 'tabpanel',
-				title: 'Administrar estado de procesos',
-				region: 'east',
-				layout: 'fit',
-				width: "24%",
-				items: [
-					{
-						id: 'form',
-						xtype: 'form',
-						//bodyStyle: 'margin: 10px',						
-						fieldDefaults: {
-							msgTarget: 'side'
-						},
-						header: false,						
-						items: [
-							{
-								xtype: 'combo',
-								id: 'usuarios',
-								typeAhead: true,
-								fieldLabel: 'Usuario',
-								triggerAction: 'all',
-								queryMode: 'local',
-								allowBlank: false,
-								anchor: '98%',
-								displayField: 'UserName',
-    							valueField: 'UserId',
-								store: Ext.create('Ext.data.Store', {
-									autoLoad: false,
-									fields: [
-										{ name: 'UserId', type: 'int' },
-										{ name: 'UserName', type: 'string' },
-										{ name: 'Password', type: 'string' }
-									],
-									proxy: {
-										timeout: 600000,
-										useDefaultXhrHeader: false,
-										type: 'ajax',
-										url: url+"obtenerUsuariosAdmin",
-										reader: {
-											type: 'json',
-											rootProperty: 'data'
-										}
-									}
-								})
-							},
-							{
-								id: 'proceso',
-								xtype: 'checkboxgroup',
-								fieldLabel: 'Proceso actual',
-								anchor: '98%',
-								// Arrange checkboxes into two columns, distributed vertically
-								columns: 1,
-								vertical: true,
-								allowBlank: false,
-								items: [
-									{ boxLabel: 'Recogiendo', name: 'IdProceso', id: "pro1", inputValue: 1, disabled: true },
-									{ boxLabel: 'Recogido', name: 'IdProceso', id: "pro2", inputValue: 2, disabled: true },
-									{ boxLabel: 'Empacando', name: 'IdProceso', id: "pro3", inputValue: 3, disabled: true },
-									{ boxLabel: 'Empacado', name: 'IdProceso', id: "pro4", inputValue: 4, disabled: true },
-									//{ boxLabel: 'Cancelado', name: 'IdProceso', id: "pro7", inputValue: 7, disabled: false }
-								]
-							},
-							{
-								xtype: 'combo',
-								id: 'Operarios',
-								typeAhead: true,
-								fieldLabel: 'Operario Asignado:',
-								triggerAction: 'all',
-								queryMode: 'local',
-								allowBlank: false,
-								anchor: '98%',
-								displayField: 'UserName',
-    							valueField: 'UserId',
-								store: Ext.create('Ext.data.Store', {
-									autoLoad: false,
-									fields: [
-										{ name: 'UserId', type: 'int' },
-										{ name: 'UserName', type: 'string' },
-										{ name: 'Password', type: 'string' }
-									],
-									proxy: {
-										timeout: 600000,
-										useDefaultXhrHeader: false,
-										type: 'ajax',
-										url: url+"obtenerUsuarios",
-										reader: {
-											type: 'json',
-											rootProperty: 'data'
-										}
-									}
-								})
-							},
-							{
-								xtype: 'textareafield',
-								id: 'Observacion',
-								grow: true,
-								fieldLabel: 'Observación',
-								anchor: '98%'
-							}
-						]
-					}
-				]
 			})
 		]
 	});

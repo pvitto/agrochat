@@ -3,7 +3,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 session_start();
 
-class Remision extends CI_Controller {
+class Remision_Empacar extends CI_Controller {
 
     public function respuesta()
     {
@@ -23,7 +23,7 @@ class Remision extends CI_Controller {
     public function index() {
 
 
-        $this->load->view('remision');
+        $this->load->view('remision_empacar');
 
     }
 
@@ -35,7 +35,7 @@ class Remision extends CI_Controller {
         $this->data = array();
 
         //$this->load->view('welcome_message');
-		$sql = sprintf("select d.entrynum Orden,e.cf_Ruta Ruta, d.ItemId Referencia, e.ExtLocID Localizacion, d.Descr,  d.QtyOrdSell Cantidad_Pedida, d.picked as Picked, i.[cf_Referencia Equivalente] [Referencia_Equivalente],
+		$sql = sprintf("select d.entrynum Orden,e.cf_Ruta Ruta, d.ItemId Referencia, e.ExtLocID Localizacion, d.Descr,  d.QtyOrdSell Cantidad_Pedida, d.picked as Picked, d.packed Packed, i.[cf_Referencia Equivalente] [Referencia_Equivalente],
 (select QtyOnHand from trav_InItemOnHand_view a where a.itemid=d.ItemId and a.LocId=d.LocId) Existencias,
 (select SUM(Qty) AS Comprt from tblInQty a where a.itemid=d.itemid and a.LocId=d.locid and a.LinkID='SO' and Qty>0) Comprt,
 
@@ -47,7 +47,7 @@ class Remision extends CI_Controller {
 			inner join tblInItemLoc l on  d.ItemId=l.ItemId and d.LocId=l.LocId
 			left join trav_tblWmExtLoc_view E on l.DfltBinNum=e.ExtLocID
 			where H.TransId='%s' and (e.[cf_Ubicacion Fisica]='%s' or e.[cf_Ubicacion Fisica] is NULL) and d.[status]='0' and h.Voidyn='0' and d.LocId='%s'
-			group by H.TransID, [cf_Ubicacion Fisica], d.ItemId, e.ExtLocID, d.Descr, d.QtyOrdSell, i.[cf_Referencia Equivalente], e.cf_Ruta, d.LocId, d.entrynum,Picked
+			group by H.TransID, [cf_Ubicacion Fisica], d.ItemId, e.ExtLocID, d.Descr, d.QtyOrdSell, i.[cf_Referencia Equivalente], e.cf_Ruta, d.LocId, d.entrynum,Picked,Packed
 			order by e.cf_Ruta",$transid, $piso,$bodega);
 
         $query = $this->db->query($sql);
@@ -59,6 +59,12 @@ class Remision extends CI_Controller {
             {
                 $row->Picked = 0;
             }
+
+            if($row->Packed == null)
+            {
+                $row->Packed = 0;
+            }
+
             $this->data["data"][] = array(
                 "Orden"=>$row->Orden, 
                 "Ruta"=>$row->Ruta, 
@@ -70,7 +76,8 @@ class Remision extends CI_Controller {
                 "Comprt"=>$row->Comprt,
                 "Disp"=>$row->Disp, 
                 "Referencia_Equivalente"=>$row->Referencia_Equivalente,
-                "Picked"=>$row->Picked
+                "Picked"=>$row->Picked,
+                "Packed"=>$row->Packed
 
 );
         }
@@ -99,7 +106,7 @@ class Remision extends CI_Controller {
     
         // Construir la consulta usando sprintf
         $sql = sprintf(
-            "UPDATE tblSoTransDetail SET picked='%s' WHERE TransID='%s' AND ItemId='%s' AND EntryNum='%d'",
+            "UPDATE tblSoTransDetail SET packed='%s' WHERE TransID='%s' AND ItemId='%s' AND EntryNum='%d'",
             $this->db->escape_str($cantidadAgregada), 
             $this->db->escape_str($transid), 
             $this->db->escape_str($referencia), 
@@ -116,7 +123,7 @@ class Remision extends CI_Controller {
             $this->data["mensaje"] = "Error en la actualización o no hubo cambios";
         }
 
-        $this->guardarHistorialPicked($transid, 1, $piso, $IdUsuario);
+        $this->guardarHistorialPicked($transid, 3, $piso, $IdUsuario);
     
         $this->respuesta();
     }
@@ -146,7 +153,7 @@ class Remision extends CI_Controller {
         $piso = $this->input->post('piso');
         $IdUsuario = $_SESSION['idusuario_bodegaitem'];
 
-        $result = $this->guardarHistorialPicked($transid, 2, $piso, $IdUsuario);
+        $result = $this->guardarHistorialPicked($transid, 4, $piso, $IdUsuario);
 
         if ($result) {
             $this->data["mensaje"] = "Actualización exitosa";
@@ -164,7 +171,7 @@ class Remision extends CI_Controller {
         $transid = $this->input->post('transid');
 
         $sql_picked = sprintf(
-            "UPDATE tblSoTransDetail SET Picked='0' where TransID='%s'",
+            "UPDATE tblSoTransDetail SET Packed='0' where TransID='%s'",
             $this->db->escape_str($transid)
         );
 
@@ -172,7 +179,7 @@ class Remision extends CI_Controller {
         $query_picked = $this->db->query($sql_picked);
 
         $sql_proceso = sprintf(
-            "UPDATE AGRInProcesoInventario SET idtranstipo='0' where TransID='%s'",
+            "UPDATE AGRInProcesoInventario SET idtranstipo='3' where TransID='%s'",
             $this->db->escape_str($transid)
         );
 

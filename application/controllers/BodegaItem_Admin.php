@@ -1,19 +1,33 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-session_start();
+class BodegaItem_Admin extends CI_Controller {
 
-class BodegaItem extends CI_Controller {
+    /**
+     * Index Page for this controller.
+     *
+     * Maps to the following URL
+     * 		http://example.com/index.php/welcome
+     *	- or -
+     * 		http://example.com/index.php/welcome/index
+     *	- or -
+     * Since this controller is set as the default controller in
+     * config/routes.php, it's displayed at http://example.com/
+     *
+     * So any other public methods not prefixed with an underscore will
+     * map to /index.php/welcome/<method_name>
+     * @see https://codeigniter.com/user_guide/general/urls.html
+     */
     public function __construct()
     {
-        if (!isset($_SESSION['usuario_bodegaitem'])) {
-            header("Location: " . $this->conseguirUrl() . "login?pagina=bodegaitem");
-            exit();
-        }
-  
-        $this->revisarSesion();
-
         parent::__construct();
+        /*header('Access-Control-Allow-Origin: *');
+        header("Access-Control-Allow-Headers: X-API-KEY, Origin, X-Requested-With, Content-Type, Accept, Access-Control-Request-Method");
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+        $method = $_SERVER['REQUEST_METHOD'];
+        if($method == "OPTIONS") {
+            die();
+        }*/
 
         $this->data = null;
     }
@@ -29,17 +43,15 @@ class BodegaItem extends CI_Controller {
     public function index()
     {
         //echo base_url();
-        $this->load->view('bodegaitem');
+        $this->load->view('bodegaitem_admin');
     }
 	
     public function obtenerPickedList()
     {
-        $this->revisarSesion();
-
+        
         $this->data = array();
         //$this->load->view('welcome_message');
         $fecha = $this->input->get("FechaTransaccion");
-        $usuario = $_SESSION['usuario_bodegaitem'];
         $sql = "Select
                 f.TransId,
                 CONVERT(VARCHAR,F.FechaTransaccion,103) [FechaTransaccion],
@@ -64,8 +76,7 @@ class BodegaItem extends CI_Controller {
             where
                 convert(varchar,f.FechaPicked,103) = convert(varchar,"."'".$fecha."'".",103) and
                 g.transtype=5
-                and F.Estado=0 and g.Voidyn='0'
-                and S.UserName="."'".$usuario."'"."
+                and F.Estado=0 and g.Voidyn='0'      
             order by
                 F.FechaPicked desc";
 
@@ -73,7 +84,6 @@ class BodegaItem extends CI_Controller {
 
         foreach ($query->result() as $row)
         {
-
             $this->data["data"][] = array("TransId"=>$row->TransId, 
                 "IdProceso"=>$row->IdProceso, 
                 "Orden"=>$row->Orden, 
@@ -99,7 +109,6 @@ class BodegaItem extends CI_Controller {
 
     public function obtenerUsuarios()
     {
-        $this->revisarSesion();
         $this->data = array();
 
         //$this->load->view('welcome_message');
@@ -125,7 +134,6 @@ class BodegaItem extends CI_Controller {
     
     public function obtenerUsuariosAdmin()
     {
-        $this->revisarSesion();
         $this->data = array();
 
         //$this->load->view('welcome_message');
@@ -147,81 +155,8 @@ class BodegaItem extends CI_Controller {
 
         $this->respuesta();
         //$this->load->view('welcome_message');
-    }   		
-
-    public function iniciarTrabajo() {
-        $this->revisarSesion();
-        // Obtener los datos enviados por POST
-        $transid = $this->input->post('transid');
-        $piso = $this->input->post('piso');
-        $bodega = $this->input->post('bodega');
-        $proceso = $this->input->post('proceso');
-    
-        // Validar los datos
-        if (!empty($transid) && !empty($piso) && !empty($bodega) && $proceso >= 0) {
-            // Redirigir a la página de remisión con los parámetros adicionales
-            if ($proceso < 2)
-            {
-                echo json_encode([
-                    'success' => true,
-                    'url' => 'remision?transid=' . urlencode($transid) . '&piso=' . urlencode($piso) . '&bodega=' . urlencode($bodega)         
-                ]);
-            }
-            else
-            {
-                echo json_encode([
-                    'success' => true,
-                    'url' => 'remision_empacar?transid=' . urlencode($transid) . '&piso=' . urlencode($piso) . '&bodega=' . urlencode($bodega)         
-                ]);
-            }
-        } else {
-            // Enviar un mensaje de error si los datos no son válidos
-            echo json_encode([
-                'success' => false,
-                'message' => 'Datos inválidos'
-            ]);
-        }
-    }
-
-    function revisarSesion() {
-        if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] >1800 )) {
-            // Si el usuario ha estado inactivo durante más de 30 minutos, se cierra la sesión
-            session_unset();     
-            session_destroy();   
-            header("Location: " . $this->conseguirUrl() . "login?pagina=bodegaitem");
-            exit();
-        }
-        $_SESSION['LAST_ACTIVITY'] = time();
-
-        if(isset($_GET['cerrar'])) {
-            session_unset();     
-            session_destroy();   
-            header("Location: " . $this->conseguirUrl() . "login?pagina=bodegaitem");
-            exit();
-        }
-    }
-
-    function cerrarSesion()
-    {
-        session_unset();     
-        session_destroy();   
-        header("Location: " . $this->conseguirUrl() . "login?pagina=bodegaitem");
-    }
-
-    function conseguirUrl() {
-        // Obtener el protocolo (http o https)
-        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-    
-        // Obtener el host (nombre de dominio o IP)
-        $host = $_SERVER['HTTP_HOST'];
-    
-        // Obtener el nombre de la carpeta de la aplicación
-        $basePath = str_replace(basename($_SERVER['SCRIPT_NAME']), '', $_SERVER['SCRIPT_NAME']);
-    
-        return $protocol . $host . $basePath;
-    }
-    
-
+    } 
+	
     public function obtenerReferencias()
     {
 		$transid = $this->input->get("TransId");
@@ -253,7 +188,7 @@ class BodegaItem extends CI_Controller {
             {
                 $row->Picked = 0;
             }
-
+            
             $this->data["data"][] = array(
                 "Orden"=>$row->Orden, 
                 "Ruta"=>$row->Ruta, 
@@ -273,4 +208,21 @@ class BodegaItem extends CI_Controller {
         $this->respuesta();
         //$this->load->view('welcome_message');
     }    	
+
+    public function guardarHistorialPicked()
+    {
+
+        $this->data = json_decode($this->input->post("datos"));
+
+        //$this->load->view('welcome_message');
+        $sql = sprintf("EXEC [dbo].[HistorialProcesoBodegaAdmin] '%s', %d, '%s', %d, %d,'%s'",$this->data->TransId, $this->data->IdTransTipo, $this->data->IdPiso, $this->data->IdUsuario,$this->data->Idoperario, $this->data->Observaciones );
+
+        $query = $this->db->query($sql);
+
+        $this->data = array();
+        $this->data["mensaje"] = $query->row()->Mensaje;
+
+        $this->respuesta();
+        //$this->load->view('welcome_message');
+    }    
 }
