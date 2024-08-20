@@ -14,5 +14,4 @@ La funcionalidad de esta web app esta basada en el uso de controllers en PHP que
 viene de la base de datos de la empresa en el software de "Traverse", por lo que esto asegura que es fiable y que los cambios hechos desde el interfaz del sistema van a representar un cambio real en los datos que la emprese maneje. 
 Los controladores y funcionalidad hasta la última versión de la aplicación liberada son:
 
--  `Bodega - Esta es la pestaña utilizada por los operarios para ver las remisiones que aún no han sido verificadas en el sistema. Les permite ver los items de las remisiones, quién es el responsable de completarlas y ver y administrar el estado en el que están
-si ellos son los responsables.`_
+-  `Bodega - Esta es la pestaña utilizada por los operarios para ver las remisiones que aún no han sido verificadas en el sistema. Les permite ver los items de las remisiones, quién es el responsable de completarlas y ver y administrar el estado en el que están si ellos son los responsables.`_
