@@ -5,7 +5,7 @@ Agro-Costa App Bodega
 Esta aplicación web, desarrollada en PHP y JavaScript, es el sistema utilizado en la bodega de Agro-COSTA para administrar diversos aspectos del inventario y las remisiones realizadas por los clientes. La aplicación se conecta a la base de datos de **Agro-Costa SAS** y está diseñada para ser utilizada tanto por los trabajadores de piso como por el personal de oficina, ofreciendo una interfaz práctica y funcional que agiliza la gestión del inventario y de las órdenes.
 
 *******************
-Funcionalidad <sub>(v2.0.0)</sub> 
+Funcionalidad (v2.0.0)
 *******************
 
 La funcionalidad de esta aplicación web se basa en el uso de controladores en PHP, que integran su lógica con archivos JavaScript para cumplir con sus distintos objetivos. Toda la información gestionada y visualizada en la aplicación proviene de la base de datos de la empresa en el software **Traverse**, lo que garantiza la fiabilidad de los datos y que cualquier cambio realizado desde la interfaz del sistema se refleje en tiempo real en los datos de la empresa.
