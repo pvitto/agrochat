@@ -21,5 +21,5 @@ La funcionalidad de esta aplicación web se basa en el uso de controladores en P
 Versiones
 *******************
 
-1. **AppBodega_v1.0**
-2. **AppBodega_v2.0** (Versión mas reciente)
+1. `AppBodega_v1.0 <https://github.com/jdavidIP/AgroCosta_AppBodega/releases/tag/v1.0.0>`_
+2. `AppBodega_v2.0 <https://github.com/jdavidIP/AgroCosta_AppBodega/releases/tag/v2.0.0>`_ (Versión mas reciente)
