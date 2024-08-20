@@ -2,28 +2,24 @@
 Agro-Costa App Bodega
 ###################
 
-Esta web app desarrollada en PHP y JavaScript es el sistema utilizado en la bodega de Agro-COSTA para administrar distintos aspectos alrededor de los productos en el inventario y las remisiones hechas por los clientes.
-Este sistema se conecta a la base de datos de "Agro-Costa SAS" y está hecho para ser utilizado tanto por los trabajadores de piso como los de oficina para lo que sus labores les requiera, y busca ser lo mas práctico y funcional en su uso para agilizar el funcionamiento de 
-la compañía en cuanto al manejamiento de inventario y órdenes se refiere.
+Esta aplicación web, desarrollada en PHP y JavaScript, es el sistema utilizado en la bodega de Agro-COSTA para administrar diversos aspectos del inventario y las remisiones realizadas por los clientes. La aplicación se conecta a la base de datos de **Agro-Costa SAS** y está diseñada para ser utilizada tanto por los trabajadores de piso como por el personal de oficina, ofreciendo una interfaz práctica y funcional que agiliza la gestión del inventario y de las órdenes.
 
 *******************
 Funcionalidad
 *******************
 
-La funcionalidad de esta web app esta basada en el uso de controllers en PHP que luego integran su funcionalidad con archivos JavaScript para asi lograr sus distintos cometidos. Toda la información que se muestra y administra en la app
-viene de la base de datos de la empresa en el software de "Traverse", por lo que esto asegura que es fiable y que los cambios hechos desde el interfaz del sistema van a representar un cambio real en los datos que la emprese maneje. 
-Los controladores y funcionalidad hasta la última versión de la aplicación liberada son:
+La funcionalidad de esta aplicación web se basa en el uso de controladores en PHP, que integran su lógica con archivos JavaScript para cumplir con sus distintos objetivos. Toda la información gestionada y visualizada en la aplicación proviene de la base de datos de la empresa en el software **Traverse**, lo que garantiza la fiabilidad de los datos y que cualquier cambio realizado desde la interfaz del sistema se refleje en tiempo real en los datos de la empresa.
 
--  `Bodega - Esta es la pestaña utilizada por los operarios para ver las remisiones que aún no han sido verificadas en el sistema. Les permite ver los items de las remisiones, quién es el responsable de completarlas y ver y administrar el estado en el que están si ellos son los responsables.`
--  `Bodega Admin - Esta es la pestaña utilizada por los administradores para ver las remisiones que aún no han sido verificadas en el sistema. Les permite ver los items de las remisiones, quién es el responsable de completarlas, ver y administrar el estado en el que están, y asignar operarios a cada remisión.`
-- `Localizar/Localizar_Etiquetas - Esta es la pestaña utilizada por los usuarios para consultar en que localizaciónes se encuentran los items de una remisión usando su numero de despacho. Les permite ver los items de las remisiones, sus localizaciones, cantidad disponible, proveedor, entre otras cosas. En "Localizar_Eitquetas" a esto se le agrega la funcionalidad de generar códigos de barras para los items de la orden.`
-- `Localizaciones/Localizaciones_Etiquetas - Esta es la pestaña utilizada por los usuarios para consultar la información de un item en específico utilizando su número de referencia. Les permite ver la referencia, descripción, bodega, cantidad disponible y localización del item. En "Localizaciones_Etiquetas" a esto se le agrega la funcionalidad de generar un codigo de barras al item.`
-- `Traslado/Traslado_Etiquetas - Esta es la pestaña utilizada por los administradores para consultar la información de los items que hayan sido asignados a traslados entre bodegas utilizando un número de traslado.  Les permite ver los items de los traslados, sus localizaciones, cantidad disponible, proveedor, entre otras cosas. En "Traslado_Eitquetas" a esto se le agrega la funcionalidad de generar códigos de barras para los items del traslado.`
-- `Históricos (Por Terminar) - Esta pestaña va a ser utilizada por usuarios para consultar remisiones ya despachadas utilizando su numero de remision. Les permite ver los items de las remisiones, quién fue el responsable de completarlas, la fecha de despacho, etc. En la versión mas reciente, la funcionalidad de este módulo aun no esta terminada ya que en la base de datos aun no se guardan las remisiones ya despachadas, por lo que se muestra cualquier remision que tenga el ID ingresado por el usuario sin importar su estado.`
+-  `**Bodega:** Pestaña utilizada por los operarios para visualizar las remisiones pendientes de verificación. Permite consultar los ítems de las remisiones, identificar al responsable de completarlas y gestionar su estado si son los responsables.`
+-  `**Bodega Admin:** Pestaña utilizada por los administradores para gestionar las remisiones pendientes. Permite ver los ítems, asignar operarios y administrar el estado de las remisiones.`
+- `**Localizar/Localizar Etiquetas:** Pestaña que permite a los usuarios consultar la localización de los ítems de una remisión utilizando su número de despacho. Muestra la localización, cantidad disponible, proveedor, entre otros datos. La versión "Localizar Etiquetas" añade la funcionalidad de generar códigos de barras para los ítems.`
+- `**Localizaciones/Localizaciones Etiquetas:** Pestaña utilizada para consultar la información de un ítem específico mediante su número de referencia. Muestra la descripción, bodega, cantidad disponible y localización. La versión "Localizaciones Etiquetas" permite generar un código de barras para el ítem.`
+- `**Traslado/Traslado Etiquetas:** Pestaña para que los administradores consulten los ítems asignados a traslados entre bodegas, utilizando un número de traslado. Muestra la localización, cantidad disponible, proveedor, entre otros datos. La versión "Traslado Etiquetas" permite generar códigos de barras para los ítems del traslado.`
+- `**Históricos (En desarrollo):** Pestaña que será utilizada para consultar remisiones ya despachadas mediante su número de remisión. Permitirá ver los ítems de las remisiones, el responsable, la fecha de despacho, entre otros. En la versión actual, esta funcionalidad no está terminada, ya que las remisiones despachadas aún no se guardan en la base de datos; por lo tanto, se muestran remisiones con el ID ingresado, independientemente de su estado.`
 
 *******************
 Versiones
 *******************
 
-1. `AppBodega_v1.0`
-2. `AppBodega_v2.0 (Latest)`
+1. `**AppBodega_v1.0**`
+2. `**AppBodega_v2.0** (Versión mas reciente)`
