@@ -2,12 +2,58 @@ Ext.onReady(function() {
 	var socket = io.connect('http://192.168.0.205:4000');
 	var url = "/agro/BodegaDespacho/";
 
+	var tipo = 1;
+
 	function restablecer(){
 		Ext.getCmp("form").getForm().reset();
 		//Ext.getCmp("tabla").getView().setDisabled(false);
 		Ext.getCmp('tabpanel').setVisible(false);
 		Ext.getCmp("tabla").getStore().reload();
 	};
+
+	function actualizarTextoBoton() {
+		var boton = Ext.getCmp('CambiarTipoButton');
+		if (tipo === 1) {
+			boton.setText('Mostrar Despachados');
+		} else {
+			boton.setText('Mostrar No Despachados');
+		}
+	}
+
+
+	var store = Ext.create('Ext.data.Store', {
+		autoLoad: false,
+		//groupField: "TransId",
+		fields: [
+			{ name: 'TransId', type: 'string' },
+			{ name: 'FechaTransaccion', type: 'string' },
+			{ name: 'FechaImpresion', type: 'string' },
+			{ name: 'Proceso', type: 'string' },
+			{ name: 'IdCliente', type: 'int' },
+			{ name: 'Cliente', type: 'string' },
+			{ name: 'Rep2id', type: 'string' },
+			{ name: 'Vendedor', type: 'string' },
+			{ name: 'EstadoTransaccion', type: 'string' },
+			{ name: 'Observaciones', type: 'string' },
+			{ name: 'TipoEnvio', type: 'string' },
+			{ name: 'Ubicacion', type: 'string' },
+			{ name: 'Transportadora', type: 'string' },
+			{ name: 'Guia', type: 'string' }
+		],
+		proxy: {
+			timeout: 600000,
+			useDefaultXhrHeader: false,
+			type: 'ajax',
+			url: url+"obtenerPickedList",
+			reader: {
+				type: 'json',
+				rootProperty: 'data'
+			},
+			extraParams: {
+				Tipo: tipo  // Aquí se envía el valor de "tipo"
+			}
+		}
+	})
 	 
 	Ext.create('Ext.container.Viewport', {
 		layout: 'border',
@@ -94,6 +140,18 @@ Ext.onReady(function() {
 									Ext.getCmp('tabpanel').setVisible(false);
 									Ext.getCmp('tabla').getStore().reload();
 								} 
+							},
+							{
+								xtype: 'button',
+								id: 'CambiarTipoButton',
+								text: 'Mostrar Despachados', // Texto inicial
+								handler: function() {
+									tipo = tipo === 1 ? 4 : 1; // Cambia el valor de tipo
+									actualizarTextoBoton(); // Actualiza el texto del botón
+									Ext.getCmp('tabla').getStore().reload({
+										params: { Tipo: tipo } // Recarga la lista con el nuevo valor de tipo
+									});
+								}
 							}
 						]
 					}
@@ -198,134 +256,60 @@ Ext.onReady(function() {
 							//console.log('Main Grid Collapse Body')
 						}
 					}
-				},				
-				store: Ext.create('Ext.data.Store', {
-					autoLoad: false,
-					//groupField: "TransId",
-					fields: [
-						{ name: 'TransId', type: 'string' },
-						{ name: 'IdProceso', type: 'int' },
-						{ name: 'Orden', type: 'int' },
-						{ name: 'TransType', type: 'string' },
-						{ name: 'CustName', type: 'string' },
-						{ name: 'Name', type: 'string' },
-						{ name: 'HoraInicial', type: 'string' },
-						{ name: 'HoraFinal', type: 'string' },
-						{ name: 'Piso', type: 'string' },
-						{ name: 'Bodega', type: 'string' },
-						{ name: 'FechaTransaccion', type: 'string' },
-						{ name: 'FechaImpresion', type: 'string' },
-						{ name: 'NombreUsuario', type: 'string' },
-						{ name: 'Observaciones', type: 'string' },
-						{ name: 'TipoEnvio', type: 'string' }
-					],
-					proxy: {
-						timeout: 600000,
-						useDefaultXhrHeader: false,
-						type: 'ajax',
-						url: url+"obtenerPickedList",
-						reader: {
-							type: 'json',
-							rootProperty: 'data'
-						}
-					}
-				}),
+				},			
+				store: store,	
 				columns: [
-					{
-						//xtype: 'checkcolumn',
-						header: 'Fecha Tansación',
-						dataIndex: 'FechaTransaccion',
-						groupable: true,
-						hidden: true,
-						headerCheckbox: true,
-						width: 150
-					},
+					
 					{
 						header: 'Remisión',
 						dataIndex: 'TransId',
 						width: 100
 					}, 
 					{
-						header: 'Id Proceso',
-						dataIndex: 'IdProceso',
-						hidden: true,
-						width: 100,
-						editor: {
-							xtype: 'combo',
-							typeAhead: true,
-							triggerAction: 'all',
-							store: [
-								['Shade','Shade'],
-								['Mostly Shady','Mostly Shady'],
-								['Sun or Shade','Sun or Shade'],
-								['Mostly Sunny','Mostly Sunny'],
-								['Sunny','Sunny']
-							]
-						}
+						header: 'Estado',
+						dataIndex: 'EstadoTransaccion',
+						width: 100
 					}, 
 					{
 						header: 'Proceso',
-						dataIndex: 'TransType',
-						width: 140,
-						editor: {
-							xtype: 'combo',
-							typeAhead: true,
-							triggerAction: 'all',
-							store: [
-								['Shade','Shade'],
-								['Mostly Shady','Mostly Shady'],
-								['Sun or Shade','Sun or Shade'],
-								['Mostly Sunny','Mostly Sunny'],
-								['Sunny','Sunny']
-							]
-						},
-						renderer: function(value, metaData, record, rowIndex, colIndex, store, view){
-							var proc = record.get("IdProceso");
-
-							switch(proc) {
-								case 0:
-									metaData.tdCls = 'picked';
-									break;
-								case 1:
-									metaData.tdCls = 'verificado';
-									break;
-								case 2:
-									metaData.tdCls = 'despachado';
-									break;
-							}
-
-							return value;
-						}
+						dataIndex: 'Proceso',
+						hidden: false,
+						width: 100
 					}, 
 					{
-						header: 'Orden Proceso',
-						dataIndex: 'Orden',
+						header: 'IdCliente',
+						dataIndex: 'IdCliente',
 						hidden: true,
 						width: 100
 					}, 
 					{
-						header: 'Bodega',
-						dataIndex: 'Bodega',
+						header: 'Guia',
+						dataIndex: 'Guia',
 						width: 100
 					}, 
 					{
-						header: 'Piso',
-						dataIndex: 'Piso',
+						header: 'Rep2id',
+						dataIndex: 'Rep2id',
+						hidden: true,
+						width: 100
+					}, 
+					{
+						header: 'Vendedor',
+						dataIndex: 'Vendedor',
 						width: 100
 					}, 
 					{
 						header: 'Cliente',
-						dataIndex: 'CustName',
+						dataIndex: 'Cliente',
 						flex: 1,
 						minWidth: 200,
 						align: 'center',
 					}, 
-					
 					{
-						//xtype: 'datecolumn',
-						header: 'Vendedor',
-						dataIndex: 'Name',
-						refenence: 'Name',
+						//xtype: 'checkcolumn',
+						header: 'Transportadora',
+						dataIndex: 'Transportadora',
+						width: 100
 					}, 
 					{
 						//xtype: 'checkcolumn',
@@ -342,23 +326,12 @@ Ext.onReady(function() {
 					}, 
 					{
 						//xtype: 'checkcolumn',
-						header: 'Fecha Inicial',
-						dataIndex: 'HoraInicial',
-						width: 190//,
-						//stopSelection: false
-					}, 
-					{
-						//xtype: 'checkcolumn',
-						header: 'Fecha Final',
-						dataIndex: 'HoraFinal', 
-						//headerCheckbox: true,
-						width: 190
-					}, 
-					{
-						//xtype: 'checkcolumn',
-						header: 'Responsable',
-						dataIndex: 'NombreUsuario',
-						width: 130
+						header: 'Fecha Tansación',
+						dataIndex: 'FechaTransaccion',
+						groupable: true,
+						hidden: false,
+						headerCheckbox: true,
+						width: 150
 					},
 					{
 						//xtype: 'checkcolumn',
@@ -389,46 +362,55 @@ Ext.onReady(function() {
 					}
 				],
 				
-				listeners: {			
-					afterrender: function( view, eOpts ){
+				listeners: {
+					afterrender: function(view, eOpts) {
 						Ext.getCmp("form").getForm().reset();
 						Ext.getCmp('tabpanel').setVisible(false);
-						//Ext.getCmp("tabla").getView().setDisabled(false);
 						var fe = Ext.getCmp("fecha").getRawValue();
-						view.getStore().load({params: {FechaTransaccion: fe}});					
+						view.getStore().load({ params: { FechaTransaccion: fe } });
 						Ext.getCmp('usuarios').getStore().load();
 						Ext.getCmp('Operarios').getStore().load();
-						
 					},
-					rowdblclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
+					rowdblclick: function(viewTable, record, element, rowIndex, e, eOpts) {
 						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro1").setDisabled(true);
 						Ext.getCmp("pro2").setDisabled(true);
-						//Ext.getCmp("tabla").getView().setDisabled(true);
+						Ext.getCmp("pro3").setDisabled(true);
 						Ext.getCmp('tabpanel').setVisible(true);
-
-						if(record.data.IdUsuario != null){
-							Ext.getCmp("Operarios").setValue(record.data.IdUsuario);
+				
+						var proceso = record.get('Proceso');
+				
+						switch (proceso) {
+							case 'POR DESPACHO':
+								Ext.getCmp("pro2").setDisabled(false);
+								Ext.getCmp("pro3").setDisabled(false);
+								break;
+							case 'UBICADO':
+								Ext.getCmp("pro3").setDisabled(false);
+								break;
+							case 'DESPACHADO':
+								break;
 						}
-
-						if(record.data.IdProceso < 2){
-							Ext.getCmp("pro"+(record.data.IdProceso+1)).setDisabled(false);
-						}						
 					},
-					rowclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
+					rowclick: function(viewTable, record, element, rowIndex, e, eOpts) {
 						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro1").setDisabled(true);
 						Ext.getCmp("pro2").setDisabled(true);
-
-						if(record.data.IdUsuario != null){
-							Ext.getCmp("Operarios").setValue(record.data.IdUsuario);
+						Ext.getCmp("pro3").setDisabled(true);
+				
+						var proceso = record.get('Proceso');
+				
+						switch (proceso) {
+							case 'POR DESPACHO':
+								Ext.getCmp("pro2").setDisabled(false);
+								Ext.getCmp("pro3").setDisabled(false);
+								break;
+							case 'UBICADO':
+								Ext.getCmp("pro3").setDisabled(false);
+								break;
+							case 'DESPACHADO':
+								break;
 						}
-
-						if(record.data.IdProceso < 2){
-							Ext.getCmp("pro"+(record.data.IdProceso+1)).setDisabled(false);
-						}						
 					}
-				}
+				}				
 			}),
 			Ext.create('Ext.panel.Panel',{
 				hidden: true,
@@ -459,15 +441,6 @@ Ext.onReady(function() {
 									{ minWidth: 80, text: 'Guardar', iconCls: 'fas fa-save', hidden: false, handler: function(){
 										var fila = Ext.getCmp("tabla").getSelection()[0].data;
 
-										if(fila.Piso == null || fila.Piso == ""){
-											Ext.Msg.show({
-												title:'Atención!',
-												message: 'Debe asignar un piso a la ubicación de unas de las referencias de la remisión: <br> <strong>'+fila.TransId+'</strong>',
-												buttons: Ext.Msg.OK,
-												icon: Ext.Msg.WARNING
-											});
-											return false;
-										}
 
 										if(!Ext.getCmp("form").getForm().isValid()){
 											Ext.Msg.show({
@@ -487,15 +460,6 @@ Ext.onReady(function() {
 											});
 											return false;
 										}
-										if(Ext.getCmp("proceso").getValue().IdProceso==7 && Ext.getCmp("Observacion").getValue().trim()==""){
-											Ext.Msg.show({
-												title:'Atención!',
-												message: 'Si vas a cancelar/activar un pedido digita la observacion',
-												buttons: Ext.Msg.OK,
-												icon: Ext.Msg.WARNING
-											});
-											return false;
-										}
 										else{
 											var datos = {};
 											datos.TransId = fila.TransId;
@@ -503,7 +467,28 @@ Ext.onReady(function() {
 											datos.IdPiso = fila.Piso;
 											datos.IdUsuario = Ext.getCmp("usuarios").getValue();
 											datos.Idoperario = Ext.getCmp("Operarios").getValue();
-											datos.Observaciones ='';
+											datos.Observaciones = Ext.getCmp("Observacion").getValue().trim();
+											
+											
+											if (datos.IdTransTipo == 2)
+											{
+												datos.BinNum = Ext.getCmp("Localizacion").getValue();
+												datos.Transportadora = ""
+											}
+											else if (datos.IdTransTipo == 3){
+												datos.Transportadora = Ext.getCmp("Transportadora").getValue();
+												datos.BinNum = "";
+											}
+											else
+											{
+												Ext.Msg.show({
+													title:'Atención!',
+													message: 'Debe escoger un estado.',
+													buttons: Ext.Msg.OK,
+													icon: Ext.Msg.WARNING
+												});
+												return false;
+											}
 
 											var dat = Ext.getCmp("tabla").getStore().getDataSource().items.filter(x => x.data.TransId == fila.TransId && x.data.IdProceso !== datos.IdTransTipo && x.data.Piso != fila.Piso);
 
@@ -593,7 +578,7 @@ Ext.onReady(function() {
 								allowBlank: false,
 								anchor: '98%',
 								displayField: 'UserName',
-    							valueField: 'UserId',
+								valueField: 'UserId',
 								store: Ext.create('Ext.data.Store', {
 									autoLoad: false,
 									fields: [
@@ -605,7 +590,7 @@ Ext.onReady(function() {
 										timeout: 600000,
 										useDefaultXhrHeader: false,
 										type: 'ajax',
-										url: url+"obtenerUsuariosAdmin",
+										url: url + "obtenerUsuariosAdmin",
 										reader: {
 											type: 'json',
 											rootProperty: 'data'
@@ -623,29 +608,56 @@ Ext.onReady(function() {
 							},
 							{
 								id: 'proceso',
-								xtype: 'checkboxgroup',
+								xtype: 'radiogroup',
 								fieldLabel: 'Proceso actual',
 								anchor: '98%',
-								// Arrange checkboxes into two columns, distributed vertically
 								columns: 1,
 								vertical: true,
 								allowBlank: false,
 								items: [
-									{ boxLabel: 'Verificado', name: 'IdProceso', id: "pro1", inputValue: 1, disabled: true },
-									{ boxLabel: 'Despachado', name: 'IdProceso', id: "pro2", inputValue: 2, disabled: true },
-								]
+									{ 
+										boxLabel: 'Ubicado', 
+										name: 'IdProceso', 
+										id: "pro2", 
+										inputValue: 2, 
+										disabled: true
+									},
+									{ 
+										boxLabel: 'Despachado', 
+										name: 'IdProceso', 
+										id: "pro3", 
+										inputValue: 3, 
+										disabled: true
+									}
+								],
+								listeners: {
+									change: function(field, newValue, oldValue) {
+										// Oculta todos los campos al inicio
+										Ext.getCmp('Localizacion').setVisible(false);
+										Ext.getCmp('Transportadora').setVisible(false);
+							
+										// Muestra el campo correspondiente basado en la selección
+										if (newValue.IdProceso === 2) {
+											Ext.getCmp('Localizacion').setVisible(true);
+											Ext.getCmp('Transportadora').setVisible(false);
+										} else if (newValue.IdProceso === 3) {
+											Ext.getCmp('Transportadora').setVisible(true);
+											Ext.getCmp('Localizacion').setVisible(false);
+										}
+									}
+								}
 							},
 							{
 								xtype: 'combo',
 								id: 'Operarios',
 								typeAhead: true,
-								fieldLabel: 'Transportadora:',
-								triggerAction: 'all', 
+								fieldLabel: 'Operario:',
+								triggerAction: 'all',
 								queryMode: 'local',
 								allowBlank: false,
 								anchor: '98%',
 								displayField: 'UserName',
-    							valueField: 'UserId',
+								valueField: 'UserId',
 								store: Ext.create('Ext.data.Store', {
 									autoLoad: false,
 									fields: [
@@ -657,15 +669,83 @@ Ext.onReady(function() {
 										timeout: 600000,
 										useDefaultXhrHeader: false,
 										type: 'ajax',
-										url: url+"obtenerUsuarios",
+										url: url + "obtenerUsuarios",
 										reader: {
 											type: 'json',
 											rootProperty: 'data'
 										}
 									}
 								})
+							},
+							{
+								xtype: 'textareafield',
+								id: 'Observacion',
+								grow: true,
+								fieldLabel: 'Observación',
+								anchor: '98%'
+							},
+							{
+								xtype: 'combo',
+								id: 'Localizacion',
+								typeAhead: true,
+								fieldLabel: 'Localizacion',
+								triggerAction: 'all',
+								queryMode: 'local',
+								allowBlank: true,
+								anchor: '98%',
+								displayField: 'BinNum',
+    							valueField: 'BinNum',
+								store: Ext.create('Ext.data.Store', {
+									autoLoad: true,
+									fields: [
+										{ name: 'BinNum', type: 'string' }
+									],
+									proxy: {
+										timeout: 600000,
+										useDefaultXhrHeader: false,
+										type: 'ajax',
+										url: url+"obtenerBinNum",
+										reader: {
+											type: 'json',
+											rootProperty: 'data'
+										}
+									}
+								}),
+								hidden: true
+							},
+							{
+								xtype: 'combo',
+								id: 'Transportadora',
+								typeAhead: true,
+								fieldLabel: 'Transportadora',
+								triggerAction: 'all',
+								queryMode: 'local',
+								allowBlank: true,
+								anchor: '98%',
+								displayField: 'Descrip', 
+								valueField: 'Idtransportadora', 
+								store: Ext.create('Ext.data.Store', {
+									autoLoad: true,
+									fields: [
+										{ name: 'Descrip', type: 'string' },
+										{ name: 'Idtransportadora', type: 'int' }
+									],
+									proxy: {
+										timeout: 600000,
+										useDefaultXhrHeader: false,
+										type: 'ajax',
+										url: url + "obtenerTransportadoras",
+										reader: {
+											type: 'json',
+											rootProperty: 'data'
+										}
+									}
+								}),
+								hidden: true
 							}
+							
 						]
+						
 					}
 				]
 			})

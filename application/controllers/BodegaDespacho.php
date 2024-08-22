@@ -30,55 +30,27 @@ class BodegaDespacho extends CI_Controller {
         
         $this->data = array();
         //$this->load->view('welcome_message');
-        $fecha = $this->input->get("FechaTransaccion");
-        $sql = "Select
-                f.TransId,
-                CONVERT(VARCHAR,F.FechaTransaccion,103) [FechaTransaccion],
-                CONVERT(VARCHAR,F.FechaPicked,103) [FechaImpresion],
-                isnull (F.IdTransTipo,0) IdProceso,
-                isnull (t.Nombre,'PICKED') Proceso,
-                isnull(t.Orden,0) Orden,
-                f.CustName , f.[Name], (convert(varchar, f.HoraInicial, 103)+' '+Format(f.HoraInicial, 'hh:mm:ss tt')) HoraInicial,
-                (convert(varchar, f.HoraFinal, 103)+' '+Format(f.HoraFinal, 'hh:mm:ss tt')) HoraFinal,
-                f.Piso,
-                f.LocId,
-                F.IdUsuario IdUsuario,
-                S.UserName NombreUsuario,
-                F.Observaciones Observaciones,
-                Case when g.ShipToID='MOSTRADOR' then  'Mostrador' else '' end TipoEnvio
-            from
-              
-                [AGR].[dbo].[AGRInProcesoInventario] F inner join tblsotransheader g
-		on f.transid=g.transid and f.Estado=0
-                left join [AGR].[dbo].[AGRInTipoTransaccion] T on F.IdTransTipo=t.IdTransTipo
-                left join [TSM].[dbo].[User] S on s.UserId=F.IdUsuario
-            where
-                convert(varchar,f.FechaPicked,103) = convert(varchar,"."'".$fecha."'".",103) and
-                g.transtype=5
-                and F.Estado=0 and g.Voidyn='0'      
-            order by
-                F.FechaPicked desc";
+        $tipo = $this->input->get("Tipo");
+        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s'", '', $tipo, '', '', '', '', '', '');
 
         $query = $this->db->query($sql);
 
         foreach ($query->result() as $row)
         {
             $this->data["data"][] = array("TransId"=>$row->TransId, 
-                "IdProceso"=>$row->IdProceso, 
-                "Orden"=>$row->Orden, 
-                "TransType"=>$row->Proceso, 
-                "CustName"=>$row->CustName, 
-                "Name"=>$row->Name, 
-                "FechaTransaccion"=>$row->FechaTransaccion, 
-				"FechaImpresion"=>$row->FechaImpresion,
-                "HoraInicial"=>$row->HoraInicial, 
-                "HoraFinal"=>$row->HoraFinal, 
-                "Piso"=>$row->Piso, 
-                "Bodega"=>$row->LocId, 
-                "IdUsuario"=>$row->IdUsuario, 
-                "NombreUsuario"=>$row->NombreUsuario, 
+                "FechaTransaccion"=>$row->FechaTransaccion,
+                "FechaImpresion"=>$row->FechaImpresion,
+                "Proceso"=>$row->Proceso,
+                "IdCliente"=>$row->IdCliente,
+                "Cliente"=>$row->Cliente,
+                "Rep2id"=>$row->Rep2id,
+                "Vendedor"=>$row->Vendedor,
+                "EstadoTransaccion"=>$row->EstadoTransaccion,
                 "Observaciones"=>$row->Observaciones,
-                "TipoEnvio"=>$row->TipoEnvio
+                "TipoEnvio"=>$row->TipoEnvio,
+                "Ubicacion"=>$row->Ubicacion,
+                "Transportadora"=>$row->Transportadora,
+                "Guia"=>$row->Guia
             );
         }
 
@@ -175,15 +147,61 @@ class BodegaDespacho extends CI_Controller {
 
         $this->data = json_decode($this->input->post("datos"));
 
+        $tipo = 0;
+
+        if ($this->data->IdTransTipo == 2)
+        {
+            $tipo = 3;
+        }
+        else if ($this->data->IdTransTipo == 3)
+        {
+            $tipo = 2;
+        }
+
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialProcesoBodegaAdmin] '%s', %d, '%s', %d, %d,'%s'",$this->data->TransId, $this->data->IdTransTipo, $this->data->IdPiso, $this->data->IdUsuario,$this->data->Idoperario, $this->data->Observaciones );
+        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho);
 
         $query = $this->db->query($sql);
-
-        $this->data = array();
-        $this->data["mensaje"] = $query->row()->Mensaje;
 
         $this->respuesta();
         //$this->load->view('welcome_message');
     }   
+
+    public function obtenerBinNum()
+    {
+        $this->data = array();
+        //$this->load->view('welcome_message');
+        $sql = "SELECT ExtLocID BinNum, LocID from trav_tblWmExtLoc_view 
+        order by ExtLocID";
+
+        $query = $this->db->query($sql);
+
+        foreach ($query->result() as $row)
+        {
+            $this->data["data"][] = array("BinNum"=>$row->BinNum, 
+            "LocID"=>$row->LocID);
+        }
+
+        $this->respuesta();
+        //$this->load->view('welcome_message');
+    } 
+
+    public function obtenerTransportadoras()
+    {
+        $this->data = array();
+        //$this->load->view('welcome_message');
+        $sql = "SELECT Idtransportadora, Descrip from AGRinTransportadoras
+        order by Idtransportadora";
+
+        $query = $this->db->query($sql);
+
+        foreach ($query->result() as $row)
+        {
+            $this->data["data"][] = array("Idtransportadora"=>$row->Idtransportadora, 
+            "Descrip"=>$row->Descrip);
+        }
+
+        $this->respuesta();
+        //$this->load->view('welcome_message');
+    }
 }
