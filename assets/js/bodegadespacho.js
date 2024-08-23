@@ -21,8 +21,41 @@ Ext.onReady(function() {
 	}
 
 
+	function updateExportButtonState() {
+		var exportButton = Ext.getCmp('exportButton');
+		if (exportButton) {
+			exportButton.setDisabled(tipo !== 4);
+		}
+	}
+
+	function setVisibilityForm(visible)
+	{
+		if (visible === false)
+		{
+			Ext.getCmp("pro2").setVisible(false);
+			Ext.getCmp("pro3").setVisible(false);
+			Ext.getCmp("proceso").setVisible(false);
+			Ext.getCmp("usuarios").setVisible(false);
+			Ext.getCmp("password").setVisible(false);
+			Ext.getCmp("Operarios").setVisible(false);
+			Ext.getCmp("Observacion").setVisible(false);
+		}
+		else if (visible === true)
+		{
+			Ext.getCmp("pro2").setVisible(true);
+			Ext.getCmp("pro3").setVisible(true);
+			Ext.getCmp("proceso").setVisible(true);
+			Ext.getCmp("usuarios").setVisible(true);
+			Ext.getCmp("password").setVisible(true);
+			Ext.getCmp("Operarios").setVisible(true);
+			Ext.getCmp("Observacion").setVisible(true);
+		}
+	}
+	
+
+
 	var store = Ext.create('Ext.data.Store', {
-		autoLoad: false,
+		autoLoad: true,
 		//groupField: "TransId",
 		fields: [
 			{ name: 'TransId', type: 'string' },
@@ -38,7 +71,10 @@ Ext.onReady(function() {
 			{ name: 'TipoEnvio', type: 'string' },
 			{ name: 'Ubicacion', type: 'string' },
 			{ name: 'Transportadora', type: 'string' },
-			{ name: 'Guia', type: 'string' }
+			{ name: 'Guia', type: 'string' },
+			{ name: 'Administrador', type: 'string' },
+			{ name: 'Operario', type: 'string' },
+			{ name: 'IdDespacho', type: 'int' },
 		],
 		proxy: {
 			timeout: 600000,
@@ -81,78 +117,58 @@ Ext.onReady(function() {
 						},
 						items: [
 							{
-								xtype: 'combo',
-								typeAhead: true,
-								id: 'pisos',
-								width: 225,
-								labelWidth: 130,
-								fieldLabel: 'Seleccione Bodega',
-								triggerAction: 'all',
-								value: 0,
-								editable: false,
-								store: [
-									[0,'Todos'],
-									[1,'P1'],
-									[2,'A'],
-									//[3,'A']
-								],
-								listeners: {
-									select: function( combo, record, eOpts ) {
-										Ext.getCmp("form").getForm().reset();
-										//Ext.getCmp("tabla").getView().setDisabled(false);
-										Ext.getCmp('tabpanel').setVisible(false);
-										if(combo.getValue() == 0){
-											Ext.getCmp('tabla').getStore().clearFilter();
-										}else{
-											Ext.getCmp('tabla').getStore().filter("Bodega",combo.getRawValue());
-										}	
-									}
-								}
-							},
-							"-",
-							{
-								xtype: 'datefield',
-								labelWidth: 120,
-								//anchor: '100%',
-								id: 'fecha',
-								fieldLabel: 'Seleccione fecha',
-								value: new Date(),
-								format: "d/m/Y",
-								editable: false,
-								width: 245,
-								listeners:{
-									select: function( field, value, eOpts ) {
-										Ext.getCmp('tabla').getStore().clearFilter();
-										Ext.getCmp("form").getForm().reset();
-										//Ext.getCmp("tabla").getView().setDisabled(false);
-										Ext.getCmp('tabpanel').setVisible(false);
-										Ext.getCmp('tabla').getStore().load({params: {FechaTransaccion: field.getRawValue()}});
-									}
-								},
-								maxValue: new Date()  // limited to the current date or prior
-							},
-							"-",
-							{ 	
-								minWidth: 80, text: 'Actualizar', iconCls: 'fas fa-sync-alt', hidden: false, handler: function(){
-									Ext.getCmp('tabla').getStore().clearFilter();
-									Ext.getCmp("pisos").setValue(0);
-									Ext.getCmp("form").getForm().reset();
-									Ext.getCmp('tabpanel').setVisible(false);
-									Ext.getCmp('tabla').getStore().reload();
-								} 
-							},
-							{
 								xtype: 'button',
 								id: 'CambiarTipoButton',
 								text: 'Mostrar Despachados', // Texto inicial
 								handler: function() {
 									tipo = tipo === 1 ? 4 : 1; // Cambia el valor de tipo
 									actualizarTextoBoton(); // Actualiza el texto del botón
+									updateExportButtonState(); 
 									Ext.getCmp('tabla').getStore().reload({
 										params: { Tipo: tipo } // Recarga la lista con el nuevo valor de tipo
 									});
 								}
+							},
+							"->",
+							{
+								id: 'exportButton', 
+								xtype: 'button',
+								text: 'Exportar a Excel',
+								disabled: tipo != 4,
+								iconCls: 'fas fa-caret-down',
+								handler: function() {
+									try {
+										var grid = Ext.getCmp('tabla');
+										var store = grid.getStore();
+						
+							
+										// Create a new Excel workbook
+										var workbook = XLSX.utils.book_new();
+							
+										// Convert store data to JSON format for Excel export
+										var worksheetData = store.getData().items.map(function(record) {
+											var data = record.getData();
+											delete data.id; // Eliminar la columna "ID"
+											return data;
+										});
+							
+										// Create a worksheet and append it to the workbook
+										var worksheet = XLSX.utils.json_to_sheet(worksheetData);
+										XLSX.utils.book_append_sheet(workbook, worksheet, 'Datos');
+							
+										// Export the workbook to a file
+										XLSX.writeFile(workbook, 'despachados.xlsx');
+							
+										// Clear the filter after exporting
+										store.clearFilter();
+							
+										Ext.Msg.alert('Éxito', 'El archivo Excel se ha creado correctamente.');
+									} catch (error) {
+										Ext.Msg.alert('Error', 'Hubo un problema al crear el archivo Excel: ' + error.message);
+									}
+								}
 							}
+							
 						]
 					}
 				],
@@ -268,23 +284,48 @@ Ext.onReady(function() {
 					{
 						header: 'Estado',
 						dataIndex: 'EstadoTransaccion',
-						width: 100
+						width: 70
 					}, 
 					{
 						header: 'Proceso',
 						dataIndex: 'Proceso',
 						hidden: false,
-						width: 100
+						minWidth: 200,
+						renderer: function(value, metaData, record, rowIndex, colIndex, store, view){
+							var proc = record.get("Proceso");
+
+							switch(proc) {
+								case 'POR DESPACHO':
+									metaData.tdCls = 'pordespacho';
+									return 'Por Despacho';
+								case 'UBICADO':
+									metaData.tdCls = 'ubicado';
+									return 'Ubicado';
+								case 'DESPACHADO':
+									metaData.tdCls = 'despachado';
+									return 'Despachado';
+
+							}
+
+							return value;
+						}
 					}, 
 					{
 						header: 'IdCliente',
 						dataIndex: 'IdCliente',
 						hidden: true,
 						width: 100
-					}, 
+					},
+					{
+						header: 'IdCliente',
+						dataIndex: 'IdCliente',
+						hidden: true,
+						width: 100
+					},  
 					{
 						header: 'Guia',
 						dataIndex: 'Guia',
+						hidden: true,
 						width: 100
 					}, 
 					{
@@ -302,8 +343,7 @@ Ext.onReady(function() {
 						header: 'Cliente',
 						dataIndex: 'Cliente',
 						flex: 1,
-						minWidth: 200,
-						align: 'center',
+						minWidth: 100,
 					}, 
 					{
 						//xtype: 'checkcolumn',
@@ -359,55 +399,97 @@ Ext.onReady(function() {
 						}
 						
 						
-					}
+					},
+					{
+						//xtype: 'checkcolumn',
+						header: 'Admin',
+						dataIndex: 'Administrador',
+						width: 100
+					}, 
+					{
+						//xtype: 'checkcolumn',
+						header: 'Operario',
+						dataIndex: 'Operario',
+						width: 100
+					},
 				],
 				
 				listeners: {
 					afterrender: function(view, eOpts) {
 						Ext.getCmp("form").getForm().reset();
 						Ext.getCmp('tabpanel').setVisible(false);
-						var fe = Ext.getCmp("fecha").getRawValue();
-						view.getStore().load({ params: { FechaTransaccion: fe } });
 						Ext.getCmp('usuarios').getStore().load();
 						Ext.getCmp('Operarios').getStore().load();
 					},
 					rowdblclick: function(viewTable, record, element, rowIndex, e, eOpts) {
-						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp('tabpanel').setVisible(true);
-				
-						var proceso = record.get('Proceso');
-				
-						switch (proceso) {
-							case 'POR DESPACHO':
-								Ext.getCmp("pro2").setDisabled(false);
-								Ext.getCmp("pro3").setDisabled(false);
-								break;
-							case 'UBICADO':
-								Ext.getCmp("pro3").setDisabled(false);
-								break;
-							case 'DESPACHADO':
-								break;
+						if (tipo == 1)
+						{
+							Ext.getCmp("form").setDisabled(false);
+							Ext.getCmp("form").getForm().reset();
+							Ext.getCmp("pro2").setDisabled(true);
+							Ext.getCmp("pro3").setDisabled(true);
+							Ext.getCmp('tabpanel').setVisible(true);
+							Ext.getCmp("Guia").setVisible(false);
+							setVisibilityForm(true);
+					
+							var proceso = record.get('Proceso');
+					
+							switch (proceso) {
+								case 'POR DESPACHO':
+									Ext.getCmp("pro2").setDisabled(false);
+									Ext.getCmp("pro3").setDisabled(false);
+									break;
+								case 'UBICADO':
+									Ext.getCmp("pro3").setDisabled(false);
+									break;
+								case 'DESPACHADO':
+									break;
+							}
 						}
+						else
+						{
+							//Ext.getCmp("form").disable();
+							Ext.getCmp('tabpanel').setVisible(true);
+							Ext.getCmp("form").setDisabled(false);
+							Ext.getCmp("form").getForm().reset();
+							setVisibilityForm(false);
+							Ext.getCmp("Guia").setVisible(true);
+						}
+						
 					},
 					rowclick: function(viewTable, record, element, rowIndex, e, eOpts) {
-						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-				
-						var proceso = record.get('Proceso');
-				
-						switch (proceso) {
-							case 'POR DESPACHO':
-								Ext.getCmp("pro2").setDisabled(false);
-								Ext.getCmp("pro3").setDisabled(false);
-								break;
-							case 'UBICADO':
-								Ext.getCmp("pro3").setDisabled(false);
-								break;
-							case 'DESPACHADO':
-								break;
+						if (tipo == 1)
+						{
+							Ext.getCmp("form").setDisabled(false);
+							Ext.getCmp("form").getForm().reset();
+							Ext.getCmp("pro2").setDisabled(true);
+							Ext.getCmp("pro3").setDisabled(true);
+							Ext.getCmp("Guia").setVisible(false);
+							setVisibilityForm(true);
+					
+							var proceso = record.get('Proceso');
+					
+							switch (proceso) {
+								case 'POR DESPACHO':
+									Ext.getCmp("pro2").setDisabled(false);
+									Ext.getCmp("pro3").setDisabled(false);
+									break;
+								case 'UBICADO':
+									Ext.getCmp("pro3").setDisabled(false);
+									break;
+								case 'DESPACHADO':
+									break;
+							}
+						}
+						else
+						{
+							//Ext.getCmp("form").disable();
+							Ext.getCmp('tabpanel').setVisible(true);
+							Ext.getCmp("form").setDisabled(false);
+							Ext.getCmp("form").getForm().reset();
+							setVisibilityForm(false);
+							Ext.getCmp("Guia").setVisible(true);
+							
 						}
 					}
 				}				
@@ -438,29 +520,34 @@ Ext.onReady(function() {
 									pack: 'left'
 								},
 								items: [
-									{ minWidth: 80, text: 'Guardar', iconCls: 'fas fa-save', hidden: false, handler: function(){
-										var fila = Ext.getCmp("tabla").getSelection()[0].data;
-
-
-										if(!Ext.getCmp("form").getForm().isValid()){
-											Ext.Msg.show({
-												title:'Atención!',
-												message: 'Debe llenar todos los campos obligatorios',
-												buttons: Ext.Msg.OK,
-												icon: Ext.Msg.WARNING
-											});
-											return false;
-										}
-										if(Ext.getCmp("usuarios").getSelection().data.Password != Ext.getCmp("password").getValue().trim()){
-											Ext.Msg.show({
-												title:'Atención!',
-												message: 'Contraseña Incorrecta',
-												buttons: Ext.Msg.OK,
-												icon: Ext.Msg.WARNING
-											});
-											return false;
-										}
-										else{
+									{
+										minWidth: 80,
+										text: 'Guardar',
+										iconCls: 'fas fa-save',
+										hidden: false,
+										handler: function () {
+											var fila = Ext.getCmp("tabla").getSelection()[0].data;
+							
+											if (!Ext.getCmp("form").getForm().isValid()) {
+												Ext.Msg.show({
+													title: 'Atención!',
+													message: 'Debe llenar todos los campos obligatorios',
+													buttons: Ext.Msg.OK,
+													icon: Ext.Msg.WARNING
+												});
+												return false;
+											}
+							
+											if (Ext.getCmp("usuarios").getSelection().data.Password != Ext.getCmp("password").getValue().trim()) {
+												Ext.Msg.show({
+													title: 'Atención!',
+													message: 'Contraseña Incorrecta',
+													buttons: Ext.Msg.OK,
+													icon: Ext.Msg.WARNING
+												});
+												return false;
+											}
+							
 											var datos = {};
 											datos.TransId = fila.TransId;
 											datos.IdTransTipo = Ext.getCmp("proceso").getValue().IdProceso;
@@ -468,104 +555,72 @@ Ext.onReady(function() {
 											datos.IdUsuario = Ext.getCmp("usuarios").getValue();
 											datos.Idoperario = Ext.getCmp("Operarios").getValue();
 											datos.Observaciones = Ext.getCmp("Observacion").getValue().trim();
-											
-											
-											if (datos.IdTransTipo == 2)
-											{
+											datos.FechaDespacho = "";
+							
+											if (datos.IdTransTipo == 2) {
 												datos.BinNum = Ext.getCmp("Localizacion").getValue();
-												datos.Transportadora = ""
-											}
-											else if (datos.IdTransTipo == 3){
+												datos.Transportadora = "";
+											} else if (datos.IdTransTipo == 3) {
 												datos.Transportadora = Ext.getCmp("Transportadora").getValue();
 												datos.BinNum = "";
-											}
-											else
-											{
+											} else {
 												Ext.Msg.show({
-													title:'Atención!',
+													title: 'Atención!',
 													message: 'Debe escoger un estado.',
 													buttons: Ext.Msg.OK,
 													icon: Ext.Msg.WARNING
 												});
 												return false;
 											}
-
+							
 											var dat = Ext.getCmp("tabla").getStore().getDataSource().items.filter(x => x.data.TransId == fila.TransId && x.data.IdProceso !== datos.IdTransTipo && x.data.Piso != fila.Piso);
-
+							
 											Ext.Ajax.request({
-												url : url+'guardarHistorialPicked',
-												params : {
-													datos : JSON.stringify(datos)									
+												url: url + 'guardarHistorialPicked',
+												params: {
+													datos: JSON.stringify(datos)
 												},
-												method : 'POST',
-												success : function(result, request) {
+												method: 'POST',
+												success: function (result, request) {
+													console.log(result.responseText);
+													try {
 													var res = Ext.util.JSON.decode(result.responseText);
 
-													//console.log(res);
-													//if(res.mensaje == 'Ok'){
 													if(res.mensaje.substring(0,2)=='Ok'){
-														Ext.Msg.show({
-															title:'Atención!',
-															message: 'Registro guardado con éxito',
-															buttons: Ext.Msg.OK,
-															icon: Ext.Msg.INFO
+														var confirmMessage = datos.IdTransTipo == 2 ? 'Ubicado confirmado' : 'Despacho confirmado';
+
+                            							Ext.Msg.alert('Confirmación', confirmMessage, function () {
+															window.location.reload();
 														});
+													}
+													else
+													{
+														var errormessage = res.mensaje;
 
-														if(res.mensaje=='Ok-recogido'){
-
+														Ext.Msg.alert('Error', errormessage, function () {
 															
-															Ext.defer(function(){
-																Ext.Msg.show({
-																	title:'Atención!',
-																	message: 'Este Pedido fue recogido anteriormente, Verifica si ya ha sido despachado',
-																	buttons: Ext.Msg.OK,
-																	icon: Ext.Msg.INFO
-																});
-
-															},1000);
-
-															console.log("ENTRAAA EN RECOGIDO YA");	
-
-														}
-
-														restablecer();
-														if(dat.length == 1){ 
-															console.log("NO SE ENVÍA NADA");		
-															//socket.emit('message', datos);											
-														} else{
-															console.log("SE ENVÍA");
-															socket.emit('message', datos);	
-														}
-														return false;
-													}else if(res.mensaje == "Error"){
-														Ext.Msg.show({
-															title:'Atención!',
-															message: 'Se presentó on error en el sistema. <br> Favor comunicarse con el departamento de sistemas.',
-															buttons: Ext.Msg.OK,
-															icon: Ext.Msg.ERROR
 														});
-
-														return false;
-													}else{
-														Ext.Msg.show({
-															title:'Atención!',
-															message: res.mensaje,
-															buttons: Ext.Msg.OK,
-															icon: Ext.Msg.WARNING
-														});
-														return false;
-													}					
+													}
+												} catch (e) {
+													Ext.Msg.alert('Error', 'La respuesta del servidor no es un JSON válido.');
 												}
-											});	
+													
+												}
+											});
 										}
-									} },
-									{ minWidth: 80, text: 'Cancelar', iconCls: 'fas fa-backspace', hidden: false, handler: function(){
-										Ext.getCmp("form").getForm().reset();
-										Ext.getCmp('tabpanel').setVisible(false);
-										//Ext.getCmp("tabla").getView().setDisabled(false);
-									} }
+									},
+									{
+										minWidth: 80,
+										text: 'Cancelar',
+										iconCls: 'fas fa-backspace',
+										hidden: false,
+										handler: function () {
+											Ext.getCmp("form").getForm().reset();
+											Ext.getCmp('tabpanel').setVisible(false);
+										}
+									}
 								]
-							}
+							}							
 						],
 						items: [
 							{
@@ -741,6 +796,14 @@ Ext.onReady(function() {
 										}
 									}
 								}),
+								hidden: true
+							},
+							{
+								xtype: 'textareafield',
+								id: 'Guia',
+								grow: true,
+								fieldLabel: 'Guia',
+								anchor: '98%',
 								hidden: true
 							}
 							

@@ -31,28 +31,55 @@ class BodegaDespacho extends CI_Controller {
         $this->data = array();
         //$this->load->view('welcome_message');
         $tipo = $this->input->get("Tipo");
-        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s'", '', $tipo, '', '', '', '', '', '');
+        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', %d", '', $tipo, '', '', '', '', '', '', '', '');
 
         $query = $this->db->query($sql);
 
-        foreach ($query->result() as $row)
+        if ($tipo == 4)
         {
-            $this->data["data"][] = array("TransId"=>$row->TransId, 
-                "FechaTransaccion"=>$row->FechaTransaccion,
-                "FechaImpresion"=>$row->FechaImpresion,
-                "Proceso"=>$row->Proceso,
-                "IdCliente"=>$row->IdCliente,
-                "Cliente"=>$row->Cliente,
-                "Rep2id"=>$row->Rep2id,
-                "Vendedor"=>$row->Vendedor,
-                "EstadoTransaccion"=>$row->EstadoTransaccion,
-                "Observaciones"=>$row->Observaciones,
-                "TipoEnvio"=>$row->TipoEnvio,
-                "Ubicacion"=>$row->Ubicacion,
-                "Transportadora"=>$row->Transportadora,
-                "Guia"=>$row->Guia
-            );
+            foreach ($query->result() as $row)
+            {
+                $this->data["data"][] = array("TransId"=>$row->TransId, 
+                    "FechaTransaccion"=>$row->FechaTransaccion,
+                    "FechaImpresion"=>$row->FechaImpresion,
+                    "Proceso"=>$row->Proceso,
+                    "IdCliente"=>$row->IdCliente,
+                    "Cliente"=>$row->Cliente,
+                    "Rep2id"=>$row->Rep2id,
+                    "Vendedor"=>$row->Vendedor,
+                    "EstadoTransaccion"=>$row->EstadoTransaccion,
+                    "Observaciones"=>$row->Observaciones,
+                    "TipoEnvio"=>$row->TipoEnvio,
+                    "Ubicacion"=>$row->Ubicacion,
+                    "Transportadora"=>$row->Transportadora,
+                    "Guia"=>$row->Guia,
+                    "Administrador"=>$row->Administrador,
+                    "Operario"=>$row->Operario
+                );
+            }
         }
+        else if ($tipo == 1)
+        {
+            foreach ($query->result() as $row)
+            {
+                $this->data["data"][] = array("TransId"=>$row->TransId, 
+                    "FechaTransaccion"=>$row->FechaTransaccion,
+                    "FechaImpresion"=>$row->FechaImpresion,
+                    "Proceso"=>$row->Proceso,
+                    "IdCliente"=>$row->IdCliente,
+                    "Cliente"=>$row->Cliente,
+                    "Rep2id"=>$row->Rep2id,
+                    "Vendedor"=>$row->Vendedor,
+                    "EstadoTransaccion"=>$row->EstadoTransaccion,
+                    "Observaciones"=>$row->Observaciones,
+                    "TipoEnvio"=>$row->TipoEnvio,
+                    "Ubicacion"=>$row->Ubicacion,
+                    "Transportadora"=>$row->Transportadora,
+                    "Guia"=>$row->Guia
+                );
+            }
+        }
+        
 
         $this->respuesta();
         //$this->load->view('welcome_message');
@@ -159,12 +186,14 @@ class BodegaDespacho extends CI_Controller {
         }
 
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho);
+        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespacho);
 
         $query = $this->db->query($sql);
 
+        $this->data = array();
+        $this->data["mensaje"] = $query->row()->Mensaje;
+
         $this->respuesta();
-        //$this->load->view('welcome_message');
     }   
 
     public function obtenerBinNum()
