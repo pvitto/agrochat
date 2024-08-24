@@ -35,20 +35,32 @@ Ext.onReady(function() {
 			Ext.getCmp("pro2").setVisible(false);
 			Ext.getCmp("pro3").setVisible(false);
 			Ext.getCmp("proceso").setVisible(false);
-			Ext.getCmp("usuarios").setVisible(false);
-			Ext.getCmp("password").setVisible(false);
-			Ext.getCmp("Operarios").setVisible(false);
+			//Ext.getCmp("usuarios").setVisible(false);
+			//Ext.getCmp("password").setVisible(false);
+			//Ext.getCmp("Operarios").setVisible(false);
 			Ext.getCmp("Observacion").setVisible(false);
+
+			Ext.getCmp("proceso").setDisabled(true);
+			//Ext.getCmp("usuarios").setDisabled(true);
+			//Ext.getCmp("password").setDisabled(true);
+			//Ext.getCmp("Operarios").setDisabled(true);
+			Ext.getCmp("Observacion").setDisabled(true);
 		}
 		else if (visible === true)
 		{
 			Ext.getCmp("pro2").setVisible(true);
 			Ext.getCmp("pro3").setVisible(true);
 			Ext.getCmp("proceso").setVisible(true);
-			Ext.getCmp("usuarios").setVisible(true);
-			Ext.getCmp("password").setVisible(true);
-			Ext.getCmp("Operarios").setVisible(true);
+			//Ext.getCmp("usuarios").setVisible(true);
+			//Ext.getCmp("password").setVisible(true);
+			//Ext.getCmp("Operarios").setVisible(true);
 			Ext.getCmp("Observacion").setVisible(true);
+
+			Ext.getCmp("proceso").setDisabled(false);
+			//Ext.getCmp("usuarios").setDisabled(false)
+			//Ext.getCmp("password").setDisabled(false)
+			//Ext.getCmp("Operarios").setDisabled(false)
+			Ext.getCmp("Observacion").setDisabled(false)
 		}
 	}
 	
@@ -74,7 +86,7 @@ Ext.onReady(function() {
 			{ name: 'Guia', type: 'string' },
 			{ name: 'Administrador', type: 'string' },
 			{ name: 'Operario', type: 'string' },
-			{ name: 'IdDespacho', type: 'int' },
+			{ name: 'IdDespacho', type: 'int' }
 		],
 		proxy: {
 			timeout: 600000,
@@ -325,7 +337,7 @@ Ext.onReady(function() {
 					{
 						header: 'Guia',
 						dataIndex: 'Guia',
-						hidden: true,
+						//hidden: true,
 						width: 100
 					}, 
 					{
@@ -551,11 +563,13 @@ Ext.onReady(function() {
 											var datos = {};
 											datos.TransId = fila.TransId;
 											datos.IdTransTipo = Ext.getCmp("proceso").getValue().IdProceso;
-											datos.IdPiso = fila.Piso;
 											datos.IdUsuario = Ext.getCmp("usuarios").getValue();
 											datos.Idoperario = Ext.getCmp("Operarios").getValue();
 											datos.Observaciones = Ext.getCmp("Observacion").getValue().trim();
 											datos.FechaDespacho = "";
+											datos.IdDespacho = fila.IdDespacho;
+											datos.Guia = Ext.getCmp("Guia").getValue();
+											datos.Proceso = fila.Proceso;
 							
 											if (datos.IdTransTipo == 2) {
 												datos.BinNum = Ext.getCmp("Localizacion").getValue();
@@ -563,7 +577,13 @@ Ext.onReady(function() {
 											} else if (datos.IdTransTipo == 3) {
 												datos.Transportadora = Ext.getCmp("Transportadora").getValue();
 												datos.BinNum = "";
-											} else {
+											} else if (datos.Proceso == "DESPACHADO")
+											{
+												datos.IdTransTipo = 5;
+												datos.BinNum = "";
+												datos.Transportadora = "";
+											}
+											else {
 												Ext.Msg.show({
 													title: 'Atención!',
 													message: 'Debe escoger un estado.',
