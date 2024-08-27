@@ -49,13 +49,13 @@ Ext.onReady(function() {
 			Ext.getCmp("proceso").setVisible(false);
 			//Ext.getCmp("usuarios").setVisible(false);
 			//Ext.getCmp("password").setVisible(false);
-			//Ext.getCmp("Operarios").setVisible(false);
+			Ext.getCmp("Operarios").setVisible(false);
 			Ext.getCmp("Observacion").setVisible(false);
 
 			Ext.getCmp("proceso").setDisabled(true);
 			//Ext.getCmp("usuarios").setDisabled(true);
 			//Ext.getCmp("password").setDisabled(true);
-			//Ext.getCmp("Operarios").setDisabled(true);
+			Ext.getCmp("Operarios").setDisabled(true);
 			Ext.getCmp("Observacion").setDisabled(true);
 		}
 		else if (visible === true)
@@ -65,13 +65,13 @@ Ext.onReady(function() {
 			Ext.getCmp("proceso").setVisible(true);
 			//Ext.getCmp("usuarios").setVisible(true);
 			//Ext.getCmp("password").setVisible(true);
-			//Ext.getCmp("Operarios").setVisible(true);
+			Ext.getCmp("Operarios").setVisible(true);
 			Ext.getCmp("Observacion").setVisible(true);
 
 			Ext.getCmp("proceso").setDisabled(false);
 			//Ext.getCmp("usuarios").setDisabled(false)
 			//Ext.getCmp("password").setDisabled(false)
-			//Ext.getCmp("Operarios").setDisabled(false)
+			Ext.getCmp("Operarios").setDisabled(false)
 			Ext.getCmp("Observacion").setDisabled(false)
 		}
 	}
