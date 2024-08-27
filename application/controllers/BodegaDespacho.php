@@ -35,7 +35,29 @@ class BodegaDespacho extends CI_Controller {
 
         $query = $this->db->query($sql);
 
-        if ($tipo == 4)
+
+        if ($tipo == 1 || $tipo == 6)
+        {
+            foreach ($query->result() as $row)
+            {
+                $this->data["data"][] = array("TransId"=>$row->TransId, 
+                    "FechaTransaccion"=>$row->FechaTransaccion,
+                    "FechaImpresion"=>$row->FechaImpresion,
+                    "Proceso"=>$row->Proceso,
+                    "IdCliente"=>$row->IdCliente,
+                    "Cliente"=>$row->Cliente,
+                    "Rep2id"=>$row->Rep2id,
+                    "Vendedor"=>$row->Vendedor,
+                    "EstadoTransaccion"=>$row->EstadoTransaccion,
+                    "Observaciones"=>$row->Observaciones,
+                    "TipoEnvio"=>$row->TipoEnvio,
+                    "Ubicacion"=>$row->Ubicacion,
+                    "Transportadora"=>$row->Transportadora,
+                    "Guia"=>$row->Guia
+                );
+            }
+        }
+        else if ($tipo == 4)
         {
             foreach ($query->result() as $row)
             {
@@ -56,27 +78,6 @@ class BodegaDespacho extends CI_Controller {
                     "Administrador"=>$row->Administrador,
                     "Operario"=>$row->Operario,
                     "IdDespachado"=>$row->IdDespachado
-                );
-            }
-        }
-        else if ($tipo == 1)
-        {
-            foreach ($query->result() as $row)
-            {
-                $this->data["data"][] = array("TransId"=>$row->TransId, 
-                    "FechaTransaccion"=>$row->FechaTransaccion,
-                    "FechaImpresion"=>$row->FechaImpresion,
-                    "Proceso"=>$row->Proceso,
-                    "IdCliente"=>$row->IdCliente,
-                    "Cliente"=>$row->Cliente,
-                    "Rep2id"=>$row->Rep2id,
-                    "Vendedor"=>$row->Vendedor,
-                    "EstadoTransaccion"=>$row->EstadoTransaccion,
-                    "Observaciones"=>$row->Observaciones,
-                    "TipoEnvio"=>$row->TipoEnvio,
-                    "Ubicacion"=>$row->Ubicacion,
-                    "Transportadora"=>$row->Transportadora,
-                    "Guia"=>$row->Guia
                 );
             }
         }

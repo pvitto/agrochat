@@ -12,7 +12,10 @@ Ext.onReady(function() {
 	};
 
 	function actualizarInterfaz() {
-		var boton = Ext.getCmp('CambiarTipoButton');
+		var boton_PorDespachar = Ext.getCmp('PorDespacharButton');
+		var boton_Ubicados = Ext.getCmp('UbicadosButton');
+		var boton_Depachados = Ext.getCmp('DespachadosButton');
+
 		var exportButton = Ext.getCmp('exportButton');
 		var grid = Ext.getCmp('tabla'); 
 
@@ -24,19 +27,33 @@ Ext.onReady(function() {
 	
 
 		// Ajustar visibiliad de elementos dependientes al tipo de proceso
-		exportButton.setDisabled(tipo !== 4);
-		adminColumn.setVisible(tipo === 4);
-		operarioColumn.setVisible(tipo === 4);
+		exportButton.setDisabled(tipo !== 4 && tipo !== 6);
+		adminColumn.setVisible(tipo === 4 || tipo === 6);
+		operarioColumn.setVisible(tipo === 4 || tipo === 6);
 		transportadoraColumn.setVisible(tipo === 4);
 		guiaColumn.setVisible(tipo === 4);
-		ubicacionColumn.setVisible(tipo === 1);
+		ubicacionColumn.setVisible(tipo === 6);
 
-	
-		if (tipo === 1) {
-			boton.setText('Mostrar Despachados');
-		} else {
-			boton.setText('Mostrar No Despachados');
+		if (tipo === 1)
+		{
+			boton_PorDespachar.setDisabled(true);
+			boton_Ubicados.setDisabled(false);
+			boton_Depachados.setDisabled(false);
 		}
+		else if (tipo === 4)
+		{
+			boton_PorDespachar.setDisabled(false);
+			boton_Ubicados.setDisabled(false);
+			boton_Depachados.setDisabled(true);
+		}
+		else if (tipo === 6)
+		{
+			boton_PorDespachar.setDisabled(false);
+			boton_Ubicados.setDisabled(true);
+			boton_Depachados.setDisabled(false);
+		}
+
+		
 	}
 	
 
@@ -142,10 +159,36 @@ Ext.onReady(function() {
 						items: [
 							{
 								xtype: 'button',
-								id: 'CambiarTipoButton',
+								id: 'PorDespacharButton',
+								text: 'Mostrar Por Despachar',
+								handler: function() {
+									tipo = 1; // Cambia el valor de tipo
+									actualizarInterfaz(); // Actualiza el interfaz entre despachados y no despachados
+									Ext.getCmp('tabla').getStore().reload({
+										params: { Tipo: tipo } // Recarga la lista con el nuevo valor de tipo
+									});
+								}
+							},
+							"-",
+							{
+								xtype: 'button',
+								id: 'UbicadosButton',
+								text: 'Mostrar Ubicados', // Texto inicial
+								handler: function() {
+									tipo = 6; // Cambia el valor de tipo
+									actualizarInterfaz(); // Actualiza el interfaz entre despachados y no despachados
+									Ext.getCmp('tabla').getStore().reload({
+										params: { Tipo: tipo } // Recarga la lista con el nuevo valor de tipo
+									});
+								}
+							},
+							"-",
+							{
+								xtype: 'button',
+								id: 'DespachadosButton',
 								text: 'Mostrar Despachados', // Texto inicial
 								handler: function() {
-									tipo = tipo === 1 ? 4 : 1; // Cambia el valor de tipo
+									tipo = 4; // Cambia el valor de tipo
 									actualizarInterfaz(); // Actualiza el interfaz entre despachados y no despachados
 									Ext.getCmp('tabla').getStore().reload({
 										params: { Tipo: tipo } // Recarga la lista con el nuevo valor de tipo
@@ -157,12 +200,14 @@ Ext.onReady(function() {
 								id: 'exportButton', 
 								xtype: 'button',
 								text: 'Exportar a Excel',
-								disabled: tipo != 4,
+								disabled: tipo != 4 || tipo != 6,
 								iconCls: 'fas fa-caret-down',
 								handler: function() {
 									try {
 										var grid = Ext.getCmp('tabla');
 										var store = grid.getStore();
+										
+										var excelName = "";
 						
 							
 										// Create a new Excel workbook
@@ -172,16 +217,24 @@ Ext.onReady(function() {
 										var worksheetData = store.getData().items.map(function(record) {
 											var data = record.getData();
 											delete data.id; // Eliminar la columna "ID"
-											delete data.Ubicacion;
 											return data;
 										});
+
+										if (tipo == 4)
+										{
+											excelName = "Despachados";
+										}
+										else
+										{
+											excelName = "Ubicados";
+										}
 							
 										// Create a worksheet and append it to the workbook
 										var worksheet = XLSX.utils.json_to_sheet(worksheetData);
-										XLSX.utils.book_append_sheet(workbook, worksheet, 'Datos');
+										XLSX.utils.book_append_sheet(workbook, worksheet, excelName);
 							
 										// Export the workbook to a file
-										XLSX.writeFile(workbook, 'despachados.xlsx');
+										XLSX.writeFile(workbook, excelName + '.xlsx');
 							
 										// Clear the filter after exporting
 										store.clearFilter();
@@ -459,7 +512,7 @@ Ext.onReady(function() {
 						Ext.getCmp('Operarios').getStore().load();
 					},
 					rowdblclick: function(viewTable, record, element, rowIndex, e, eOpts) {
-						if (tipo == 1)
+						if (tipo == 1 || tipo == 6)
 						{
 							Ext.getCmp("form").setDisabled(false);
 							Ext.getCmp("form").getForm().reset();
@@ -495,7 +548,7 @@ Ext.onReady(function() {
 						
 					},
 					rowclick: function(viewTable, record, element, rowIndex, e, eOpts) {
-						if (tipo == 1)
+						if (tipo == 1 || tipo == 6)
 						{
 							Ext.getCmp("form").setDisabled(false);
 							Ext.getCmp("form").getForm().reset();
@@ -598,9 +651,33 @@ Ext.onReady(function() {
 							
 											if (datos.IdTransTipo == 2) {
 												datos.BinNum = Ext.getCmp("Localizacion").getValue();
+
+												if (datos.BinNum == null)
+												{
+													Ext.Msg.show({
+														title: 'Atención!',
+														message: 'Debe escoger una localización',
+														buttons: Ext.Msg.OK,
+														icon: Ext.Msg.WARNING
+													});
+													return false;
+												}
+
 												datos.Transportadora = "";
 											} else if (datos.IdTransTipo == 3) {
 												datos.Transportadora = Ext.getCmp("Transportadora").getValue();
+
+												if (datos.Transportadora == null)
+												{
+													Ext.Msg.show({
+														title: 'Atención!',
+														message: 'Debe escoger una transportadora',
+														buttons: Ext.Msg.OK,
+														icon: Ext.Msg.WARNING
+													});
+													return false;
+												}
+
 												datos.BinNum = "";
 											} else if (datos.Proceso == "DESPACHADO")
 											{
@@ -634,17 +711,31 @@ Ext.onReady(function() {
 													if(res.mensaje.substring(0,2)=='Ok'){
 														var confirmMessage = datos.IdTransTipo == 2 ? 'Ubicado confirmado' : 'Despacho confirmado';
 
-                            							Ext.Msg.alert('Confirmación', confirmMessage, function () {
-															window.location.reload();
+                            							Ext.Msg.show({
+															title: 'Confirmación',
+															message: confirmMessage,
+															buttons: Ext.Msg.OK,
+															icon: Ext.Msg.INFO,
+															fn: function() {
+																window.location.reload();
+															}
 														});
+														
 													}
 													else
 													{
 														var errormessage = res.mensaje;
 
-														Ext.Msg.alert('Error', errormessage, function () {
-															
+														Ext.Msg.show({
+															title: 'Error',
+															message: errormessage,
+															buttons: Ext.Msg.OK,
+															icon: Ext.Msg.ERROR, // Use Ext.Msg.ERROR to display an error symbol
+															fn: function() {
+																window.location.reload();
+															}
 														});
+														
 													}
 												} catch (e) {
 													Ext.Msg.alert('Error', 'La respuesta del servidor no es un JSON válido.');
