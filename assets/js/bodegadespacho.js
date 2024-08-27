@@ -11,22 +11,34 @@ Ext.onReady(function() {
 		Ext.getCmp("tabla").getStore().reload();
 	};
 
-	function actualizarTextoBoton() {
+	function actualizarInterfaz() {
 		var boton = Ext.getCmp('CambiarTipoButton');
+		var exportButton = Ext.getCmp('exportButton');
+		var grid = Ext.getCmp('tabla'); 
+
+		var adminColumn = grid.down('[itemId=adminColumn]');
+		var operarioColumn = grid.down('[itemId=operarioColumn]');
+		var transportadoraColumn = grid.down('[itemId=transportadoraColumn]');
+		var ubicacionColumn = grid.down('[itemId=ubicacionColumn]');
+		var guiaColumn = grid.down('[itemId=guiaColumn]');
+	
+
+		// Ajustar visibiliad de elementos dependientes al tipo de proceso
+		exportButton.setDisabled(tipo !== 4);
+		adminColumn.setVisible(tipo === 4);
+		operarioColumn.setVisible(tipo === 4);
+		transportadoraColumn.setVisible(tipo === 4);
+		guiaColumn.setVisible(tipo === 4);
+		ubicacionColumn.setVisible(tipo === 1);
+
+	
 		if (tipo === 1) {
 			boton.setText('Mostrar Despachados');
 		} else {
 			boton.setText('Mostrar No Despachados');
 		}
 	}
-
-
-	function updateExportButtonState() {
-		var exportButton = Ext.getCmp('exportButton');
-		if (exportButton) {
-			exportButton.setDisabled(tipo !== 4);
-		}
-	}
+	
 
 	function setVisibilityForm(visible)
 	{
@@ -86,7 +98,7 @@ Ext.onReady(function() {
 			{ name: 'Guia', type: 'string' },
 			{ name: 'Administrador', type: 'string' },
 			{ name: 'Operario', type: 'string' },
-			{ name: 'IdDespacho', type: 'int' }
+			{ name: 'IdDespachado', type: 'int' }
 		],
 		proxy: {
 			timeout: 600000,
@@ -98,7 +110,7 @@ Ext.onReady(function() {
 				rootProperty: 'data'
 			},
 			extraParams: {
-				Tipo: tipo  // Aquí se envía el valor de "tipo"
+				Tipo: tipo 
 			}
 		}
 	})
@@ -134,8 +146,7 @@ Ext.onReady(function() {
 								text: 'Mostrar Despachados', // Texto inicial
 								handler: function() {
 									tipo = tipo === 1 ? 4 : 1; // Cambia el valor de tipo
-									actualizarTextoBoton(); // Actualiza el texto del botón
-									updateExportButtonState(); 
+									actualizarInterfaz(); // Actualiza el interfaz entre despachados y no despachados
 									Ext.getCmp('tabla').getStore().reload({
 										params: { Tipo: tipo } // Recarga la lista con el nuevo valor de tipo
 									});
@@ -161,6 +172,7 @@ Ext.onReady(function() {
 										var worksheetData = store.getData().items.map(function(record) {
 											var data = record.getData();
 											delete data.id; // Eliminar la columna "ID"
+											delete data.Ubicacion;
 											return data;
 										});
 							
@@ -296,6 +308,7 @@ Ext.onReady(function() {
 					{
 						header: 'Estado',
 						dataIndex: 'EstadoTransaccion',
+						hidden: true,
 						width: 70
 					}, 
 					{
@@ -329,15 +342,16 @@ Ext.onReady(function() {
 						width: 100
 					},
 					{
-						header: 'IdCliente',
-						dataIndex: 'IdCliente',
+						header: 'IdDespachado',
+						dataIndex: 'IdDespachado',
 						hidden: true,
 						width: 100
 					},  
 					{
 						header: 'Guia',
 						dataIndex: 'Guia',
-						//hidden: true,
+						itemId: 'guiaColumn',
+						hidden: true,
 						width: 100
 					}, 
 					{
@@ -361,8 +375,17 @@ Ext.onReady(function() {
 						//xtype: 'checkcolumn',
 						header: 'Transportadora',
 						dataIndex: 'Transportadora',
+						itemId: 'transportadoraColumn',
+						hidden: true,
 						width: 100
 					}, 
+					{
+						//xtype: 'checkcolumn',
+						header: 'Ubicacion',
+						dataIndex: 'Ubicacion',
+						itemId: 'ubicacionColumn',
+						width: 100
+					},
 					{
 						//xtype: 'checkcolumn',
 						header: 'Envio',
@@ -413,17 +436,19 @@ Ext.onReady(function() {
 						
 					},
 					{
-						//xtype: 'checkcolumn',
 						header: 'Admin',
 						dataIndex: 'Administrador',
+						itemId: 'adminColumn', // Asigna un itemId
+						hidden: true,
 						width: 100
 					}, 
 					{
-						//xtype: 'checkcolumn',
 						header: 'Operario',
 						dataIndex: 'Operario',
+						itemId: 'operarioColumn', // Asigna un itemId
+						hidden: true,
 						width: 100
-					},
+					}					
 				],
 				
 				listeners: {
@@ -567,7 +592,7 @@ Ext.onReady(function() {
 											datos.Idoperario = Ext.getCmp("Operarios").getValue();
 											datos.Observaciones = Ext.getCmp("Observacion").getValue().trim();
 											datos.FechaDespacho = "";
-											datos.IdDespacho = fila.IdDespacho;
+											datos.IdDespachado = fila.IdDespachado;
 											datos.Guia = Ext.getCmp("Guia").getValue();
 											datos.Proceso = fila.Proceso;
 							

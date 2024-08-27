@@ -54,7 +54,8 @@ class BodegaDespacho extends CI_Controller {
                     "Transportadora"=>$row->Transportadora,
                     "Guia"=>$row->Guia,
                     "Administrador"=>$row->Administrador,
-                    "Operario"=>$row->Operario
+                    "Operario"=>$row->Operario,
+                    "IdDespachado"=>$row->IdDespachado
                 );
             }
         }
@@ -188,7 +189,7 @@ class BodegaDespacho extends CI_Controller {
             $tipo = 5;
 
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespacho);
+        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado);
 
         $query = $this->db->query($sql);
 
