@@ -15,6 +15,7 @@ Ext.onReady(function() {
 		var boton_PorDespachar = Ext.getCmp('PorDespacharButton');
 		var boton_Ubicados = Ext.getCmp('UbicadosButton');
 		var boton_Depachados = Ext.getCmp('DespachadosButton');
+		var textFieldRemision = Ext.getCmp('idRemision')
 
 		var exportButton = Ext.getCmp('exportButton');
 		var grid = Ext.getCmp('tabla'); 
@@ -43,10 +44,13 @@ Ext.onReady(function() {
 		// Items correspondientes exclusivamente a Despachados
 		transportadoraColumn.setVisible(tipo === 4);
 		guiaColumn.setVisible(tipo === 4);
-		calendario.setVisible(tipo === 4);
+		calendario.setDisabled(tipo !== 4);
 
 		// Items correspondientes exclusivamente a Ubicados
 		ubicacionColumn.setVisible(tipo === 6);
+		
+		// Items correspondientes exclusivamente a Por Despachar
+		textFieldRemision.setDisabled(tipo !== 1);
 
 		Ext.getCmp('tabla').getStore().clearFilter();
 		Ext.getCmp("form").getForm().reset();
@@ -222,6 +226,40 @@ Ext.onReady(function() {
 							},
 							"-",
 							{
+								xtype: 'textfield',
+								labelWidth: 160,
+								id: 'idRemision',
+								fieldLabel: 'Consultar Remision:',
+								value: '',
+								editable: true,
+								width: 285,
+								listeners: {
+									change: function(field, newValue) {
+										var store = Ext.getCmp('tabla').getStore();
+										
+										// Limpiar los filtros existentes
+										store.clearFilter();
+							
+										// Verificar si hay un valor en el campo de texto
+										if (newValue) {
+											// Aplicar un filtro para buscar coincidencias que contengan el texto ingresado
+											store.filterBy(function(record) {
+												var remision = record.get('TransId');
+												
+												// Verificar si 'remision' no es null o undefined antes de usar toLowerCase()
+												if (remision) {
+													return remision.toLowerCase().includes(newValue.toLowerCase());
+												}
+							
+												return false; // Si 'remision' es null o undefined, no coincide
+											});
+										}
+									}
+								}
+							}							
+							,
+							"-",
+							{
 								xtype: 'datefield',
 								labelWidth: 120,
 								id: 'fecha',
@@ -230,7 +268,7 @@ Ext.onReady(function() {
 								format: "d/m/Y",
 								editable: false,
 								width: 245,
-								hidden: true, // Oculto inicialmente
+								disabled: true, // Oculto inicialmente
 								listeners: {
 									select: function(field, value, eOpts) {
 										Ext.getCmp('tabla').getStore().clearFilter();
@@ -530,7 +568,7 @@ Ext.onReady(function() {
 					}, 
 					{
 						//xtype: 'checkcolumn',
-						header: 'Fecha Tansación',
+						header: 'Fecha Transación',
 						dataIndex: 'FechaTransaccion',
 						groupable: true,
 						hidden: false,
