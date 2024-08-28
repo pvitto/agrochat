@@ -24,15 +24,33 @@ Ext.onReady(function() {
 		var transportadoraColumn = grid.down('[itemId=transportadoraColumn]');
 		var ubicacionColumn = grid.down('[itemId=ubicacionColumn]');
 		var guiaColumn = grid.down('[itemId=guiaColumn]');
+		var idColumn = grid.down('[itemId=idColumn]');
+		var fechaColumn = grid.down('[itemId=fechaColumn]');
 	
 
+		var calendario = Ext.getCmp('fecha');
+
 		// Ajustar visibiliad de elementos dependientes al tipo de proceso
+
+		// Items correspondientes a Ubicados / Despachados
 		exportButton.setDisabled(tipo !== 4 && tipo !== 6);
 		adminColumn.setVisible(tipo === 4 || tipo === 6);
 		operarioColumn.setVisible(tipo === 4 || tipo === 6);
+		idColumn.setVisible(tipo === 6 || tipo === 4);
+		fechaColumn.setVisible(tipo === 6 || tipo === 4)
+
+
+		// Items correspondientes exclusivamente a Despachados
 		transportadoraColumn.setVisible(tipo === 4);
 		guiaColumn.setVisible(tipo === 4);
+		calendario.setVisible(tipo === 4);
+
+		// Items correspondientes exclusivamente a Ubicados
 		ubicacionColumn.setVisible(tipo === 6);
+
+		Ext.getCmp('tabla').getStore().clearFilter();
+		Ext.getCmp("form").getForm().reset();
+		Ext.getCmp('tabpanel').setVisible(false);
 
 		if (tipo === 1)
 		{
@@ -45,12 +63,14 @@ Ext.onReady(function() {
 			boton_PorDespachar.setDisabled(false);
 			boton_Ubicados.setDisabled(false);
 			boton_Depachados.setDisabled(true);
+			fechaColumn.setText("Fecha Despacho");
 		}
 		else if (tipo === 6)
 		{
 			boton_PorDespachar.setDisabled(false);
 			boton_Ubicados.setDisabled(true);
 			boton_Depachados.setDisabled(false);
+			fechaColumn.setText("Fecha Ubicado");
 		}
 
 		
@@ -161,11 +181,12 @@ Ext.onReady(function() {
 								xtype: 'button',
 								id: 'PorDespacharButton',
 								text: 'Mostrar Por Despachar',
+								disabled: true,
 								handler: function() {
-									tipo = 1; // Cambia el valor de tipo
-									actualizarInterfaz(); // Actualiza el interfaz entre despachados y no despachados
+									tipo = 1;
+									actualizarInterfaz();
 									Ext.getCmp('tabla').getStore().reload({
-										params: { Tipo: tipo } // Recarga la lista con el nuevo valor de tipo
+										params: { Tipo: tipo }
 									});
 								}
 							},
@@ -173,12 +194,12 @@ Ext.onReady(function() {
 							{
 								xtype: 'button',
 								id: 'UbicadosButton',
-								text: 'Mostrar Ubicados', // Texto inicial
+								text: 'Mostrar Ubicados',
 								handler: function() {
-									tipo = 6; // Cambia el valor de tipo
-									actualizarInterfaz(); // Actualiza el interfaz entre despachados y no despachados
+									tipo = 6;
+									actualizarInterfaz();
 									Ext.getCmp('tabla').getStore().reload({
-										params: { Tipo: tipo } // Recarga la lista con el nuevo valor de tipo
+										params: { Tipo: tipo }
 									});
 								}
 							},
@@ -186,21 +207,51 @@ Ext.onReady(function() {
 							{
 								xtype: 'button',
 								id: 'DespachadosButton',
-								text: 'Mostrar Despachados', // Texto inicial
+								text: 'Mostrar Despachados',
 								handler: function() {
-									tipo = 4; // Cambia el valor de tipo
-									actualizarInterfaz(); // Actualiza el interfaz entre despachados y no despachados
+									tipo = 4;
+									actualizarInterfaz();
+
 									Ext.getCmp('tabla').getStore().reload({
-										params: { Tipo: tipo } // Recarga la lista con el nuevo valor de tipo
+										params: { 
+											Tipo: tipo,
+											Fecha: Ext.getCmp('fecha').getRawValue() // Usa la fecha seleccionada o actual
+										}
 									});
 								}
 							},
+							"-",
+							{
+								xtype: 'datefield',
+								labelWidth: 120,
+								id: 'fecha',
+								fieldLabel: 'Seleccione fecha',
+								value: new Date(),
+								format: "d/m/Y",
+								editable: false,
+								width: 245,
+								hidden: true, // Oculto inicialmente
+								listeners: {
+									select: function(field, value, eOpts) {
+										Ext.getCmp('tabla').getStore().clearFilter();
+										Ext.getCmp("form").getForm().reset();
+										Ext.getCmp('tabpanel').setVisible(false);
+										Ext.getCmp('tabla').getStore().reload({
+											params: { 
+												Tipo: tipo,
+												Fecha: field.getRawValue()
+											}
+										});
+									}
+								},
+								maxValue: new Date()
+							},
 							"->",
 							{
-								id: 'exportButton', 
+								id: 'exportButton',
 								xtype: 'button',
 								text: 'Exportar a Excel',
-								disabled: tipo != 4 || tipo != 6,
+								disabled: tipo != 4 && tipo != 6,
 								iconCls: 'fas fa-caret-down',
 								handler: function() {
 									try {
@@ -209,44 +260,40 @@ Ext.onReady(function() {
 										
 										var excelName = "";
 						
-							
-										// Create a new Excel workbook
+										// Crear un nuevo libro de Excel
 										var workbook = XLSX.utils.book_new();
-							
-										// Convert store data to JSON format for Excel export
+						
+										// Convertir datos del store a formato JSON para exportar a Excel
 										var worksheetData = store.getData().items.map(function(record) {
 											var data = record.getData();
 											delete data.id; // Eliminar la columna "ID"
 											return data;
 										});
-
-										if (tipo == 4)
-										{
+						
+										if (tipo == 4) {
 											excelName = "Despachados";
-										}
-										else
-										{
+										} else {
 											excelName = "Ubicados";
 										}
-							
-										// Create a worksheet and append it to the workbook
+						
+										// Crear una hoja de cálculo y añadirla al libro
 										var worksheet = XLSX.utils.json_to_sheet(worksheetData);
 										XLSX.utils.book_append_sheet(workbook, worksheet, excelName);
-							
-										// Export the workbook to a file
+						
+										// Exportar el libro a un archivo
 										XLSX.writeFile(workbook, excelName + '.xlsx');
-							
-										// Clear the filter after exporting
+						
+										// Limpiar el filtro después de exportar
 										store.clearFilter();
-							
+						
 										Ext.Msg.alert('Éxito', 'El archivo Excel se ha creado correctamente.');
 									} catch (error) {
 										Ext.Msg.alert('Error', 'Hubo un problema al crear el archivo Excel: ' + error.message);
 									}
 								}
 							}
-							
 						]
+						
 					}
 				],
 				plugins: [
@@ -365,6 +412,13 @@ Ext.onReady(function() {
 						width: 70
 					}, 
 					{
+						header: 'ID',
+						dataIndex: 'Id',
+						itemId: 'idColumn',
+						hidden: true,
+						width: 50
+					}, 
+					{
 						header: 'Proceso',
 						dataIndex: 'Proceso',
 						hidden: false,
@@ -393,19 +447,31 @@ Ext.onReady(function() {
 						dataIndex: 'IdCliente',
 						hidden: true,
 						width: 100
-					},
-					{
-						header: 'IdDespachado',
-						dataIndex: 'IdDespachado',
-						hidden: true,
-						width: 100
-					},  
+					}, 
 					{
 						header: 'Guia',
 						dataIndex: 'Guia',
 						itemId: 'guiaColumn',
 						hidden: true,
-						width: 100
+						headerCheckbox: true,
+						width: 100,
+						editor: {
+							xtype: 'textfield',
+							typeAhead: true,
+							triggerAction: 'all'
+							
+						},
+						
+						listeners: {
+							beforeedit: function (editor, context) {
+								// Cancelamos el evento de edición para evitar que se inicie el modo de edición
+								return false;
+							},
+							// Manejador del evento de clic en la celda para mostrar el texto completo
+							click: function (grid, cell, cellIndex, record, row, rowIndex, e) {
+								Ext.Msg.alert('Guia', cell.innerHTML.toLowerCase());
+							}
+						}
 					}, 
 					{
 						header: 'Rep2id',
@@ -416,13 +482,13 @@ Ext.onReady(function() {
 					{
 						header: 'Vendedor',
 						dataIndex: 'Vendedor',
-						width: 100
+						flex: 1,
+						minWidth: 100
 					}, 
 					{
 						header: 'Cliente',
 						dataIndex: 'Cliente',
-						flex: 1,
-						minWidth: 100,
+						minWidth: 200
 					}, 
 					{
 						//xtype: 'checkcolumn',
@@ -430,21 +496,31 @@ Ext.onReady(function() {
 						dataIndex: 'Transportadora',
 						itemId: 'transportadoraColumn',
 						hidden: true,
-						width: 100
+						minWidth: 150
 					}, 
 					{
 						//xtype: 'checkcolumn',
 						header: 'Ubicacion',
 						dataIndex: 'Ubicacion',
 						itemId: 'ubicacionColumn',
-						width: 100
+						minWidth: 150
 					},
 					{
 						//xtype: 'checkcolumn',
 						header: 'Envio',
 						dataIndex: 'TipoEnvio',
-						width: 100
+						hidden: true,
+						minWidth: 100
 					},
+					{
+						header: 'Fecha',
+						dataIndex: 'Fecha',
+						itemId: 'fechaColumn',
+						hidden: true,
+						groupable: true,
+						headerCheckbox: true,
+						width: 200
+					}, 
 					{
 						header: 'Fecha Impresión',
 						dataIndex: 'FechaImpresion',
@@ -493,14 +569,14 @@ Ext.onReady(function() {
 						dataIndex: 'Administrador',
 						itemId: 'adminColumn', // Asigna un itemId
 						hidden: true,
-						width: 100
+						minWidth: 150
 					}, 
 					{
 						header: 'Operario',
 						dataIndex: 'Operario',
 						itemId: 'operarioColumn', // Asigna un itemId
 						hidden: true,
-						width: 100
+						minWidth: 150
 					}					
 				],
 				

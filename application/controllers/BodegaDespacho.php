@@ -29,14 +29,39 @@ class BodegaDespacho extends CI_Controller {
     {
         
         $this->data = array();
-        //$this->load->view('welcome_message');
         $tipo = $this->input->get("Tipo");
-        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', %d", '', $tipo, '', '', '', '', '', '', '', '');
-
+        $fechaConsulta = "";
+    
+        if ($this->input->get("Fecha")) {
+            $fechaInput = $this->input->get("Fecha");
+            
+            // Convertir la fecha de 'd/m/Y' a 'Y-m-d'
+            $fechaObjeto = DateTime::createFromFormat('d/m/Y', $fechaInput);
+            if ($fechaObjeto) {
+                $fechaConsulta = $fechaObjeto->format('Y-m-d');
+            } else {
+                // Manejar el error si el formato de fecha es incorrecto
+                echo "Formato de fecha incorrecto.";
+                return;
+            }
+        }
+    
+        $sql = sprintf(
+            "EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', %d, '%s'", 
+            '', $tipo, '', '', '', '', '', '', '', '', $fechaConsulta
+        );
+    
         $query = $this->db->query($sql);
+    
+        if (!$query) {
+            $error = $this->db->error();
+            log_message('error', 'Error en la consulta SQL: ' . $error['message']);
+            echo "Error en la consulta SQL: " . $error['message'];
+            return;
+        }
 
 
-        if ($tipo == 1 || $tipo == 6)
+        if ($tipo == 1)
         {
             foreach ($query->result() as $row)
             {
@@ -77,7 +102,33 @@ class BodegaDespacho extends CI_Controller {
                     "Guia"=>$row->Guia,
                     "Administrador"=>$row->Administrador,
                     "Operario"=>$row->Operario,
-                    "IdDespachado"=>$row->IdDespachado
+                    "Id"=>$row->IdDespachado,
+                    "Fecha"=>$row->FechaDespachado
+                );
+            }
+        }
+        else if ($tipo == 6)
+        {
+            foreach ($query->result() as $row)
+            {
+                $this->data["data"][] = array("TransId"=>$row->TransId, 
+                    "FechaTransaccion"=>$row->FechaTransaccion,
+                    "FechaImpresion"=>$row->FechaImpresion,
+                    "Proceso"=>$row->Proceso,
+                    "IdCliente"=>$row->IdCliente,
+                    "Cliente"=>$row->Cliente,
+                    "Rep2id"=>$row->Rep2id,
+                    "Vendedor"=>$row->Vendedor,
+                    "EstadoTransaccion"=>$row->EstadoTransaccion,
+                    "Observaciones"=>$row->Observaciones,
+                    "TipoEnvio"=>$row->TipoEnvio,
+                    "Ubicacion"=>$row->Ubicacion,
+                    "Transportadora"=>$row->Transportadora,
+                    "Guia"=>$row->Guia,
+                    "Administrador"=>$row->Administrador,
+                    "Operario"=>$row->Operario,
+                    "Id"=>$row->IdUbicado,
+                    "Fecha"=>$row->FechaUbicado
                 );
             }
         }
@@ -190,7 +241,7 @@ class BodegaDespacho extends CI_Controller {
             $tipo = 5;
 
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado);
+        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado, '');
 
         $query = $this->db->query($sql);
 
