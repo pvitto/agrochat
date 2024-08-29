@@ -15,7 +15,8 @@ Ext.onReady(function() {
 		var boton_PorDespachar = Ext.getCmp('PorDespacharButton');
 		var boton_Ubicados = Ext.getCmp('UbicadosButton');
 		var boton_Depachados = Ext.getCmp('DespachadosButton');
-		var textFieldRemision = Ext.getCmp('idRemision')
+		var boton_BuscarRemision = Ext.getCmp('BuscarButton');
+		var textFieldRemision = Ext.getCmp('idRemision');
 
 		var exportButton = Ext.getCmp('exportButton');
 		var grid = Ext.getCmp('tabla'); 
@@ -50,7 +51,8 @@ Ext.onReady(function() {
 		ubicacionColumn.setVisible(tipo === 6);
 		
 		// Items correspondientes exclusivamente a Por Despachar
-		textFieldRemision.setDisabled(tipo !== 1);
+		textFieldRemision.setDisabled(tipo !== 1); 
+		boton_BuscarRemision.setDisabled(tipo !== 1);
 
 		Ext.getCmp('tabla').getStore().clearFilter();
 		Ext.getCmp("form").getForm().reset();
@@ -287,7 +289,9 @@ Ext.onReady(function() {
 									tipo = 1;
 									actualizarInterfaz();
 									Ext.getCmp('tabla').getStore().reload({
-										params: { Tipo: tipo }
+										params: { Tipo: tipo,
+											Remision: Ext.getCmp('idRemision').getValue().trim()
+										}
 									});
 								}
 							},
@@ -327,33 +331,24 @@ Ext.onReady(function() {
 								labelWidth: 160,
 								id: 'idRemision',
 								fieldLabel: 'Consultar Remision:',
-								value: '',
 								editable: true,
-								width: 285,
-								listeners: {
-									change: function(field, newValue) {
-										var store = Ext.getCmp('tabla').getStore();
-										
-										// Limpiar los filtros existentes
-										store.clearFilter();
-							
-										// Verificar si hay un valor en el campo de texto
-										if (newValue) {
-											// Aplicar un filtro para buscar coincidencias que contengan el texto ingresado
-											store.filterBy(function(record) {
-												var remision = record.get('TransId');
-												
-												// Verificar si 'remision' no es null o undefined antes de usar toLowerCase()
-												if (remision) {
-													return remision.toLowerCase().includes(newValue.toLowerCase());
-												}
-							
-												return false; // Si 'remision' es null o undefined, no coincide
-											});
+								width: 285
+							},
+							"-",
+							{
+								xtype: 'button',
+								text: 'Buscar Remisión',
+								id: 'BuscarButton',
+								handler: function() {
+
+									Ext.getCmp('tabla').getStore().reload({
+										params: { 
+											Tipo: tipo,
+											Remision: Ext.getCmp('idRemision').getRawValue() // Usa la fecha seleccionada o actual
 										}
-									}
+									});
 								}
-							}							
+							},							
 							,
 							"-",
 							{

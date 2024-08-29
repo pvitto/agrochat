@@ -30,6 +30,7 @@ class BodegaDespacho extends CI_Controller {
         
         $this->data = array();
         $tipo = $this->input->get("Tipo");
+        $remision = 0;
         $fechaConsulta = "";
     
         if ($this->input->get("Fecha")) {
@@ -45,10 +46,14 @@ class BodegaDespacho extends CI_Controller {
                 return;
             }
         }
+        else if ($this->input->get("Remision"))
+        {
+            $remision = $this->input->get("Remision");
+        }
     
         $sql = sprintf(
             "EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', %d, '%s'", 
-            '', $tipo, '', '', '', '', '', '', '', '', $fechaConsulta
+            $remision, $tipo, '', '', '', '', '', '', '', '', $fechaConsulta
         );
     
         $query = $this->db->query($sql);
