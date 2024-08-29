@@ -82,10 +82,8 @@ Ext.onReady(function() {
 		
 	}
 
-	function borrarColumnasExcel(data, tipo)
-	{
-		if (tipo == 4)
-		{
+	function borrarColumnasExcel(data, tipo) {
+		if (tipo == 4) {
 			delete data.id; // Eliminar la columna "ID"
 			delete data.Vendedor;
 			delete data.TipoEnvio;
@@ -95,10 +93,8 @@ Ext.onReady(function() {
 			delete data.Id;
 			delete data.Fecha;
 			delete data.IdDespachado;
-			data['FIRMA'] = ""
-		}
-		else if (tipo == 6)
-		{
+			data['FIRMA'] = "";
+		} else if (tipo == 6) {
 			delete data.id;
 			delete data.Vendedor;
 			delete data.Transportadora;
@@ -106,66 +102,104 @@ Ext.onReady(function() {
 			delete data.IdDespachado;
 			delete data.IdCliente;
 			delete data.Guia;
+			data['Fecha Ubicado'] = data.Fecha;
+			delete data.Fecha;
 		}
-
+	
 		return data;
 	}
-
+	
 	function exportarExcel(tipo) {
 		var grid = Ext.getCmp('tabla');
 		var store = grid.getStore();
 	
 		// Crear un nuevo libro de Excel
 		var workbook = XLSX.utils.book_new();
+		var excelName = tipo == 4 ? "Despachados" : "Ubicados";
 	
-		var excelName = "";
-
-		if (tipo == 4)
-		{
-			excelName = "Despachados";
-		}
-		else if (tipo == 6)
-		{
-			excelName = "Ubicados";
-		}
-	
+		// Obtener los datos y procesarlos
 		var worksheetData = store.getData().items.map(function(record) {
 			var data = record.getData();
 			data = borrarColumnasExcel(data, tipo);
 			return data;
 		});
-
-		// Crear una hoja de cálculo y añadirla al libro
-		var worksheet = XLSX.utils.json_to_sheet(worksheetData);
-
-		// Obtener los nombres de las columnas
-		var headers = Object.keys(worksheetData[0]);
-
+	
+		// Crear los encabezados para la hoja de cálculo
+		var headers = Object.keys(worksheetData[0] || {});
+		var worksheet = XLSX.utils.json_to_sheet([], { header: headers, skipHeader: true });
+	
+		// Agregar el texto en la celda A1 según el tipo
+		if (tipo == 4) {
+			var currentDate = new Date().toLocaleDateString(); // Obtener la fecha actual en formato local
+			worksheet['A1'] = { v: 'RELACION DE DESPACHOS FECHA: ' + currentDate, t: 's' };
+		} else {
+			worksheet['A1'] = { v: 'RELACION DE MERCANCIA UBICADA', t: 's' };
+		}
+		
+		// Agregar una fila vacía para hacer espacio para los encabezados
+		worksheet['A2'] = { v: '', t: 's' };
+		
+		// Agregar los encabezados en la fila 3
+		XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: 'A3' });
+		
+		// Agregar los datos a partir de la fila 4 (después de los encabezados)
+		XLSX.utils.sheet_add_json(worksheet, worksheetData, { header: headers, skipHeader: true, origin: 'A4' });
+	
 		// Aplicar estilos a los encabezados
 		var headerStyle = {
-			font: { bold: true, color: { rgb: '1F497D' } }, // Color del texto en amarillo crema y negrita
-			fill: { fgColor: { rgb: 'FFF2CC' } } // Fondo amarillento crema
+			font: { bold: true, color: { rgb: '1F497D' } },
+			fill: {
+				patternType: 'solid',
+				fgColor: { rgb: 'FFF2CC' }
+			},
+			alignment: {
+				horizontal: 'center',
+				vertical: 'center'
+			},
+			border: {
+				top: { style: 'thin', color: { rgb: '000000' } },
+				bottom: { style: 'thin', color: { rgb: '000000' } },
+				left: { style: 'thin', color: { rgb: '000000' } },
+				right: { style: 'thin', color: { rgb: '000000' } }
+			}
 		};
-		// Aplica el estilo a cada celda del encabezado
-		headers.forEach(function(header, index) {
-			var cellAddress = XLSX.utils.encode_cell({ c: index, r: 0 });
-			if (!worksheet[cellAddress]) worksheet[cellAddress] = {}; // Crea la celda si no existe
-			worksheet[cellAddress].s = headerStyle;
-		});
-
+	
+		// Aplicar estilos a los encabezados
+		var range = XLSX.utils.decode_range(worksheet['!ref']);
+		var headerRow = 2; // La fila 3 es la de los encabezados
+	
+		for (var C = range.s.c; C <= range.e.c; ++C) {
+			var cellAddress = XLSX.utils.encode_cell({ c: C, r: headerRow });
+			if (worksheet[cellAddress]) {
+				worksheet[cellAddress].s = headerStyle;
+			}
+		}
+	
+		// Ajustar el rango de la hoja de cálculo
+		worksheet['!ref'] = XLSX.utils.encode_range(range);
+	
+		// Añadir la hoja al libro y exportar
 		XLSX.utils.book_append_sheet(workbook, worksheet, excelName);
-
-		// Exportar el libro a un archivo
-		XLSX.writeFile(workbook, excelName + '.xlsx');
-
+		var wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
+	
+		// Convertir cadena binaria a Blob y descargar
+		function s2ab(s) {
+			var buf = new ArrayBuffer(s.length);
+			var view = new Uint8Array(buf);
+			for (var i = 0; i < s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
+			return buf;
+		}
+	
+		var blob = new Blob([s2ab(wbout)], { type: "application/octet-stream" });
+		saveAs(blob, excelName + ".xlsx"); // Asegúrate de incluir FileSaver.js
+	
 		// Limpiar el filtro después de exportar
 		store.clearFilter();
-
+	
 		Ext.Msg.alert('Éxito', 'El archivo Excel se ha creado correctamente.');
-		
 	}
 	
-
+	
 	function setVisibilityForm(visible)
 	{
 		if (visible === false)
