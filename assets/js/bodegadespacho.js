@@ -79,6 +79,89 @@ Ext.onReady(function() {
 
 		
 	}
+
+	function borrarColumnasExcel(data, tipo)
+	{
+		if (tipo == 4)
+		{
+			delete data.id; // Eliminar la columna "ID"
+			delete data.Vendedor;
+			delete data.TipoEnvio;
+			delete data.Ubicacion;
+			delete data.Administrador;
+			delete data.Operario;
+			delete data.Id;
+			delete data.Fecha;
+			delete data.IdDespachado;
+			data['FIRMA'] = ""
+		}
+		else if (tipo == 6)
+		{
+			delete data.id;
+			delete data.Vendedor;
+			delete data.Transportadora;
+			delete data.Id;
+			delete data.IdDespachado;
+			delete data.IdCliente;
+			delete data.Guia;
+		}
+
+		return data;
+	}
+
+	function exportarExcel(tipo) {
+		var grid = Ext.getCmp('tabla');
+		var store = grid.getStore();
+	
+		// Crear un nuevo libro de Excel
+		var workbook = XLSX.utils.book_new();
+	
+		var excelName = "";
+
+		if (tipo == 4)
+		{
+			excelName = "Despachados";
+		}
+		else if (tipo == 6)
+		{
+			excelName = "Ubicados";
+		}
+	
+		var worksheetData = store.getData().items.map(function(record) {
+			var data = record.getData();
+			data = borrarColumnasExcel(data, tipo);
+			return data;
+		});
+
+		// Crear una hoja de cálculo y añadirla al libro
+		var worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+		// Obtener los nombres de las columnas
+		var headers = Object.keys(worksheetData[0]);
+
+		// Aplicar estilos a los encabezados
+		var headerStyle = {
+			font: { bold: true, color: { rgb: '1F497D' } }, // Color del texto en amarillo crema y negrita
+			fill: { fgColor: { rgb: 'FFF2CC' } } // Fondo amarillento crema
+		};
+		// Aplica el estilo a cada celda del encabezado
+		headers.forEach(function(header, index) {
+			var cellAddress = XLSX.utils.encode_cell({ c: index, r: 0 });
+			if (!worksheet[cellAddress]) worksheet[cellAddress] = {}; // Crea la celda si no existe
+			worksheet[cellAddress].s = headerStyle;
+		});
+
+		XLSX.utils.book_append_sheet(workbook, worksheet, excelName);
+
+		// Exportar el libro a un archivo
+		XLSX.writeFile(workbook, excelName + '.xlsx');
+
+		// Limpiar el filtro después de exportar
+		store.clearFilter();
+
+		Ext.Msg.alert('Éxito', 'El archivo Excel se ha creado correctamente.');
+		
+	}
 	
 
 	function setVisibilityForm(visible)
@@ -119,9 +202,9 @@ Ext.onReady(function() {
 	
 
 
+	// Crear la store
 	var store = Ext.create('Ext.data.Store', {
 		autoLoad: true,
-		//groupField: "TransId",
 		fields: [
 			{ name: 'TransId', type: 'string' },
 			{ name: 'FechaTransaccion', type: 'string' },
@@ -145,7 +228,7 @@ Ext.onReady(function() {
 			timeout: 600000,
 			useDefaultXhrHeader: false,
 			type: 'ajax',
-			url: url+"obtenerPickedList",
+			url: url + "obtenerPickedList",
 			reader: {
 				type: 'json',
 				rootProperty: 'data'
@@ -153,8 +236,22 @@ Ext.onReady(function() {
 			extraParams: {
 				Tipo: tipo 
 			}
+		},
+		listeners: {
+			// Desactivar botones antes de cargar la store
+			beforeload: function() {
+				Ext.getCmp('DespachadosButton').setDisabled(true);
+				Ext.getCmp('PorDespacharButton').setDisabled(true);
+				Ext.getCmp('UbicadosButton').setDisabled(true);
+			},
+			load: function(store, records, successful, operation, eOpts) {
+				if (successful) { // Verifica si la carga fue exitosa
+					actualizarInterfaz();
+				}
+			}
 		}
-	})
+	});
+
 	 
 	Ext.create('Ext.container.Viewport', {
 		layout: 'border',
@@ -292,42 +389,7 @@ Ext.onReady(function() {
 								disabled: tipo != 4 && tipo != 6,
 								iconCls: 'fas fa-caret-down',
 								handler: function() {
-									try {
-										var grid = Ext.getCmp('tabla');
-										var store = grid.getStore();
-										
-										var excelName = "";
-						
-										// Crear un nuevo libro de Excel
-										var workbook = XLSX.utils.book_new();
-						
-										// Convertir datos del store a formato JSON para exportar a Excel
-										var worksheetData = store.getData().items.map(function(record) {
-											var data = record.getData();
-											delete data.id; // Eliminar la columna "ID"
-											return data;
-										});
-						
-										if (tipo == 4) {
-											excelName = "Despachados";
-										} else {
-											excelName = "Ubicados";
-										}
-						
-										// Crear una hoja de cálculo y añadirla al libro
-										var worksheet = XLSX.utils.json_to_sheet(worksheetData);
-										XLSX.utils.book_append_sheet(workbook, worksheet, excelName);
-						
-										// Exportar el libro a un archivo
-										XLSX.writeFile(workbook, excelName + '.xlsx');
-						
-										// Limpiar el filtro después de exportar
-										store.clearFilter();
-						
-										Ext.Msg.alert('Éxito', 'El archivo Excel se ha creado correctamente.');
-									} catch (error) {
-										Ext.Msg.alert('Error', 'Hubo un problema al crear el archivo Excel: ' + error.message);
-									}
+									exportarExcel(tipo);
 								}
 							}
 						]
@@ -692,7 +754,15 @@ Ext.onReady(function() {
 							Ext.getCmp("form").setDisabled(false);
 							Ext.getCmp("form").getForm().reset();
 							setVisibilityForm(false);
-							Ext.getCmp("Guia").setVisible(true);
+
+							if (record.get('Guia') != null)
+							{
+								Ext.getCmp("Guia").setVisible(true);
+							}
+							else
+							{
+								Ext.getCmp("Guia").setVisible(false);
+							}
 							
 						}
 					}
@@ -798,6 +868,17 @@ Ext.onReady(function() {
 												datos.IdTransTipo = 5;
 												datos.BinNum = "";
 												datos.Transportadora = "";
+
+												if (datos.Guia == "")
+												{
+													Ext.Msg.show({
+															title: 'Atención!',
+															message: 'Debe ingresar una guia',
+															buttons: Ext.Msg.OK,
+															icon: Ext.Msg.WARNING
+														});
+														return false;
+												}
 											}
 											else {
 												Ext.Msg.show({
@@ -945,9 +1026,11 @@ Ext.onReady(function() {
 										if (newValue.IdProceso === 2) {
 											Ext.getCmp('Localizacion').setVisible(true);
 											Ext.getCmp('Transportadora').setVisible(false);
+											Ext.getCmp('Guia').setVisible(false);
 										} else if (newValue.IdProceso === 3) {
 											Ext.getCmp('Transportadora').setVisible(true);
 											Ext.getCmp('Localizacion').setVisible(false);
+											Ext.getCmp('Guia').setVisible(true);
 										}
 									}
 								}
