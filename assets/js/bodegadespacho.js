@@ -192,7 +192,7 @@ Ext.onReady(function() {
 	
 		// Añadir la hoja al libro y exportar
 		XLSX.utils.book_append_sheet(workbook, worksheet, excelName);
-		
+
 		// Guardar el archivo Excel
 		XLSX.writeFile(workbook, excelName + '.xlsx');
 
@@ -621,6 +621,7 @@ Ext.onReady(function() {
 					{
 						header: 'Cliente',
 						dataIndex: 'Cliente',
+						flex: 1,
 						minWidth: 200
 					}, 
 					{
@@ -675,6 +676,7 @@ Ext.onReady(function() {
 						header: 'Observaciones',
 						dataIndex: 'Observaciones',
 						headerCheckbox: true,
+						flex: 1,
 						//headerCheckbox: true,
 						width: 190,
 						editor: {
