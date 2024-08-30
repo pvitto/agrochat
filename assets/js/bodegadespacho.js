@@ -82,6 +82,15 @@ Ext.onReady(function() {
 		
 	}
 
+	function limpiarEspacios(data) {
+		Object.keys(data).forEach(key => {
+			if (typeof data[key] === 'string') {
+				data[key] = data[key].trim(); // Elimina los espacios en blanco al inicio y al final
+			}
+		});
+		return data;
+	}
+	
 	function borrarColumnasExcel(data, tipo) {
 		if (tipo == 4) {
 			delete data.id; // Eliminar la columna "ID"
@@ -105,9 +114,37 @@ Ext.onReady(function() {
 			data['Fecha Ubicado'] = data.Fecha;
 			delete data.Fecha;
 		}
+		
+		data = limpiarEspacios(data); // Limpiar espacios en blanco después de borrar las columnas
 	
 		return data;
 	}
+	
+	function adjustColumnWidths(ws, data, headers) {
+		var colWidths = {};
+		var maxLengths = headers.map(header => header.length);
+	
+		// Calcular el ancho máximo para cada columna
+		data.forEach(row => {
+			headers.forEach((header, i) => {
+				var cellValue = String(row[header] || '');
+				if (cellValue.length > maxLengths[i]) {
+					maxLengths[i] = cellValue.length;
+				}
+			});
+		});
+	
+		// Ajustar el ancho de las columnas
+		headers.forEach((header, i) => {
+			colWidths[header] = { width: maxLengths[i] }; // Dividir por 7 para ajustar la escala de píxeles a columnas
+		});
+	
+		ws['!cols'] = headers.map(header => ({
+			wpx: colWidths[header] ? colWidths[header].width * 7 : 60 // Ajustar el ancho de columna
+		}));
+	}
+	
+	
 	
 	function exportarExcel(tipo) {
 		var grid = Ext.getCmp('tabla');
@@ -145,35 +182,11 @@ Ext.onReady(function() {
 		// Agregar los datos a partir de la fila 4 (después de los encabezados)
 		XLSX.utils.sheet_add_json(worksheet, worksheetData, { header: headers, skipHeader: true, origin: 'A4' });
 	
-		// Aplicar estilos a los encabezados
-		var headerStyle = {
-			font: { bold: true, color: { rgb: '1F497D' } },
-			fill: {
-				patternType: 'solid',
-				fgColor: { rgb: 'FFF2CC' }
-			},
-			alignment: {
-				horizontal: 'center',
-				vertical: 'center'
-			},
-			border: {
-				top: { style: 'thin', color: { rgb: '000000' } },
-				bottom: { style: 'thin', color: { rgb: '000000' } },
-				left: { style: 'thin', color: { rgb: '000000' } },
-				right: { style: 'thin', color: { rgb: '000000' } }
-			}
-		};
+		adjustColumnWidths(worksheet, worksheetData, headers);
+
 	
 		// Aplicar estilos a los encabezados
 		var range = XLSX.utils.decode_range(worksheet['!ref']);
-		var headerRow = 2; // La fila 3 es la de los encabezados
-	
-		for (var C = range.s.c; C <= range.e.c; ++C) {
-			var cellAddress = XLSX.utils.encode_cell({ c: C, r: headerRow });
-			if (worksheet[cellAddress]) {
-				worksheet[cellAddress].s = headerStyle;
-			}
-		}
 	
 		// Ajustar el rango de la hoja de cálculo
 		worksheet['!ref'] = XLSX.utils.encode_range(range);
@@ -198,6 +211,7 @@ Ext.onReady(function() {
 	
 		Ext.Msg.alert('Éxito', 'El archivo Excel se ha creado correctamente.');
 	}
+ 	
 	
 	
 	function setVisibilityForm(visible)
@@ -276,12 +290,12 @@ Ext.onReady(function() {
 		listeners: {
 			// Desactivar botones antes de cargar la store
 			beforeload: function() {
-				Ext.getCmp('DespachadosButton').setDisabled(true);
-				Ext.getCmp('PorDespacharButton').setDisabled(true);
-				Ext.getCmp('UbicadosButton').setDisabled(true);
+
+				Ext.getCmp('toolbar').setDisabled(true);
 			},
 			load: function(store, records, successful, operation, eOpts) {
 				if (successful) { // Verifica si la carga fue exitosa
+					Ext.getCmp('toolbar').setDisabled(false);
 					actualizarInterfaz();
 				}
 			}
@@ -309,6 +323,7 @@ Ext.onReady(function() {
 					{
 						xtype: 'toolbar',
 						dock: 'top',
+						id: "toolbar",
 						ui: 'footer',
 						layout: {
 							pack: 'left'
