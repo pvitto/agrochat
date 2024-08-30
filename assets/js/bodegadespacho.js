@@ -172,18 +172,17 @@ Ext.onReady(function() {
 		} else {
 			worksheet['A1'] = { v: 'RELACION DE MERCANCIA UBICADA', t: 's' };
 		}
-		
+	
 		// Agregar una fila vacía para hacer espacio para los encabezados
 		worksheet['A2'] = { v: '', t: 's' };
-		
+	
 		// Agregar los encabezados en la fila 3
 		XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: 'A3' });
-		
+	
 		// Agregar los datos a partir de la fila 4 (después de los encabezados)
 		XLSX.utils.sheet_add_json(worksheet, worksheetData, { header: headers, skipHeader: true, origin: 'A4' });
 	
 		adjustColumnWidths(worksheet, worksheetData, headers);
-
 	
 		// Aplicar estilos a los encabezados
 		var range = XLSX.utils.decode_range(worksheet['!ref']);
@@ -193,24 +192,14 @@ Ext.onReady(function() {
 	
 		// Añadir la hoja al libro y exportar
 		XLSX.utils.book_append_sheet(workbook, worksheet, excelName);
-		var wbout = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
-	
-		// Convertir cadena binaria a Blob y descargar
-		function s2ab(s) {
-			var buf = new ArrayBuffer(s.length);
-			var view = new Uint8Array(buf);
-			for (var i = 0; i < s.length; ++i) view[i] = s.charCodeAt(i) & 0xFF;
-			return buf;
-		}
-	
-		var blob = new Blob([s2ab(wbout)], { type: "application/octet-stream" });
-		saveAs(blob, excelName + ".xlsx"); // Asegúrate de incluir FileSaver.js
-	
-		// Limpiar el filtro después de exportar
+		
+		// Guardar el archivo Excel
+		XLSX.writeFile(workbook, excelName + '.xlsx');
+
 		store.clearFilter();
-	
-		Ext.Msg.alert('Éxito', 'El archivo Excel se ha creado correctamente.');
+
 	}
+	
  	
 	
 	
