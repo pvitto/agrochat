@@ -26,7 +26,6 @@ Ext.onReady(function() {
 		var transportadoraColumn = grid.down('[itemId=transportadoraColumn]');
 		var ubicacionColumn = grid.down('[itemId=ubicacionColumn]');
 		var guiaColumn = grid.down('[itemId=guiaColumn]');
-		var idColumn = grid.down('[itemId=idColumn]');
 		var fechaColumn = grid.down('[itemId=fechaColumn]');
 	
 
@@ -38,7 +37,6 @@ Ext.onReady(function() {
 		exportButton.setDisabled(tipo !== 4 && tipo !== 6);
 		adminColumn.setVisible(tipo === 4 || tipo === 6);
 		operarioColumn.setVisible(tipo === 4 || tipo === 6);
-		idColumn.setVisible(tipo === 6 || tipo === 4);
 		fechaColumn.setVisible(tipo === 6 || tipo === 4)
 
 
@@ -85,46 +83,37 @@ Ext.onReady(function() {
 	function limpiarEspacios(data) {
 		Object.keys(data).forEach(key => {
 			if (typeof data[key] === 'string') {
-				data[key] = data[key].trim(); // Elimina los espacios en blanco al inicio y al final
+				data[key] = data[key].trim();
 			}
 		});
 		return data;
 	}
 	
 	function borrarColumnasExcel(data, tipo) {
-		if (tipo == 4) {
-			delete data.id; // Eliminar la columna "ID"
-			delete data.Vendedor;
-			delete data.TipoEnvio;
-			delete data.Ubicacion;
-			delete data.Administrador;
-			delete data.Operario;
-			delete data.Id;
-			delete data.Fecha;
-			delete data.IdDespachado;
+		if (tipo === 4) {
+			const columnasParaEliminar = [
+				'id', 'Vendedor', 'TipoEnvio', 'Ubicacion', 'Administrador', 
+				'Operario', 'Id', 'Fecha', 'IdDespachado'
+			];
+			columnasParaEliminar.forEach(columna => delete data[columna]);
 			data['FIRMA'] = "";
-		} else if (tipo == 6) {
-			delete data.id;
-			delete data.Vendedor;
-			delete data.Transportadora;
-			delete data.Id;
-			delete data.IdDespachado;
-			delete data.IdCliente;
-			delete data.Guia;
+		} else if (tipo === 6) {
+			const columnasParaEliminar = [
+				'id', 'Vendedor', 'Transportadora', 'Id', 'IdDespachado', 
+				'IdCliente', 'Guia'
+			];
+			columnasParaEliminar.forEach(columna => delete data[columna]);
 			data['Fecha Ubicado'] = data.Fecha;
 			delete data.Fecha;
 		}
-		
-		data = limpiarEspacios(data); // Limpiar espacios en blanco después de borrar las columnas
 	
+		data = limpiarEspacios(data);
 		return data;
 	}
 	
 	function adjustColumnWidths(ws, data, headers) {
-		var colWidths = {};
 		var maxLengths = headers.map(header => header.length);
 	
-		// Calcular el ancho máximo para cada columna
 		data.forEach(row => {
 			headers.forEach((header, i) => {
 				var cellValue = String(row[header] || '');
@@ -134,14 +123,35 @@ Ext.onReady(function() {
 			});
 		});
 	
-		// Ajustar el ancho de las columnas
-		headers.forEach((header, i) => {
-			colWidths[header] = { width: maxLengths[i] }; // Dividir por 7 para ajustar la escala de píxeles a columnas
-		});
-	
-		ws['!cols'] = headers.map(header => ({
-			wpx: colWidths[header] ? colWidths[header].width * 7 : 60 // Ajustar el ancho de columna
+		ws['!cols'] = headers.map((header, i) => ({
+			wpx: maxLengths[i] * 7 || 60
 		}));
+	}
+
+	function obtenerTransportadoras(callback) {
+		Ext.Ajax.request({
+			url: url + 'obtenerTransportadoras',
+			method: 'GET',
+			success: function(response) {
+				try {
+					var responseData = Ext.decode(response.responseText); // Decodificar la respuesta
+					var transportadoras = responseData.data; // Obtener el arreglo 'data'
+	
+					if (Array.isArray(transportadoras)) {
+						callback(transportadoras);
+					} else {
+						console.error('La propiedad "data" no es un arreglo:', transportadoras);
+						Ext.Msg.alert('Error', 'Formato de respuesta inesperado. Por favor, revisa los datos.');
+					}
+				} catch (e) {
+					console.error('Error al decodificar la respuesta:', e);
+					Ext.Msg.alert('Error', 'Error al procesar la respuesta del servidor.');
+				}
+			},
+			failure: function(response) {
+				Ext.Msg.alert('Error', 'No se pudieron obtener las transportadoras.');
+			}
+		});
 	}
 	
 	
@@ -149,58 +159,111 @@ Ext.onReady(function() {
 	function exportarExcel(tipo) {
 		var grid = Ext.getCmp('tabla');
 		var store = grid.getStore();
-	
-		// Crear un nuevo libro de Excel
 		var workbook = XLSX.utils.book_new();
-		var excelName = tipo == 4 ? "Despachados" : "Ubicados";
+		var excelName = tipo === 4 ? "Despachados" : "Ubicados";
 	
-		// Obtener los datos y procesarlos
-		var worksheetData = store.getData().items.map(function(record) {
-			var data = record.getData();
-			data = borrarColumnasExcel(data, tipo);
-			return data;
-		});
+		if (tipo === 4) {
+			obtenerTransportadoras(function(transportadoras) {
+				var worksheetData = store.getData().items.map(function(record) {
+					var data = record.getData();
+					return borrarColumnasExcel(data, tipo);
+				});
 	
-		// Crear los encabezados para la hoja de cálculo
-		var headers = Object.keys(worksheetData[0] || {});
-		var worksheet = XLSX.utils.json_to_sheet([], { header: headers, skipHeader: true });
+				if (worksheetData.length === 0) {
+					Ext.Msg.alert('Error', 'No hay datos para exportar.');
+					return;
+				}
 	
-		// Agregar el texto en la celda A1 según el tipo
-		if (tipo == 4) {
-			var currentDate = new Date().toLocaleDateString(); // Obtener la fecha actual en formato local
-			worksheet['A1'] = { v: 'RELACION DE DESPACHOS FECHA: ' + currentDate, t: 's' };
+				var headers = Object.keys(worksheetData[0] || {});
+				var worksheet = XLSX.utils.json_to_sheet([], { header: headers, skipHeader: true });
+	
+				var currentDate = new Date().toLocaleDateString();
+				worksheet['A1'] = { v: 'RELACION DE DESPACHOS FECHA: ' + currentDate, t: 's' };
+	
+				var rowIndex = 3; // Starts from the third row after the title and empty row
+	
+				transportadoras.forEach(function(transportadora) {
+					// Add the transportadora name
+					var cellRef = 'A' + rowIndex++;
+					worksheet[cellRef] = { v: transportadora.Descrip, t: 's' };
+	
+					var dataPorTransportadora = worksheetData.filter(item => 
+						item.Transportadora.trim().toLowerCase() === transportadora.Descrip.trim().toLowerCase()
+					);
+					
+					// Debug: Log the filtered data
+					console.log(`Data for ${transportadora.Descrip}:`, dataPorTransportadora);
+	
+					if (dataPorTransportadora.length > 0) {
+						// Add table headers
+						XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: 'A' + rowIndex++ });
+	
+						// Debug: Log the headers added
+						console.log(`Headers added at row ${rowIndex - 1}:`, headers);
+	
+						// Add table data
+						XLSX.utils.sheet_add_json(worksheet, dataPorTransportadora, { header: headers, skipHeader: true, origin: 'A' + rowIndex });
+	
+						// Debug: Log the data added
+						console.log(`Data added starting at row ${rowIndex}:`, dataPorTransportadora);
+	
+						// Update row index for the next table
+						rowIndex += dataPorTransportadora.length;
+					}
+	
+					rowIndex =  rowIndex + 3; // Add an empty row between transportadora tables
+				});
+	
+				adjustColumnWidths(worksheet, worksheetData, headers);
+	
+				// Dynamically update the worksheet's "!ref" to cover the correct range
+				var endRow = rowIndex - 1; // Last filled row
+				worksheet['!ref'] = 'A1:L' + endRow;
+	
+				// Debug: Log the entire worksheet object
+				console.log('Final worksheet:', worksheet);
+	
+				XLSX.utils.book_append_sheet(workbook, worksheet, excelName);
+				XLSX.writeFile(workbook, excelName + '.xlsx');
+	
+				store.clearFilter();
+				Ext.Msg.alert('Éxito', 'El archivo Excel se ha creado correctamente.');
+			});
 		} else {
+			var worksheetData = store.getData().items.map(function(record) {
+				var data = record.getData();
+				return borrarColumnasExcel(data, tipo);
+			});
+	
+			if (worksheetData.length === 0) {
+				Ext.Msg.alert('Error', 'No hay datos para exportar.');
+				return;
+			}
+	
+			var headers = Object.keys(worksheetData[0] || {});
+			var worksheet = XLSX.utils.json_to_sheet([], { header: headers, skipHeader: true });
+	
 			worksheet['A1'] = { v: 'RELACION DE MERCANCIA UBICADA', t: 's' };
+	
+			worksheet['A2'] = { v: '', t: 's' };
+			XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: 'A3' });
+			XLSX.utils.sheet_add_json(worksheet, worksheetData, { header: headers, skipHeader: true, origin: 'A4' });
+	
+			adjustColumnWidths(worksheet, worksheetData, headers);
+	
+			// Ajustar el rango de la hoja de cálculo solo si hay datos
+			if (worksheetData.length > 0) {
+				var range = XLSX.utils.decode_range(worksheet['!ref']);
+				worksheet['!ref'] = XLSX.utils.encode_range(range);
+			}
+	
+			XLSX.utils.book_append_sheet(workbook, worksheet, excelName);
+			XLSX.writeFile(workbook, excelName + '.xlsx');
+	
+			store.clearFilter();
+			Ext.Msg.alert('Éxito', 'El archivo Excel se ha creado correctamente.');
 		}
-	
-		// Agregar una fila vacía para hacer espacio para los encabezados
-		worksheet['A2'] = { v: '', t: 's' };
-	
-		// Agregar los encabezados en la fila 3
-		XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: 'A3' });
-	
-		// Agregar los datos a partir de la fila 4 (después de los encabezados)
-		XLSX.utils.sheet_add_json(worksheet, worksheetData, { header: headers, skipHeader: true, origin: 'A4' });
-	
-		adjustColumnWidths(worksheet, worksheetData, headers);
-	
-		// Aplicar estilos a los encabezados
-		var range = XLSX.utils.decode_range(worksheet['!ref']);
-	
-		// Ajustar el rango de la hoja de cálculo
-		worksheet['!ref'] = XLSX.utils.encode_range(range);
-	
-		// Añadir la hoja al libro y exportar
-		XLSX.utils.book_append_sheet(workbook, worksheet, excelName);
-
-		// Guardar el archivo Excel
-		XLSX.writeFile(workbook, excelName + '.xlsx');
-
-		store.clearFilter();
-
 	}
-	
- 	
 	
 	
 	function setVisibilityForm(visible)
