@@ -18,6 +18,7 @@ Ext.onReady(function() {
 		var boton_BuscarRemision = Ext.getCmp('BuscarButton');
 		var textFieldRemision = Ext.getCmp('idRemision');
 		var boton_Anular = Ext.getCmp('anularButton');
+		var boton_Actualizar = Ext.getCmp('actualizarButton');
 
 		var exportButton = Ext.getCmp('exportButton');
 		var grid = Ext.getCmp('tabla'); 
@@ -36,6 +37,8 @@ Ext.onReady(function() {
 		var calendario = Ext.getCmp('fecha');
 
 		// Ajustar visibiliad de elementos dependientes al tipo de proceso
+
+		boton_Actualizar.setVisible(tipo !== 1)
 
 		// Items correspondientes a Ubicados / Despachados
 		exportButton.setDisabled(tipo !== 4 && tipo !== 6);
@@ -479,7 +482,13 @@ Ext.onReady(function() {
 								maxValue: new Date()
 							},
 							"-",
-							{ minWidth: 80, text: 'Actualizar', iconCls: 'fas fa-sync-alt', hidden: false, handler: function(){
+							{ 
+								minWidth: 80,
+								text: 'Actualizar', 
+								id: 'actualizarButton',
+								iconCls: 'fas fa-sync-alt', 
+								hidden: false, 
+								handler: function(){
 								Ext.getCmp('tabla').getStore().clearFilter();
 								Ext.getCmp("form").getForm().reset();
 								//Ext.getCmp("tabla").getView().setDisabled(false);
