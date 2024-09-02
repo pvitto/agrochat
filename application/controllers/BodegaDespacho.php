@@ -242,8 +242,14 @@ class BodegaDespacho extends CI_Controller {
         {
             $tipo = 2;
         }
-        else
+        else if ($this->data->IdTransTipo == 5)
+        {
             $tipo = 5;
+        }
+        else if ($this->data->IdTransTipo == 7)
+        {
+            $tipo = 7;
+        }
 
         //$this->load->view('welcome_message');
         $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado, '');

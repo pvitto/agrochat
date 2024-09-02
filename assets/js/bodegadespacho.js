@@ -17,6 +17,7 @@ Ext.onReady(function() {
 		var boton_Depachados = Ext.getCmp('DespachadosButton');
 		var boton_BuscarRemision = Ext.getCmp('BuscarButton');
 		var textFieldRemision = Ext.getCmp('idRemision');
+		var boton_Anular = Ext.getCmp('anularButton');
 
 		var exportButton = Ext.getCmp('exportButton');
 		var grid = Ext.getCmp('tabla'); 
@@ -27,6 +28,9 @@ Ext.onReady(function() {
 		var ubicacionColumn = grid.down('[itemId=ubicacionColumn]');
 		var guiaColumn = grid.down('[itemId=guiaColumn]');
 		var fechaColumn = grid.down('[itemId=fechaColumn]');
+
+		var transportadoraComboBox = Ext.getCmp('Transportadora');
+		var binNumComboBox = Ext.getCmp('Localizacion');
 	
 
 		var calendario = Ext.getCmp('fecha');
@@ -43,14 +47,19 @@ Ext.onReady(function() {
 		// Items correspondientes exclusivamente a Despachados
 		transportadoraColumn.setVisible(tipo === 4);
 		guiaColumn.setVisible(tipo === 4);
-		calendario.setDisabled(tipo !== 4);
+		calendario.setVisible(tipo === 4);
+		boton_Anular.setVisible(tipo === 4);
 
 		// Items correspondientes exclusivamente a Ubicados
 		ubicacionColumn.setVisible(tipo === 6);
 		
 		// Items correspondientes exclusivamente a Por Despachar
-		textFieldRemision.setDisabled(tipo !== 1); 
-		boton_BuscarRemision.setDisabled(tipo !== 1);
+		textFieldRemision.setVisible(tipo === 1); 
+		boton_BuscarRemision.setVisible(tipo === 1);
+
+		// Items tabpanel
+		transportadoraComboBox.setVisible(false);
+		binNumComboBox.setVisible(false);
 
 		Ext.getCmp('tabla').getStore().clearFilter();
 		Ext.getCmp("form").getForm().reset();
@@ -183,45 +192,36 @@ Ext.onReady(function() {
 				var rowIndex = 3; // Starts from the third row after the title and empty row
 	
 				transportadoras.forEach(function(transportadora) {
-					// Add the transportadora name
-					var cellRef = 'A' + rowIndex++;
-					worksheet[cellRef] = { v: transportadora.Descrip, t: 's' };
-	
+					// Filtra los datos para la transportadora actual
 					var dataPorTransportadora = worksheetData.filter(item => 
 						item.Transportadora.trim().toLowerCase() === transportadora.Descrip.trim().toLowerCase()
 					);
-					
-					// Debug: Log the filtered data
-					console.log(`Data for ${transportadora.Descrip}:`, dataPorTransportadora);
 	
+					// Solo agregar la transportadora si tiene datos
 					if (dataPorTransportadora.length > 0) {
-						// Add table headers
+						// Añade el nombre de la transportadora
+						var cellRef = 'A' + rowIndex++;
+						worksheet[cellRef] = { v: transportadora.Descrip, t: 's' };
+	
+						// Añadir encabezados de tabla
 						XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: 'A' + rowIndex++ });
 	
-						// Debug: Log the headers added
-						console.log(`Headers added at row ${rowIndex - 1}:`, headers);
-	
-						// Add table data
+						// Añadir datos de la tabla
 						XLSX.utils.sheet_add_json(worksheet, dataPorTransportadora, { header: headers, skipHeader: true, origin: 'A' + rowIndex });
 	
-						// Debug: Log the data added
-						console.log(`Data added starting at row ${rowIndex}:`, dataPorTransportadora);
-	
-						// Update row index for the next table
+						// Actualizar el índice de la fila para la próxima tabla
 						rowIndex += dataPorTransportadora.length;
-					}
 	
-					rowIndex =  rowIndex + 3; // Add an empty row between transportadora tables
+						// Añadir una fila vacía entre las tablas de transportadora
+						rowIndex += 3; 
+					}
 				});
 	
 				adjustColumnWidths(worksheet, worksheetData, headers);
 	
-				// Dynamically update the worksheet's "!ref" to cover the correct range
-				var endRow = rowIndex - 1; // Last filled row
+				// Actualizar el rango de la hoja de cálculo dinámicamente para cubrir el rango correcto
+				var endRow = rowIndex - 1; // Última fila llenada
 				worksheet['!ref'] = 'A1:L' + endRow;
-	
-				// Debug: Log the entire worksheet object
-				console.log('Final worksheet:', worksheet);
 	
 				XLSX.utils.book_append_sheet(workbook, worksheet, excelName);
 				XLSX.writeFile(workbook, excelName + '.xlsx');
@@ -244,8 +244,8 @@ Ext.onReady(function() {
 			var worksheet = XLSX.utils.json_to_sheet([], { header: headers, skipHeader: true });
 	
 			worksheet['A1'] = { v: 'RELACION DE MERCANCIA UBICADA', t: 's' };
-	
 			worksheet['A2'] = { v: '', t: 's' };
+	
 			XLSX.utils.sheet_add_aoa(worksheet, [headers], { origin: 'A3' });
 			XLSX.utils.sheet_add_json(worksheet, worksheetData, { header: headers, skipHeader: true, origin: 'A4' });
 	
@@ -264,6 +264,7 @@ Ext.onReady(function() {
 			Ext.Msg.alert('Éxito', 'El archivo Excel se ha creado correctamente.');
 		}
 	}
+	
 	
 	
 	function setVisibilityForm(visible)
@@ -461,7 +462,7 @@ Ext.onReady(function() {
 								format: "d/m/Y",
 								editable: false,
 								width: 245,
-								disabled: true, // Oculto inicialmente
+								hidden: true,
 								listeners: {
 									select: function(field, value, eOpts) {
 										Ext.getCmp('tabla').getStore().clearFilter();
@@ -477,6 +478,14 @@ Ext.onReady(function() {
 								},
 								maxValue: new Date()
 							},
+							"-",
+							{ minWidth: 80, text: 'Actualizar', iconCls: 'fas fa-sync-alt', hidden: false, handler: function(){
+								Ext.getCmp('tabla').getStore().clearFilter();
+								Ext.getCmp("form").getForm().reset();
+								//Ext.getCmp("tabla").getView().setDisabled(false);
+								Ext.getCmp('tabpanel').setVisible(false);
+								Ext.getCmp('tabla').getStore().reload();
+							} },
 							"->",
 							{
 								id: 'exportButton',
@@ -793,7 +802,9 @@ Ext.onReady(function() {
 							Ext.getCmp("pro2").setDisabled(true);
 							Ext.getCmp("pro3").setDisabled(true);
 							Ext.getCmp('tabpanel').setVisible(true);
+
 							Ext.getCmp("Guia").setVisible(false);
+							
 							setVisibilityForm(true);
 					
 							var proceso = record.get('Proceso');
@@ -812,12 +823,21 @@ Ext.onReady(function() {
 						}
 						else
 						{
-							//Ext.getCmp("form").disable();
-							Ext.getCmp('tabpanel').setVisible(true);
-							Ext.getCmp("form").setDisabled(false);
-							Ext.getCmp("form").getForm().reset();
-							setVisibilityForm(false);
-							Ext.getCmp("Guia").setVisible(true);
+							if (record.get('Guia').trim() == "")
+								{
+									Ext.getCmp("Guia").setVisible(true);
+								}
+								else
+								{
+									Ext.getCmp("Guia").setVisible(false);
+								}
+									
+								Ext.getCmp('tabpanel').setVisible(true);
+								Ext.getCmp("form").setDisabled(false);
+								Ext.getCmp("form").getForm().reset();
+								
+								setVisibilityForm(false);
+							
 						}
 						
 					},
@@ -847,13 +867,7 @@ Ext.onReady(function() {
 						}
 						else
 						{
-							//Ext.getCmp("form").disable();
-							Ext.getCmp('tabpanel').setVisible(true);
-							Ext.getCmp("form").setDisabled(false);
-							Ext.getCmp("form").getForm().reset();
-							setVisibilityForm(false);
-
-							if (record.get('Guia') != null)
+							if (record.get('Guia').trim() == "")
 							{
 								Ext.getCmp("Guia").setVisible(true);
 							}
@@ -861,7 +875,12 @@ Ext.onReady(function() {
 							{
 								Ext.getCmp("Guia").setVisible(false);
 							}
+								
+							Ext.getCmp('tabpanel').setVisible(true);
+							Ext.getCmp("form").setDisabled(false);
+							Ext.getCmp("form").getForm().reset();
 							
+							setVisibilityForm(false);
 						}
 					}
 				}				
@@ -927,8 +946,8 @@ Ext.onReady(function() {
 											datos.Idoperario = Ext.getCmp("Operarios").getValue();
 											datos.Observaciones = Ext.getCmp("Observacion").getValue().trim();
 											datos.FechaDespacho = "";
-											datos.IdDespachado = fila.IdDespachado;
-											datos.Guia = Ext.getCmp("Guia").getValue();
+											datos.IdDespachado = "";
+											datos.Guia = Ext.getCmp("Guia").getValue().trim();
 											datos.Proceso = fila.Proceso;
 							
 											if (datos.IdTransTipo == 2) {
@@ -964,6 +983,7 @@ Ext.onReady(function() {
 											} else if (datos.Proceso == "DESPACHADO")
 											{
 												datos.IdTransTipo = 5;
+												datos.IdDespachado = fila.Id;
 												datos.BinNum = "";
 												datos.Transportadora = "";
 
@@ -988,8 +1008,6 @@ Ext.onReady(function() {
 												return false;
 											}
 							
-											var dat = Ext.getCmp("tabla").getStore().getDataSource().items.filter(x => x.data.TransId == fila.TransId && x.data.IdProceso !== datos.IdTransTipo && x.data.Piso != fila.Piso);
-							
 											Ext.Ajax.request({
 												url: url + 'guardarHistorialPicked',
 												params: {
@@ -1010,7 +1028,11 @@ Ext.onReady(function() {
 															buttons: Ext.Msg.OK,
 															icon: Ext.Msg.INFO,
 															fn: function() {
-																window.location.reload();
+																Ext.getCmp('tabla').getStore().clearFilter();
+																Ext.getCmp("form").getForm().reset();
+																//Ext.getCmp("tabla").getView().setDisabled(false);
+																Ext.getCmp('tabpanel').setVisible(false);
+																Ext.getCmp('tabla').getStore().reload();
 															}
 														});
 														
@@ -1025,7 +1047,11 @@ Ext.onReady(function() {
 															buttons: Ext.Msg.OK,
 															icon: Ext.Msg.ERROR, // Use Ext.Msg.ERROR to display an error symbol
 															fn: function() {
-																window.location.reload();
+																Ext.getCmp('tabla').getStore().clearFilter();
+																Ext.getCmp("form").getForm().reset();
+																//Ext.getCmp("tabla").getView().setDisabled(false);
+																Ext.getCmp('tabpanel').setVisible(false);
+																Ext.getCmp('tabla').getStore().reload();
 															}
 														});
 														
@@ -1046,6 +1072,123 @@ Ext.onReady(function() {
 										handler: function () {
 											Ext.getCmp("form").getForm().reset();
 											Ext.getCmp('tabpanel').setVisible(false);
+										}
+									},
+									'->',
+									{
+										minWidth: 50,
+										id: 'anularButton',
+										iconCls: 'fas fa-times',
+										hidden: true,
+										handler: function () {
+											var fila = Ext.getCmp("tabla").getSelection()[0].data;
+							
+											if (!Ext.getCmp("form").getForm().isValid()) {
+												Ext.Msg.show({
+													title: 'Atención!',
+													message: 'Debe llenar todos los campos obligatorios',
+													buttons: Ext.Msg.OK,
+													icon: Ext.Msg.WARNING
+												});
+												return false;
+											}
+							
+											if (Ext.getCmp("usuarios").getSelection().data.Password != Ext.getCmp("password").getValue().trim()) {
+												Ext.Msg.show({
+													title: 'Atención!',
+													message: 'Contraseña Incorrecta',
+													buttons: Ext.Msg.OK,
+													icon: Ext.Msg.WARNING
+												});
+												return false;
+											}
+
+
+											Ext.Msg.confirm({
+												title: 'Atención!',
+												message: '¿Está seguro de anular este despacho?',
+												buttons: Ext.Msg.YESNO,
+												icon: Ext.Msg.WARNING,
+												fn: function(btn) {
+													if (btn === 'yes') {
+														var datos = {};
+														datos.TransId = fila.TransId;
+														datos.IdTransTipo = 7;
+														datos.IdUsuario = Ext.getCmp("usuarios").getValue();
+														datos.Idoperario = Ext.getCmp("Operarios").getValue();
+														datos.Observaciones = "";
+														datos.FechaDespacho = "";
+														datos.IdDespachado = fila.Id;
+														datos.Guia = "";
+														datos.Proceso = "";
+														datos.BinNum = "";
+														datos.Transportadora = "";
+
+														Ext.Ajax.request({
+															url: url + 'guardarHistorialPicked',
+															params: {
+																datos: JSON.stringify(datos)
+															},
+															method: 'POST',
+															success: function (result, request) {
+																console.log(result.responseText);
+																try {
+																var res = Ext.util.JSON.decode(result.responseText);
+
+																if(res.mensaje.substring(0,2)=='Ok'){
+																	var confirmMessage = "Despacho ha sido anulado.";
+
+																	Ext.Msg.show({
+																		title: 'Confirmación',
+																		message: confirmMessage,
+																		buttons: Ext.Msg.OK,
+																		icon: Ext.Msg.INFO,
+																		fn: function() {
+																			Ext.getCmp('tabla').getStore().clearFilter();
+																			Ext.getCmp("form").getForm().reset();
+																			//Ext.getCmp("tabla").getView().setDisabled(false);
+																			Ext.getCmp('tabpanel').setVisible(false);
+																			Ext.getCmp('tabla').getStore().reload();
+																		}
+																	});
+																	
+																}
+																else
+																{
+																	var errormessage = res.mensaje;
+
+																	Ext.Msg.show({
+																		title: 'Error',
+																		message: errormessage,
+																		buttons: Ext.Msg.OK,
+																		icon: Ext.Msg.ERROR, // Use Ext.Msg.ERROR to display an error symbol
+																		fn: function() {
+																			Ext.getCmp('tabla').getStore().clearFilter();
+																			Ext.getCmp("form").getForm().reset();
+																			//Ext.getCmp("tabla").getView().setDisabled(false);
+																			Ext.getCmp('tabpanel').setVisible(false);
+																			Ext.getCmp('tabla').getStore().reload();
+																		}
+																	});
+																	
+																}
+															} catch (e) {
+																Ext.Msg.alert('Error', 'La respuesta del servidor no es un JSON válido.');
+															}
+																
+															}
+														});
+													} else {
+														Ext.getCmp('tabla').getStore().clearFilter();
+														Ext.getCmp("form").getForm().reset();
+														//Ext.getCmp("tabla").getView().setDisabled(false);
+														Ext.getCmp('tabpanel').setVisible(false);
+														Ext.getCmp('tabla').getStore().reload();
+													}
+												}
+											});											
+							
+											
 										}
 									}
 								]
