@@ -5,13 +5,6 @@ Ext.onReady(function() {
 	var tipo = 1;
 	var IdTransTipo = 0;
 
-	function restablecer(){
-		Ext.getCmp("form").getForm().reset();
-		//Ext.getCmp("tabla").getView().setDisabled(false);
-		Ext.getCmp('tabpanel').setVisible(false);
-		Ext.getCmp("tabla").getStore().reload();
-	};
-
 	function actualizarInterfaz() {
 
 		var boton_PorDespachar = Ext.getCmp('PorDespacharButton');
@@ -618,6 +611,43 @@ Ext.onReady(function() {
 						},
 						collapsebody: function () {
 							//console.log('Main Grid Collapse Body')
+						}, 
+						cellclick: function (grid, td, cellIndex, record, tr, rowIndex, e, eOpts) {
+							if (cellIndex === grid.headerCt.items.findIndex('dataIndex', 'Observaciones')) {
+								// Obtenemos el valor completo de "Observaciones" desde el registro
+								var observaciones = record.get('Observaciones');
+				
+								// Opcional: truncar el texto si es demasiado largo
+								var maxLength = 200; // Ajusta este valor según sea necesario
+								if (observaciones && observaciones.length > maxLength) {
+									observaciones = observaciones.substring(0, maxLength) + '...';
+								}
+				
+								Ext.Msg.show({
+									title: 'Observaciones',
+									message: observaciones,
+									buttons: Ext.Msg.OK,
+									scrollable: true // Esto permite hacer scroll si el texto es muy largo
+								});
+							}
+							else if (cellIndex === grid.headerCt.items.findIndex('dataIndex', 'Guia'))
+							{
+								// Obtenemos el valor completo de "Observaciones" desde el registro
+								var guia = record.get('Guia');
+				
+								// Opcional: truncar el texto si es demasiado largo
+								var maxLength = 200; // Ajusta este valor según sea necesario
+								if (guia && guia.length > maxLength) {
+									guia = guia.substring(0, maxLength) + '...';
+								}
+				
+								Ext.Msg.show({
+									title: 'Guia',
+									message: guia,
+									buttons: Ext.Msg.OK,
+									scrollable: true // Esto permite hacer scroll si el texto es muy largo
+								});
+							}
 						}
 					}
 				},			
@@ -679,23 +709,7 @@ Ext.onReady(function() {
 						hidden: true,
 						headerCheckbox: true,
 						width: 100,
-						editor: {
-							xtype: 'textfield',
-							typeAhead: true,
-							triggerAction: 'all'
-							
-						},
-						
-						listeners: {
-							beforeedit: function (editor, context) {
-								// Cancelamos el evento de edición para evitar que se inicie el modo de edición
-								return false;
-							},
-							// Manejador del evento de clic en la celda para mostrar el texto completo
-							click: function (grid, cell, cellIndex, record, row, rowIndex, e) {
-								Ext.Msg.alert('Guia', cell.innerHTML.toLowerCase());
-							}
-						}
+						editor: null	
 					}, 
 					{
 						header: 'Rep2id',
@@ -777,25 +791,7 @@ Ext.onReady(function() {
 						flex: 1,
 						//headerCheckbox: true,
 						width: 190,
-						editor: {
-							xtype: 'textfield',
-							typeAhead: true,
-							triggerAction: 'all'
-							
-						},
-						
-						listeners: {
-							beforeedit: function (editor, context) {
-								// Cancelamos el evento de edición para evitar que se inicie el modo de edición
-								return false;
-							},
-							// Manejador del evento de clic en la celda para mostrar el texto completo
-							click: function (grid, cell, cellIndex, record, row, rowIndex, e) {
-								Ext.Msg.alert('Observaciones', cell.innerHTML.toLowerCase());
-							}
-						}
-						
-						
+						editor: null	
 					},
 					{
 						header: 'Admin',
@@ -870,7 +866,7 @@ Ext.onReady(function() {
 							
 						}
 						
-					},
+					}/*,
 					rowclick: function(viewTable, record, element, rowIndex, e, eOpts) {
 						if (tipo == 1 || tipo == 6)
 						{
@@ -914,7 +910,7 @@ Ext.onReady(function() {
 							
 							setVisibilityForm(false);
 						}
-					}
+					}*/
 				}				
 			}),
 			Ext.create('Ext.panel.Panel',{
@@ -1430,6 +1426,18 @@ Ext.onReady(function() {
 								hidden: true
 							},
 							{
+								xtype: 'datefield',
+								labelWidth: 120,
+								id: 'FechaDespacho',
+								fieldLabel: 'Fecha de Despacho',
+								value: new Date(),
+								format: "Y-m-d",
+								editable: false,
+								width: 245,
+								hidden: true,
+								maxValue: new Date()
+							},
+							{
 								xtype: 'combo',
 								id: 'Flete',
 								typeAhead: true,
@@ -1449,19 +1457,6 @@ Ext.onReady(function() {
 								valueField: 'Descrip',    
 								hidden: false  
 
-							},
-							,
-							{
-								xtype: 'datefield',
-								labelWidth: 120,
-								id: 'FechaDespacho',
-								fieldLabel: 'Seleccione fecha',
-								value: new Date(),
-								format: "Y-m-d",
-								editable: false,
-								width: 245,
-								hidden: true,
-								maxValue: new Date()
 							},
 							{
 								xtype: 'textareafield',
