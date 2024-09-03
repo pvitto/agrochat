@@ -105,10 +105,12 @@ Ext.onReady(function() {
 		if (tipo === 4) {
 			const columnasParaEliminar = [
 				'id', 'Vendedor', 'TipoEnvio', 'Ubicacion', 'Administrador', 
-				'Operario', 'Id', 'Fecha', 'IdDespachado'
+				'Operario', 'Id', 'IdDespachado'
 			];
 			columnasParaEliminar.forEach(columna => delete data[columna]);
+			data['Fecha Despachado'] = data.Fecha;
 			data['FIRMA'] = "";
+			delete data.Fecha;
 		} else if (tipo === 6) {
 			const columnasParaEliminar = [
 				'id', 'Vendedor', 'Transportadora', 'Id', 'IdDespachado', 
@@ -182,8 +184,11 @@ Ext.onReady(function() {
 			obtenerTransportadoras(function(transportadoras) {
 				var worksheetData = store.getData().items.map(function(record) {
 					var data = record.getData();
-					return borrarColumnasExcel(data, tipo);
+					data = borrarColumnasExcel(data, tipo);
+					console.log('Processed Data for Excel:', data);  // Debug: Check final data structure for Excel
+					return data;
 				});
+				
 	
 				if (worksheetData.length === 0) {
 					Ext.Msg.alert('Error', 'No hay datos para exportar.');
@@ -225,10 +230,16 @@ Ext.onReady(function() {
 				});
 	
 				adjustColumnWidths(worksheet, worksheetData, headers);
+				console.log('Worksheet Data:', worksheetData);
+				console.log('Headers:', headers);
+				console.log('Worksheet:', worksheet);
+
 	
 				// Actualizar el rango de la hoja de cálculo dinámicamente para cubrir el rango correcto
 				var endRow = rowIndex - 1; // Última fila llenada
-				worksheet['!ref'] = 'A1:L' + endRow;
+				var endCol = String.fromCharCode(65 + headers.length - 1); // Asume encabezados A, B, C, ..., Z
+
+				worksheet['!ref'] = worksheet['!ref'] = 'A1:' + endCol + endRow;
 	
 				XLSX.utils.book_append_sheet(workbook, worksheet, excelName);
 				XLSX.writeFile(workbook, excelName + '.xlsx');
