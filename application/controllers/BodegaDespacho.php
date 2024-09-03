@@ -34,17 +34,7 @@ class BodegaDespacho extends CI_Controller {
         $fechaConsulta = "";
     
         if ($this->input->get("Fecha")) {
-            $fechaInput = $this->input->get("Fecha");
-            
-            // Convertir la fecha de 'd/m/Y' a 'Y-m-d'
-            $fechaObjeto = DateTime::createFromFormat('d/m/Y', $fechaInput);
-            if ($fechaObjeto) {
-                $fechaConsulta = $fechaObjeto->format('Y-m-d');
-            } else {
-                // Manejar el error si el formato de fecha es incorrecto
-                echo "Formato de fecha incorrecto.";
-                return;
-            }
+            $fechaConsulta = $this->input->get("Fecha");
         }
         else if ($this->input->get("Remision"))
         {
@@ -52,8 +42,8 @@ class BodegaDespacho extends CI_Controller {
         }
     
         $sql = sprintf(
-            "EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', %d, '%s'", 
-            $remision, $tipo, '', '', '', '', '', '', '', '', $fechaConsulta
+            "EXEC [dbo].[HistorialDespachoBodegaBorrador] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', %d, '%s', '%s'", 
+            $remision, $tipo, '', '', '', '', '', '', '', '', $fechaConsulta, ''
         );
     
         $query = $this->db->query($sql);
@@ -108,7 +98,8 @@ class BodegaDespacho extends CI_Controller {
                     "Administrador"=>$row->Administrador,
                     "Operario"=>$row->Operario,
                     "Id"=>$row->IdDespachado,
-                    "Fecha"=>$row->FechaDespachado
+                    "Fecha"=>$row->FechaDespachado,
+                    "Flete"=>$row->Flete
                 );
             }
         }
@@ -252,7 +243,7 @@ class BodegaDespacho extends CI_Controller {
         }
 
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodega] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado, '');
+        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodegaBorrador] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado, '', $this->data->Flete);
 
         $query = $this->db->query($sql);
 

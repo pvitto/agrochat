@@ -3,6 +3,7 @@ Ext.onReady(function() {
 	var url = "/agro/BodegaDespacho/";
 
 	var tipo = 1;
+	var IdTransTipo = 0;
 
 	function restablecer(){
 		Ext.getCmp("form").getForm().reset();
@@ -12,6 +13,7 @@ Ext.onReady(function() {
 	};
 
 	function actualizarInterfaz() {
+
 		var boton_PorDespachar = Ext.getCmp('PorDespacharButton');
 		var boton_Ubicados = Ext.getCmp('UbicadosButton');
 		var boton_Depachados = Ext.getCmp('DespachadosButton');
@@ -29,22 +31,24 @@ Ext.onReady(function() {
 		var ubicacionColumn = grid.down('[itemId=ubicacionColumn]');
 		var guiaColumn = grid.down('[itemId=guiaColumn]');
 		var fechaColumn = grid.down('[itemId=fechaColumn]');
+		var fleteColumn = grid.down('[itemId=fleteColumn]');
 
 		var transportadoraComboBox = Ext.getCmp('Transportadora');
 		var binNumComboBox = Ext.getCmp('Localizacion');
+		var fleteTextField = Ext.getCmp('Flete');
+		var fechaDesapchoaCalendar = Ext.getCmp('FechaDespacho');
 	
 
 		var calendario = Ext.getCmp('fecha');
 
 		// Ajustar visibiliad de elementos dependientes al tipo de proceso
 
-		boton_Actualizar.setVisible(tipo !== 1)
-
 		// Items correspondientes a Ubicados / Despachados
 		exportButton.setDisabled(tipo !== 4 && tipo !== 6);
 		adminColumn.setVisible(tipo === 4 || tipo === 6);
 		operarioColumn.setVisible(tipo === 4 || tipo === 6);
-		fechaColumn.setVisible(tipo === 6 || tipo === 4)
+		fechaColumn.setVisible(tipo === 6 || tipo === 4);
+		boton_Actualizar.setVisible(tipo !== 1);
 
 
 		// Items correspondientes exclusivamente a Despachados
@@ -52,6 +56,7 @@ Ext.onReady(function() {
 		guiaColumn.setVisible(tipo === 4);
 		calendario.setVisible(tipo === 4);
 		boton_Anular.setVisible(tipo === 4);
+		fleteColumn.setVisible(tipo === 4);
 
 		// Items correspondientes exclusivamente a Ubicados
 		ubicacionColumn.setVisible(tipo === 6);
@@ -63,6 +68,8 @@ Ext.onReady(function() {
 		// Items tabpanel
 		transportadoraComboBox.setVisible(false);
 		binNumComboBox.setVisible(false);
+		fleteTextField.setVisible(false);
+		fechaDesapchoaCalendar.setVisible(false);
 
 		Ext.getCmp('tabla').getStore().clearFilter();
 		Ext.getCmp("form").getForm().reset();
@@ -129,7 +136,11 @@ Ext.onReady(function() {
 		data.forEach(row => {
 			headers.forEach((header, i) => {
 				var cellValue = String(row[header] || '');
-				if (cellValue.length > maxLengths[i]) {
+				if (header == "FIRMA")
+				{
+					maxLengths[i] = 10;
+				}
+				else if (cellValue.length > maxLengths[i]) {
 					maxLengths[i] = cellValue.length;
 				}
 			});
@@ -392,7 +403,7 @@ Ext.onReady(function() {
 								disabled: true,
 								handler: function() {
 									tipo = 1;
-									actualizarInterfaz();
+									
 									Ext.getCmp('tabla').getStore().reload({
 										params: { Tipo: tipo,
 											Remision: Ext.getCmp('idRemision').getValue().trim()
@@ -407,7 +418,7 @@ Ext.onReady(function() {
 								text: 'Mostrar Ubicados',
 								handler: function() {
 									tipo = 6;
-									actualizarInterfaz();
+									
 									Ext.getCmp('tabla').getStore().reload({
 										params: { Tipo: tipo }
 									});
@@ -420,7 +431,7 @@ Ext.onReady(function() {
 								text: 'Mostrar Despachados',
 								handler: function() {
 									tipo = 4;
-									actualizarInterfaz();
+									
 
 									Ext.getCmp('tabla').getStore().reload({
 										params: { 
@@ -454,7 +465,6 @@ Ext.onReady(function() {
 									});
 								}
 							},							
-							,
 							"-",
 							{
 								xtype: 'datefield',
@@ -462,7 +472,7 @@ Ext.onReady(function() {
 								id: 'fecha',
 								fieldLabel: 'Seleccione fecha',
 								value: new Date(),
-								format: "d/m/Y",
+								format: "Y-m-d",
 								editable: false,
 								width: 245,
 								hidden: true,
@@ -500,7 +510,7 @@ Ext.onReady(function() {
 								id: 'exportButton',
 								xtype: 'button',
 								text: 'Exportar a Excel',
-								disabled: tipo != 4 && tipo != 6,
+								disabled: tipo == 1,
 								iconCls: 'fas fa-caret-down',
 								handler: function() {
 									exportarExcel(tipo);
@@ -728,6 +738,13 @@ Ext.onReady(function() {
 						minWidth: 100
 					},
 					{
+						header: 'Flete',
+						dataIndex: 'Flete',
+						itemId: 'fleteColumn',
+						hidden: true,
+						minWidth: 100
+					},
+					{
 						header: 'Fecha',
 						dataIndex: 'Fecha',
 						itemId: 'fechaColumn',
@@ -812,7 +829,11 @@ Ext.onReady(function() {
 							Ext.getCmp("pro3").setDisabled(true);
 							Ext.getCmp('tabpanel').setVisible(true);
 
-							Ext.getCmp("Guia").setVisible(false);
+							Ext.getCmp('Localizacion').setVisible(false);
+							Ext.getCmp('Transportadora').setVisible(false);
+							Ext.getCmp('Guia').setVisible(false);
+							Ext.getCmp('Flete').setVisible(false);
+							Ext.getCmp('FechaDespacho').setVisible(false);
 							
 							setVisibilityForm(true);
 					
@@ -857,7 +878,11 @@ Ext.onReady(function() {
 							Ext.getCmp("form").getForm().reset();
 							Ext.getCmp("pro2").setDisabled(true);
 							Ext.getCmp("pro3").setDisabled(true);
-							Ext.getCmp("Guia").setVisible(false);
+							Ext.getCmp('Localizacion').setVisible(false);
+							Ext.getCmp('Transportadora').setVisible(false);
+							Ext.getCmp('Guia').setVisible(false);
+							Ext.getCmp('Flete').setVisible(false);
+							Ext.getCmp('FechaDespacho').setVisible(false);
 							setVisibilityForm(true);
 					
 							var proceso = record.get('Proceso');
@@ -869,8 +894,6 @@ Ext.onReady(function() {
 									break;
 								case 'UBICADO':
 									Ext.getCmp("pro3").setDisabled(false);
-									break;
-								case 'DESPACHADO':
 									break;
 							}
 						}
@@ -884,7 +907,7 @@ Ext.onReady(function() {
 							{
 								Ext.getCmp("Guia").setVisible(false);
 							}
-								
+
 							Ext.getCmp('tabpanel').setVisible(true);
 							Ext.getCmp("form").setDisabled(false);
 							Ext.getCmp("form").getForm().reset();
@@ -950,13 +973,14 @@ Ext.onReady(function() {
 							
 											var datos = {};
 											datos.TransId = fila.TransId;
-											datos.IdTransTipo = Ext.getCmp("proceso").getValue().IdProceso;
+											datos.IdTransTipo = IdTransTipo;
 											datos.IdUsuario = Ext.getCmp("usuarios").getValue();
 											datos.Idoperario = Ext.getCmp("Operarios").getValue();
 											datos.Observaciones = Ext.getCmp("Observacion").getValue().trim();
 											datos.FechaDespacho = "";
 											datos.IdDespachado = "";
 											datos.Guia = Ext.getCmp("Guia").getValue().trim();
+											datos.Flete = "";
 											datos.Proceso = fila.Proceso;
 							
 											if (datos.IdTransTipo == 2) {
@@ -974,8 +998,11 @@ Ext.onReady(function() {
 												}
 
 												datos.Transportadora = "";
+
 											} else if (datos.IdTransTipo == 3) {
+
 												datos.Transportadora = Ext.getCmp("Transportadora").getValue();
+												
 
 												if (datos.Transportadora == null)
 												{
@@ -986,6 +1013,16 @@ Ext.onReady(function() {
 														icon: Ext.Msg.WARNING
 													});
 													return false;
+												}
+
+												if (Ext.getCmp("FechaDespacho").getValue() != null)
+												{
+													datos.FechaDespacho = Ext.getCmp("FechaDespacho").getValue();
+												}
+
+												if (Ext.getCmp("Flete").getValue() != null)
+												{
+													datos.Flete = Ext.getCmp("Flete").getValue();
 												}
 
 												datos.BinNum = "";
@@ -1042,6 +1079,7 @@ Ext.onReady(function() {
 																//Ext.getCmp("tabla").getView().setDisabled(false);
 																Ext.getCmp('tabpanel').setVisible(false);
 																Ext.getCmp('tabla').getStore().reload();
+																
 															}
 														});
 														
@@ -1081,6 +1119,7 @@ Ext.onReady(function() {
 										handler: function () {
 											Ext.getCmp("form").getForm().reset();
 											Ext.getCmp('tabpanel').setVisible(false);
+											
 										}
 									},
 									'->',
@@ -1132,6 +1171,7 @@ Ext.onReady(function() {
 														datos.Proceso = "";
 														datos.BinNum = "";
 														datos.Transportadora = "";
+														datos.Flete = "";
 
 														Ext.Ajax.request({
 															url: url + 'guardarHistorialPicked',
@@ -1170,16 +1210,14 @@ Ext.onReady(function() {
 																		title: 'Error',
 																		message: errormessage,
 																		buttons: Ext.Msg.OK,
-																		icon: Ext.Msg.ERROR, // Use Ext.Msg.ERROR to display an error symbol
+																		icon: Ext.Msg.ERROR,
 																		fn: function() {
 																			Ext.getCmp('tabla').getStore().clearFilter();
 																			Ext.getCmp("form").getForm().reset();
-																			//Ext.getCmp("tabla").getView().setDisabled(false);
 																			Ext.getCmp('tabpanel').setVisible(false);
 																			Ext.getCmp('tabla').getStore().reload();
 																		}
 																	});
-																	
 																}
 															} catch (e) {
 																Ext.Msg.alert('Error', 'La respuesta del servidor no es un JSON válido.');
@@ -1271,17 +1309,27 @@ Ext.onReady(function() {
 										// Oculta todos los campos al inicio
 										Ext.getCmp('Localizacion').setVisible(false);
 										Ext.getCmp('Transportadora').setVisible(false);
+										Ext.getCmp('Guia').setVisible(false);
+										Ext.getCmp('FechaDespacho').setVisible(false);
+										Ext.getCmp('Flete').setVisible(false);
 							
 										// Muestra el campo correspondiente basado en la selección
 										if (newValue.IdProceso === 2) {
 											Ext.getCmp('Localizacion').setVisible(true);
 											Ext.getCmp('Transportadora').setVisible(false);
 											Ext.getCmp('Guia').setVisible(false);
+											Ext.getCmp('Flete').setVisible(false);
+											Ext.getCmp('FechaDespacho').setVisible(false);
 										} else if (newValue.IdProceso === 3) {
 											Ext.getCmp('Transportadora').setVisible(true);
 											Ext.getCmp('Localizacion').setVisible(false);
 											Ext.getCmp('Guia').setVisible(true);
+											Ext.getCmp('Flete').setVisible(true);
+											Ext.getCmp('FechaDespacho').setVisible(true);
 										}
+
+										IdTransTipo = newValue.IdProceso;
+										newValue.IdProceso = 0;
 									}
 								}
 							},
@@ -1380,6 +1428,40 @@ Ext.onReady(function() {
 									}
 								}),
 								hidden: true
+							},
+							{
+								xtype: 'combo',
+								id: 'Flete',
+								typeAhead: true,
+								fieldLabel: 'Flete',
+								triggerAction: 'all',
+								queryMode: 'local',
+								allowBlank: true,
+								anchor: '98%',
+								store: Ext.create('Ext.data.Store', {
+									fields: ['Descrip'], 
+									data: [
+										{ Descrip: 'Contraentrega' }, 
+										{ Descrip: 'Pagado' }         
+									]
+								}),
+								displayField: 'Descrip',  
+								valueField: 'Descrip',    
+								hidden: false  
+
+							},
+							,
+							{
+								xtype: 'datefield',
+								labelWidth: 120,
+								id: 'FechaDespacho',
+								fieldLabel: 'Seleccione fecha',
+								value: new Date(),
+								format: "Y-m-d",
+								editable: false,
+								width: 245,
+								hidden: true,
+								maxValue: new Date()
 							},
 							{
 								xtype: 'textareafield',
