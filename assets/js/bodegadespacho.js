@@ -185,7 +185,6 @@ Ext.onReady(function() {
 				var worksheetData = store.getData().items.map(function(record) {
 					var data = record.getData();
 					data = borrarColumnasExcel(data, tipo);
-					console.log('Processed Data for Excel:', data);  // Debug: Check final data structure for Excel
 					return data;
 				});
 				
@@ -230,11 +229,7 @@ Ext.onReady(function() {
 				});
 	
 				adjustColumnWidths(worksheet, worksheetData, headers);
-				console.log('Worksheet Data:', worksheetData);
-				console.log('Headers:', headers);
-				console.log('Worksheet:', worksheet);
 
-	
 				// Actualizar el rango de la hoja de cálculo dinámicamente para cubrir el rango correcto
 				var endRow = rowIndex - 1; // Última fila llenada
 				var endCol = String.fromCharCode(65 + headers.length - 1); // Asume encabezados A, B, C, ..., Z
@@ -627,12 +622,8 @@ Ext.onReady(function() {
 							if (cellIndex === grid.headerCt.items.findIndex('dataIndex', 'Observaciones')) {
 								// Obtenemos el valor completo de "Observaciones" desde el registro
 								var observaciones = record.get('Observaciones');
-				
-								// Opcional: truncar el texto si es demasiado largo
-								var maxLength = 200; // Ajusta este valor según sea necesario
-								if (observaciones && observaciones.length > maxLength) {
-									observaciones = observaciones.substring(0, maxLength) + '...';
-								}
+								
+								
 				
 								Ext.Msg.show({
 									title: 'Observaciones',
@@ -643,14 +634,10 @@ Ext.onReady(function() {
 							}
 							else if (cellIndex === grid.headerCt.items.findIndex('dataIndex', 'Guia'))
 							{
-								// Obtenemos el valor completo de "Observaciones" desde el registro
+								// Obtenemos el valor completo de "Guia" desde el registro
 								var guia = record.get('Guia');
 				
-								// Opcional: truncar el texto si es demasiado largo
-								var maxLength = 200; // Ajusta este valor según sea necesario
-								if (guia && guia.length > maxLength) {
-									guia = guia.substring(0, maxLength) + '...';
-								}
+								
 				
 								Ext.Msg.show({
 									title: 'Guia',
@@ -1086,7 +1073,6 @@ Ext.onReady(function() {
 																//Ext.getCmp("tabla").getView().setDisabled(false);
 																Ext.getCmp('tabpanel').setVisible(false);
 																Ext.getCmp('tabla').getStore().reload();
-																
 															}
 														});
 														
@@ -1456,6 +1442,7 @@ Ext.onReady(function() {
 								triggerAction: 'all',
 								queryMode: 'local',
 								allowBlank: true,
+								editable: false,
 								anchor: '98%',
 								store: Ext.create('Ext.data.Store', {
 									fields: ['Descrip'], 
@@ -1466,7 +1453,7 @@ Ext.onReady(function() {
 								}),
 								displayField: 'Descrip',  
 								valueField: 'Descrip',    
-								hidden: false  
+								hidden: true  
 
 							},
 							{
