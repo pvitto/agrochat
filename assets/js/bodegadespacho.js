@@ -174,7 +174,7 @@ Ext.onReady(function() {
 	
 	
 	
-	function exportarExcel(tipo) {
+	function exportarExcel(tipo, fecha) {
 		var grid = Ext.getCmp('tabla');
 		var store = grid.getStore();
 		var workbook = XLSX.utils.book_new();
@@ -197,7 +197,7 @@ Ext.onReady(function() {
 				var headers = Object.keys(worksheetData[0] || {});
 				var worksheet = XLSX.utils.json_to_sheet([], { header: headers, skipHeader: true });
 	
-				var currentDate = new Date().toLocaleDateString();
+				var currentDate = new Date(fecha).toLocaleDateString();
 				worksheet['A1'] = { v: 'RELACION DE DESPACHOS FECHA: ' + currentDate, t: 's' };
 	
 				var rowIndex = 3; // Starts from the third row after the title and empty row
@@ -512,7 +512,8 @@ Ext.onReady(function() {
 								disabled: tipo == 1,
 								iconCls: 'fas fa-caret-down',
 								handler: function() {
-									exportarExcel(tipo);
+									var fecha = Ext.getCmp('fecha').getValue(); 
+									exportarExcel(tipo, fecha);
 								}
 							}
 						]
