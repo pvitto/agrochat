@@ -26,4 +26,4 @@ Versiones
 
 1. `AppBodega_v1.0 <https://github.com/jdavidIP/AgroCosta_AppBodega/releases/tag/v1.0.0>`_
 2. `AppBodega_v2.0 <https://github.com/jdavidIP/AgroCosta_AppBodega/releases/tag/v2.0.0>`_ 
-3. `AppBodega_v2.0 <https://github.com/jdavidIP/AgroCosta_AppBodega/releases/tag/v3.0.0>`_ (Versión mas reciente)
+3. `AppBodega_v3.0 <https://github.com/jdavidIP/AgroCosta_AppBodega/releases/tag/v3.0.0>`_ (Versión mas reciente)
