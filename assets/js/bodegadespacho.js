@@ -4,6 +4,7 @@ Ext.onReady(function() {
 
 	var tipo = 1;
 	var IdTransTipo = 0;
+	var bodega = 0; 
 
 	function actualizarInterfaz() {
 
@@ -395,6 +396,34 @@ Ext.onReady(function() {
 							pack: 'left'
 						},
 						items: [
+							{
+								xtype: 'combo',
+								typeAhead: true,
+								id: 'pisos',
+								width: 225,
+								labelWidth: 130,
+								fieldLabel: 'Seleccione Bodega',
+								triggerAction: 'all',
+								value: 0,
+								editable: false,
+								store: [
+									[0,'Todos'],
+									[1,'P1'],
+									[2,'A'],
+								],
+								listeners: {
+									select: function( combo, record, eOpts ) {
+										Ext.getCmp("form").getForm().reset();
+										//Ext.getCmp("tabla").getView().setDisabled(false);
+										Ext.getCmp('tabpanel').setVisible(false);
+										if(combo.getValue() == 0){
+											Ext.getCmp('tabla').getStore().clearFilter();
+										}else{
+											Ext.getCmp('tabla').getStore().filter("Bodega",combo.getRawValue());
+										}	
+									}
+								}
+							},
 							{
 								xtype: 'button',
 								id: 'PorDespacharButton',
@@ -842,7 +871,7 @@ Ext.onReady(function() {
 								case 'UBICADO':
 									Ext.getCmp("pro3").setDisabled(false);
 									break;
-								case 'DESPACHADO':
+ 								case 'DESPACHADO':
 									break;
 							}
 						}
@@ -863,7 +892,7 @@ Ext.onReady(function() {
 								
 								setVisibilityForm(false);
 							
-						}
+						}   
 						
 					}/*,
 					rowclick: function(viewTable, record, element, rowIndex, e, eOpts) {
