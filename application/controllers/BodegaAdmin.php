@@ -194,18 +194,107 @@ class BodegaAdmin extends CI_Controller {
 
     public function guardarHistorialPicked()
     {
-
         $this->data = json_decode($this->input->post("datos"));
+        $mensaje = "";
 
-        //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialProcesoBodegaAdmin] '%s', %d, '%s', %d, %d,'%s'",$this->data->TransId, $this->data->IdTransTipo, $this->data->IdPiso, $this->data->IdUsuario,$this->data->Idoperario, $this->data->Observaciones );
+        switch ($this->data->IdTransTipo) {
+            case 1:
+                // IdTransTipo = 1
+                $sql = "
+                    UPDATE [AGR].[dbo].[AGRInProcesoInventario] 
+                    SET IdTransTipo = 1, 
+                        Observaciones = CONCAT(Observaciones, ';', ?), 
+                        HoraInicial = GETDATE(), 
+                        IdUsuario = ?, 
+                        IdAsignadoPor = ? 
+                    WHERE TransId = ? AND Piso = ? AND IdTransTipo = 0;
+                ";
+                $this->db->query($sql, [$this->data->Observaciones, $this->data->Idoperario, $this->data->IdUsuario, $this->data->TransId, $this->data->IdPiso]);
 
-        $query = $this->db->query($sql);
+                $mensaje = 'Ok';
+                break;
 
-        $this->data = array();
-        $this->data["mensaje"] = $query->row()->Mensaje;
+            case 2:
 
+                if ($this->data->Operariofila == $this->data->Idoperario) {
+                    $sql = "
+                        UPDATE [AGR].[dbo].[AGRInProcesoInventario] 
+                        SET IdTransTipo = 2, 
+                            Observaciones = CONCAT(Observaciones, ';', ?), 
+                            HoraFinal = GETDATE(), 
+                            IdAsignadoPor = ? 
+                        WHERE TransId = ? AND Piso = ? AND IdTransTipo = 1;
+                    ";
+                    $this->db->query($sql, [$this->data->Observaciones, $this->data->IdUsuario, $this->data->TransId, $this->data->IdPiso]);
+                    $mensaje = 'Ok';
+                } else {
+                    $mensaje = 'El usuario debe ser el que empezó a recoger la mercancia';
+                }
+                break;
+
+            case 3:
+                // IdTransTipo = 3
+                $sql = "UPDATE [AGR].[dbo].[AGRInProcesoInventario] SET Estado = 1 WHERE TransId = ? AND Piso = ? AND IdTransTipo = 2";
+                $this->db->query($sql, [$this->data->TransId, $this->data->IdPiso]);
+
+                $sql_check = "SELECT COUNT(*) AS count FROM [AGR].[dbo].[AGRInProcesoInventario] WHERE TransId = ? AND Piso = ? AND IdTransTipo = 3";
+                $result = $this->db->query($sql_check, [$this->data->TransId, $this->data->IdPiso])->row();
+
+                if ($result->count == 0) {
+                    $sql_insert = "
+                        INSERT INTO [AGR].[dbo].[AGRInProcesoInventario] 
+                        ([TransId], [IdTransTipo], [TransType], [CustName], [Name], [FechaTransaccion], [HoraInicial], [HoraFinal], [LocId], [Piso], [IdUsuario], [Observaciones], [Estado], [BatchId], [FechaPicked], [IdAsignadoPor])
+                        SELECT TransId, '3', '5', CustName, Name, FechaTransaccion, GETDATE(), NULL, LocId, ?, ?, CONCAT(Observaciones, ';', ?), '0', BatchId, FechaPicked, ?
+                        FROM [AGR].[dbo].[AGRInProcesoInventario] 
+                        WHERE TransId = ? AND Piso = ? AND IdTransTipo = 2;
+                    ";
+                    $this->db->query($sql_insert, [$this->data->IdPiso, $this->data->Idoperario, $this->data->Observaciones, $this->data->IdUsuario, $this->data->TransId, $this->data->IdPiso]);
+                    $mensaje = 'Ok';
+                } else {
+                    $mensaje = 'Ya fue Guardada';
+                }
+                break;
+
+            case 4:
+                
+                 if ($this->data->Operariofila == $this->data->Idoperario) {
+                    $sql = "
+                        UPDATE [AGR].[dbo].[AGRInProcesoInventario] 
+                        SET IdTransTipo = 4, 
+                            Observaciones = CONCAT(Observaciones, ';', ?), 
+                            HoraFinal = GETDATE(), 
+                            IdAsignadoPor = ? 
+                        WHERE TransId = ? AND Piso = ? AND IdTransTipo = 3;
+                    ";
+                    $this->db->query($sql, [$this->data->Observaciones, $this->data->IdUsuario, $this->data->TransId, $this->data->IdPiso]);
+                    $mensaje = 'Ok';
+                } else {
+                    $mensaje = 'El usuario debe ser el que empezó a empacar la mercancia';
+                }
+                break;
+
+            case 7:
+                // IdTransTipo = 7 (Cancelar pedido)
+                $sql_update = "UPDATE [AGR].[dbo].[AGRInProcesoInventario] SET Estado = 1 WHERE TransId = ? AND Estado = 0";
+                $this->db->query($sql_update, [$this->data->TransId]);
+
+                $sql_insert = "
+                    INSERT INTO [AGR].[dbo].[AGRInProcesoInventario] 
+                    ([TransId], [IdTransTipo], [TransType], [CustName], [Name], [FechaTransaccion], [HoraInicial], [HoraFinal], [Piso], [IdUsuario], [Observaciones], [Estado], [BatchId], [FechaPicked], [IdAsignadoPor])
+                    SELECT TransId, '7', '5', CustName, Name, FechaTransaccion, GETDATE(), GETDATE(), Piso, ?, CONCAT(Observaciones, ';', ?), '0', BatchId, FechaPicked, ?
+                    FROM [AGR].[dbo].[AGRInProcesoInventario] 
+                    WHERE TransId = ?;
+                ";
+                $this->db->query($sql_insert, [$this->data->Idoperario, $this->data->Observaciones, $this->data->IdUsuario, $this->data->TransId]);
+                $mensaje = 'Pedido Cancelado Correctamente';
+                break;
+
+            default:
+                $mensaje = "Tipo de transacción no soportado";
+        }
+
+        $this->data = array("mensaje" => $mensaje);
         $this->respuesta();
-        //$this->load->view('welcome_message');
-    }    
+    }
+
 }

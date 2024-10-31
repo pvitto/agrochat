@@ -2,6 +2,9 @@ Ext.onReady(function() {
 	var socket = io.connect('http://192.168.0.205:4000');
 	var url = "/agro/BodegaDespacho/";
 
+	var queryParams = new URLSearchParams(window.location.search);
+    var locId = queryParams.get('LocId');
+
 	var tipo = 1;
 	var IdTransTipo = 0;
 	var bodega = 0; 
@@ -527,12 +530,13 @@ Ext.onReady(function() {
 								iconCls: 'fas fa-sync-alt', 
 								hidden: false, 
 								handler: function(){
-								Ext.getCmp('tabla').getStore().clearFilter();
-								Ext.getCmp("form").getForm().reset();
-								//Ext.getCmp("tabla").getView().setDisabled(false);
-								Ext.getCmp('tabpanel').setVisible(false);
-								Ext.getCmp('tabla').getStore().reload();
-							} },
+									Ext.getCmp('tabla').getStore().clearFilter();
+									Ext.getCmp("form").getForm().reset();
+									//Ext.getCmp("tabla").getView().setDisabled(false);
+									Ext.getCmp('tabpanel').setVisible(false);
+									Ext.getCmp('tabla').getStore().reload();
+								} 
+							},
 							"->",
 							{
 								id: 'exportButton',
@@ -686,7 +690,7 @@ Ext.onReady(function() {
 						header: 'Remisión',
 						dataIndex: 'TransId',
 						width: 100
-					}, 
+					},
 					{
 						header: 'Estado',
 						dataIndex: 'EstadoTransaccion',
@@ -894,51 +898,7 @@ Ext.onReady(function() {
 							
 						}   
 						
-					}/*,
-					rowclick: function(viewTable, record, element, rowIndex, e, eOpts) {
-						if (tipo == 1 || tipo == 6)
-						{
-							Ext.getCmp("form").setDisabled(false);
-							Ext.getCmp("form").getForm().reset();
-							Ext.getCmp("pro2").setDisabled(true);
-							Ext.getCmp("pro3").setDisabled(true);
-							Ext.getCmp('Localizacion').setVisible(false);
-							Ext.getCmp('Transportadora').setVisible(false);
-							Ext.getCmp('Guia').setVisible(false);
-							Ext.getCmp('Flete').setVisible(false);
-							Ext.getCmp('FechaDespacho').setVisible(false);
-							setVisibilityForm(true);
-					
-							var proceso = record.get('Proceso');
-					
-							switch (proceso) {
-								case 'POR DESPACHO':
-									Ext.getCmp("pro2").setDisabled(false);
-									Ext.getCmp("pro3").setDisabled(false);
-									break;
-								case 'UBICADO':
-									Ext.getCmp("pro3").setDisabled(false);
-									break;
-							}
-						}
-						else
-						{
-							if (record.get('Guia').trim() == "")
-							{
-								Ext.getCmp("Guia").setVisible(true);
-							}
-							else
-							{
-								Ext.getCmp("Guia").setVisible(false);
-							}
-
-							Ext.getCmp('tabpanel').setVisible(true);
-							Ext.getCmp("form").setDisabled(false);
-							Ext.getCmp("form").getForm().reset();
-							
-							setVisibilityForm(false);
-						}
-					}*/
+					}
 				}				
 			}),
 			Ext.create('Ext.panel.Panel',{
@@ -952,8 +912,7 @@ Ext.onReady(function() {
 				items: [
 					{
 						id: 'form',
-						xtype: 'form',
-						//bodyStyle: 'margin: 10px',						
+						xtype: 'form',				
 						fieldDefaults: {
 							msgTarget: 'side'
 						},
@@ -1248,17 +1207,27 @@ Ext.onReady(function() {
 																
 															}
 														});
-													} else {
+						  							} else {
 														Ext.getCmp('tabla').getStore().clearFilter();
 														Ext.getCmp("form").getForm().reset();
 														//Ext.getCmp("tabla").getView().setDisabled(false);
 														Ext.getCmp('tabpanel').setVisible(false);
 														Ext.getCmp('tabla').getStore().reload();
-													}
+													} 
 												}
 											});											
 							
 											
+										}
+									},
+									'->',
+									{
+										minWidth: 50,
+										id: 'dividirButton',
+										iconCls: 'fas fa-times',
+										hidden: false,
+										handler: function () {
+											   
 										}
 									}
 								]

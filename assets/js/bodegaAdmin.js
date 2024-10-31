@@ -541,6 +541,24 @@ Ext.onReady(function() {
 						}]
 					}*/
 				],
+				/*viewConfig: {
+					getRowClass: function(record, rowIndex, rowParams, store){
+						var proc = record.get("IdProceso");
+
+						switch(proc) {
+							case 0:
+								return 'picked';
+							case 1:
+								return 'recogiendo';
+							case 2:
+								return 'recogiendo';
+							case 3:
+								return 'empacando';
+							case 3:
+								return 'empacado';
+						}
+					}
+				},*/
 				listeners: {			
 					afterrender: function( view, eOpts ){
 						Ext.getCmp("form").getForm().reset();
@@ -662,14 +680,15 @@ Ext.onReady(function() {
 											datos.IdUsuario = Ext.getCmp("usuarios").getValue();
 											datos.Idoperario = Ext.getCmp("Operarios").getValue();
 											datos.Observaciones = Ext.getCmp("Observacion").getValue().trim();
-											datos.Observaciones ='';
+											//datos.Observaciones ='';
+											datos.Operariofila = fila.IdUsuario;
 
 											var dat = Ext.getCmp("tabla").getStore().getDataSource().items.filter(x => x.data.TransId == fila.TransId && x.data.IdProceso !== datos.IdTransTipo && x.data.Piso != fila.Piso);
 
 											Ext.Ajax.request({
 												url : url+'guardarHistorialPicked',
 												params : {
-													datos : JSON.stringify(datos)									
+													datos : JSON.stringify(datos),									
 												},
 												method : 'POST',
 												success : function(result, request) {
