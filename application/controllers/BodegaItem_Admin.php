@@ -215,7 +215,7 @@ class BodegaItem_Admin extends CI_Controller {
         $this->data = json_decode($this->input->post("datos"));
 
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialProcesoBodegaAdmin] '%s', %d, '%s', %d, %d,'%s'",$this->data->TransId, $this->data->IdTransTipo, $this->data->IdPiso, $this->data->IdUsuario,$this->data->Idoperario, $this->data->Observaciones );
+        $sql = sprintf("EXEC [dbo].[HistorialProcesoBodegaAdminItems] '%s', %d, '%s', %d, %d,'%s'",$this->data->TransId, $this->data->IdTransTipo, $this->data->IdPiso, $this->data->IdUsuario,$this->data->Idoperario, $this->data->Observaciones );
 
         $query = $this->db->query($sql);
 

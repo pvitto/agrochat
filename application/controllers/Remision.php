@@ -125,7 +125,7 @@ class Remision extends CI_Controller {
     {
 
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialProcesoBodegaAdmin] '%s', %d, '%s', %d, %d,'%s'",$transid, $IdTransTipo, $IdPiso, '',$IdUsuario, '' );
+        $sql = sprintf("EXEC [dbo].[HistorialProcesoBodegaAdminItems] '%s', %d, '%s', %d, %d,'%s'",$transid, $IdTransTipo, $IdPiso, '',$IdUsuario, '' );
 
         $query = $this->db->query($sql);
 
