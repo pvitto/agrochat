@@ -430,32 +430,21 @@ Ext.onReady(function() {
 						
 					},
 					rowdblclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
-						Ext.getCmp("form").getForm().reset();
-						//Ext.getCmp("tabla").getView().setDisabled(true);
-						Ext.getCmp('tabpanel').setVisible(true);
 
-						if(record.data.IdUsuario != null){
-							Ext.getCmp("Operarios").setValue(record.data.IdUsuario);
-						}
-
-						if(record.data.IdProceso != null)
+						if (record.data.IdProceso == 0 || record.data.IdProceso == 5)
 						{
-							Ext.getCmp("proceso").setValue(record.data.IdProceso);
-						}
-						
-					},
-					rowclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
-						Ext.getCmp("form").getForm().reset();
-						//Ext.getCmp("tabla").getView().setDisabled(true);
-						//Ext.getCmp('tabpanel').setVisible(true);
-
-						if(record.data.IdUsuario != null){
-							Ext.getCmp("Operarios").setValue(record.data.IdUsuario);
-						}			
-
-						if(record.data.IdProceso != null)
-						{
-							Ext.getCmp("proceso").setValue(record.data.IdProceso);
+							Ext.getCmp("form").getForm().reset();
+							//Ext.getCmp("tabla").getView().setDisabled(true);
+							Ext.getCmp('tabpanel').setVisible(true);
+	
+							if(record.data.IdUsuario != null){
+								Ext.getCmp("Operarios").setValue(record.data.IdUsuario);
+							}
+	
+							if(record.data.IdProceso != null)
+							{
+								Ext.getCmp("proceso").setValue(record.data.IdProceso);
+							}
 						}
 					}
 				}
@@ -499,6 +488,17 @@ Ext.onReady(function() {
 											return false;
 										}
 
+										if (fila.IdProceso != 0 && fila.IdProceso != 5)
+										{
+											Ext.Msg.show({
+												title:'Atención!',
+												message: 'Estado de proceso inválido.',
+												buttons: Ext.Msg.OK,
+												icon: Ext.Msg.WARNING
+											});
+											return false;
+										}
+
 										if(!Ext.getCmp("form").getForm().isValid()){
 											Ext.Msg.show({
 												title:'Atención!',
@@ -529,7 +529,7 @@ Ext.onReady(function() {
 										else{
 											var datos = {};
 											datos.TransId = fila.TransId;
-											datos.IdTransTipo = Ext.getCmp("proceso").getValue().IdProceso;
+											datos.IdTransTipo = 0;
 											datos.IdPiso = fila.Piso;
 											datos.IdUsuario = Ext.getCmp("usuarios").getValue();
 											datos.Idoperario = Ext.getCmp("Operarios").getValue();

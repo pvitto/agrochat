@@ -437,7 +437,7 @@ Ext.onReady(function() {
 								}
 							);
 						}
-						else
+						else if (proceso != 4)
 						{
 							Ext.Msg.confirm(
 								'Confirmar Empacado',
@@ -469,6 +469,12 @@ Ext.onReady(function() {
 									}
 								}
 							);
+						}
+						else
+						{
+							Ext.Msg.alert('Empacado Finalizado',
+								'Remisión ha sido empacada.'
+							)
 						}
 						
 					}
