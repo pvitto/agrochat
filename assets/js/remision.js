@@ -173,12 +173,28 @@ var store = Ext.create('Ext.data.Store', {
                         items: [
                             {
                                 xtype: 'textfield',
-                                labelWidth: 190,
-                                id: 'fecha',
+                                id: 'referencia',
                                 fieldLabel: 'Referencia:',
                                 value: '',
                                 editable: true,
-                                width: 285
+                                width: 285,
+                                listeners: {
+                                    change: function (field, newValue) {
+                                        // Habilita o deshabilita el campo "Ubicacion" basado en el valor de "Referencia"
+                                        var ubicacionField = Ext.getCmp('ubicacion');
+                                        ubicacionField.setDisabled(!newValue); // Desactiva si no hay valor en "Referencia"
+                                    }
+                                }
+                            },
+                            "-",
+                            {
+                                xtype: 'textfield',
+                                id: 'ubicacion',
+                                fieldLabel: 'Ubicación:',
+                                value: '',
+                                editable: true,
+                                width: 285,
+                                disabled: true 
                             },
                             "-",
                             {
@@ -187,9 +203,20 @@ var store = Ext.create('Ext.data.Store', {
                                 iconCls: 'fas fa-sync-alt', 
                                 hidden: false, 
                                 handler: function() {
-                                    var reference = Ext.getCmp('fecha').getValue();
+                                    // Obtener valores de los campos "Referencia" y "Ubicacion"
+                                    var reference = Ext.getCmp('referencia').getValue();
+                                    var ubicacion = Ext.getCmp('ubicacion').getValue();
+
+                                    // Verificar que ambos campos tengan un valor
+                                    if (!reference || !ubicacion) {
+                                        Ext.Msg.alert('Error', 'Por favor ingrese valores tanto en Referencia como en Ubicación.');
+                                        return;
+                                    }
+
+                                    // Resto del código de la funcionalidad
                                     var store = Ext.getCmp('tabla').getStore();
                                     var found = false;
+                                    var locationMatch = false;
                                     var picked = false;
                                     var full = false;
                                     var siguienteCantidadPedida = null;
@@ -200,9 +227,14 @@ var store = Ext.create('Ext.data.Store', {
                                         var cantidad = record.get('Cantidad_Pedida');
                                         var pickedValue = record.get('Picked');
                                         var existenciasValue = record.get('Existencias');
+                                        var localizacionValue = record.get('Localizacion');
                             
                                         if (ref === reference) {
                                             found = true;
+
+                                            if (localizacionValue === ubicacion) {
+                                                locationMatch = true;
+                                            }
                             
                                             if (pickedValue == 0) {
                                                 picked = true;
@@ -216,6 +248,11 @@ var store = Ext.create('Ext.data.Store', {
                                             }
                                         }
                                     });
+
+                                    if (found && !locationMatch) {
+                                        Ext.Msg.alert('Error', 'La ubicación ingresada no coincide con la ubicación registrada para esta referencia.');
+                                        return;
+                                    }
                             
                                     if (found) {
                                         // Encontrar el siguiente registro a ser actualizado

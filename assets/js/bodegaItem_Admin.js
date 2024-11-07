@@ -310,6 +310,9 @@ Ext.onReady(function() {
 								case 4:
 									metaData.tdCls = 'empacado';
 									break;
+								case 5:
+									metaData.tdCls = 'porempacar';
+									break;
 							}
 
 							return value;

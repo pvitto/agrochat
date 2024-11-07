@@ -34,6 +34,10 @@ $(document).ready(function(){
 				proceso = 'Empacado';
 				color = 'lightgreen';
 				break;
+            case 5:
+                proceso = 'Por Empacar';
+                color = 'gray';
+                break;
 			case 6:
 				proceso = 'Verificada';
 				color = 'lightgreen';
