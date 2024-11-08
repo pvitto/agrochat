@@ -174,7 +174,6 @@ var store = Ext.create('Ext.data.Store', {
                         items: [
                             {
                                 xtype: 'textfield',
-                                labelWidth: 190,
                                 id: 'fecha',
                                 fieldLabel: 'Referencia:',
                                 value: '',

@@ -171,12 +171,14 @@ class Remision extends CI_Controller {
         // Ejecutar la consulta
         $query_picked = $this->db->query($sql_picked);
 
+        /*
         $sql_proceso = sprintf(
             "UPDATE AGRInProcesoInventario SET idtranstipo='0' where TransID='%s'",
             $this->db->escape_str($transid)
         );
 
         $query_proceso = $this->db->query($sql_proceso);
+        */
 
         if ($this->db->affected_rows() > 0)
         {

@@ -121,7 +121,8 @@ Ext.onReady(function() {
 										{ name: 'Comprt', type: 'int' },
 										{ name: 'Disp', type: 'int' },
 										{ name: 'Referencia_Equivalente', type: 'string' },
-										{ name: 'Picked', type: 'int' }
+										{ name: 'Picked', type: 'int' },
+										{ name: 'Packed', type: 'int' }
 									],
 									data: []
 								})
@@ -169,14 +170,20 @@ Ext.onReady(function() {
 							{ 
 								text: 'Picked', 
 								dataIndex: 'Picked', 
-								flex: 1 
+								width: 100 
+							},
+							{ 
+								text: 'Packed', 
+								dataIndex: 'Packed', 
+								width: 100 
 							},
 							{
 
 								text: 'Referencia Equivalente',
 								dataIndex: 'Referencia_Equivalente',
 								flex: 1
-							}]						
+							}
+							]						
 						}
 					}
 				],
@@ -209,7 +216,6 @@ Ext.onReady(function() {
 				},				
 				store: Ext.create('Ext.data.Store', {
 					autoLoad: false,
-					//groupField: "TransId",
 					fields: [
 						{ name: 'TransId', type: 'string' },
 						{ name: 'IdProceso', type: 'int' },
@@ -225,16 +231,35 @@ Ext.onReady(function() {
 						{ name: 'FechaImpresion', type: 'string' },
 						{ name: 'NombreUsuario', type: 'string' },
 						{ name: 'Observaciones', type: 'string' },
-						{ name: 'TipoEnvio', type: 'string' }
+						{ name: 'TipoEnvio', type: 'string' },
+						{ name: 'PorcentajeCompletado', type: 'string' } // Nuevo campo para el porcentaje
 					],
 					proxy: {
 						timeout: 600000,
 						useDefaultXhrHeader: false,
 						type: 'ajax',
-						url: url+"obtenerPickedList",
+						url: url + "obtenerPickedList",
 						reader: {
 							type: 'json',
-							rootProperty: 'data'
+							rootProperty: 'data',
+							totalProperty: 'total' // Asegúrate de que tu backend pase este campo correctamente
+						}
+					},
+					listeners: {
+						load: function(store, records, successful, eOpts) {
+							// Calcula el porcentaje para cada fila
+							store.each(function(record) {
+								var totalItems = record.get('TotalItems');
+								var pickedItems = record.get('PickedItems');
+								var porcentaje = 0;
+
+								if (totalItems > 0) {
+									porcentaje = (pickedItems / totalItems) * 100;
+								}
+
+								// Asigna el porcentaje calculado al campo 'PorcentajeCompletado'
+								record.set('PorcentajeCompletado', porcentaje.toFixed(2) + '%');
+							});
 						}
 					}
 				}),
@@ -418,6 +443,15 @@ Ext.onReady(function() {
 							click: function (grid, cell, cellIndex, record, row, rowIndex, e) {
 								Ext.Msg.alert('Observaciones', cell.innerHTML.toLowerCase());
 							}
+						}
+					},
+					{
+						header: '%',
+						dataIndex: 'PorcentajeCompletado',
+						width: 90,
+						renderer: function(value, metaData, record, rowIndex, colIndex, store, view) {
+							// Puedes personalizar el color o formato del porcentaje si lo deseas
+							return value;
 						}
 					}
 				],

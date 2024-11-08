@@ -178,12 +178,14 @@ class Remision_Empacar extends CI_Controller {
         // Ejecutar la consulta
         $query_picked = $this->db->query($sql_picked);
 
+        /*
         $sql_proceso = sprintf(
-            "UPDATE AGRInProcesoInventario SET idtranstipo='3' where TransID='%s'",
+            "UPDATE AGRInProcesoInventario SET idtranstipo='5' where TransID='%s'",
             $this->db->escape_str($transid)
         );
 
         $query_proceso = $this->db->query($sql_proceso);
+        */
 
         if ($this->db->affected_rows() > 0)
         {

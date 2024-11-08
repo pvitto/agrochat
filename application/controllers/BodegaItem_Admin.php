@@ -48,64 +48,104 @@ class BodegaItem_Admin extends CI_Controller {
 	
     public function obtenerPickedList()
     {
-        
         $this->data = array();
-        //$this->load->view('welcome_message');
+
+        // Obtener la fecha de transacción del parámetro de entrada
         $fecha = $this->input->get("FechaTransaccion");
-        $sql = "Select
-                f.TransId,
-                CONVERT(VARCHAR,F.FechaTransaccion,103) [FechaTransaccion],
-                CONVERT(VARCHAR,F.FechaPicked,103) [FechaImpresion],
-                isnull (F.IdTransTipo,0) IdProceso,
-                isnull (t.Nombre,'PICKED') Proceso,
-                isnull(t.Orden,0) Orden,
-                f.CustName , f.[Name], (convert(varchar, f.HoraInicial, 103)+' '+Format(f.HoraInicial, 'hh:mm:ss tt')) HoraInicial,
-                (convert(varchar, f.HoraFinal, 103)+' '+Format(f.HoraFinal, 'hh:mm:ss tt')) HoraFinal,
-                f.Piso,
-                f.LocId,
-                F.IdUsuario IdUsuario,
-                S.UserName NombreUsuario,
-                F.Observaciones Observaciones,
-                Case when g.ShipToID='MOSTRADOR' then  'Mostrador' else '' end TipoEnvio
-            from
-              
-                [AGR].[dbo].[AGRInProcesoInventario] F inner join tblsotransheader g
-		on f.transid=g.transid and f.Estado=0
-                left join [AGR].[dbo].[AGRInTipoTransaccion] T on F.IdTransTipo=t.IdTransTipo
-                left join [TSM].[dbo].[User] S on s.UserId=F.IdUsuario
-            where
-                convert(varchar,f.FechaPicked,103) = convert(varchar,"."'".$fecha."'".",103) and
-                g.transtype=5
-                and F.Estado=0 and g.Voidyn='0'      
-            order by
-                F.FechaPicked desc";
 
-        $query = $this->db->query($sql);
+        // Consulta principal para obtener la información de la remisión
+        $sql = "SELECT
+                    f.TransId,
+                    CONVERT(VARCHAR, F.FechaTransaccion, 103) AS FechaTransaccion,
+                    CONVERT(VARCHAR, F.FechaPicked, 103) AS FechaImpresion,
+                    ISNULL(F.IdTransTipo, 0) AS IdProceso,
+                    ISNULL(t.Nombre, 'PICKED') AS Proceso,
+                    ISNULL(t.Orden, 0) AS Orden,
+                    f.CustName,
+                    f.[Name],
+                    (CONVERT(VARCHAR, f.HoraInicial, 103) + ' ' + FORMAT(f.HoraInicial, 'hh:mm:ss tt')) AS HoraInicial,
+                    (CONVERT(VARCHAR, f.HoraFinal, 103) + ' ' + FORMAT(f.HoraFinal, 'hh:mm:ss tt')) AS HoraFinal,
+                    f.Piso,
+                    f.LocId,
+                    F.IdUsuario AS IdUsuario,
+                    S.UserName AS NombreUsuario,
+                    F.Observaciones,
+                    CASE WHEN g.ShipToID = 'MOSTRADOR' THEN 'Mostrador' ELSE '' END AS TipoEnvio
+                FROM
+                    [AGR].[dbo].[AGRInProcesoInventario] F
+                INNER JOIN
+                    tblsotransheader g ON f.transid = g.transid AND f.Estado = 0
+                LEFT JOIN
+                    [AGR].[dbo].[AGRInTipoTransaccion] T ON F.IdTransTipo = T.IdTransTipo
+                LEFT JOIN
+                    [TSM].[dbo].[User] S ON S.UserId = F.IdUsuario
+                WHERE
+                    CONVERT(VARCHAR, f.FechaPicked, 103) = CONVERT(VARCHAR, ?, 103) 
+                    AND g.transtype = 5
+                    AND F.Estado = 0
+                    AND g.Voidyn = '0'
+                ORDER BY
+                    F.FechaPicked DESC";
 
-        foreach ($query->result() as $row)
-        {
-            $this->data["data"][] = array("TransId"=>$row->TransId, 
-                "IdProceso"=>$row->IdProceso, 
-                "Orden"=>$row->Orden, 
-                "TransType"=>$row->Proceso, 
-                "CustName"=>$row->CustName, 
-                "Name"=>$row->Name, 
-                "FechaTransaccion"=>$row->FechaTransaccion, 
-				"FechaImpresion"=>$row->FechaImpresion,
-                "HoraInicial"=>$row->HoraInicial, 
-                "HoraFinal"=>$row->HoraFinal, 
-                "Piso"=>$row->Piso, 
-                "Bodega"=>$row->LocId, 
-                "IdUsuario"=>$row->IdUsuario, 
-                "NombreUsuario"=>$row->NombreUsuario, 
-                "Observaciones"=>$row->Observaciones,
-                "TipoEnvio"=>$row->TipoEnvio
+        // Ejecutar la consulta principal
+        $query = $this->db->query($sql, array($fecha));
+
+        // Recorrer los resultados de la consulta principal
+        foreach ($query->result() as $row) {
+            // Subconsulta para obtener el total de items y los items con picked != 0
+            if ($row->IdProceso < 3)
+            {
+                $sql_items = "SELECT 
+                            COUNT(*) AS TotalItems,
+                            SUM(CASE WHEN picked != 0 THEN 1 ELSE 0 END) AS PickedItems
+                        FROM tblSoTransDetail 
+                        WHERE TransID = ?";
+            }
+            else
+            {
+                $sql_items = "SELECT 
+                            COUNT(*) AS TotalItems,
+                            SUM(CASE WHEN packed != 0 THEN 1 ELSE 0 END) AS PickedItems
+                        FROM tblSoTransDetail 
+                        WHERE TransID = ?";
+            }
+            
+            
+            // Ejecutar la subconsulta con parámetros
+            $query_items = $this->db->query($sql_items, array($row->TransId));
+            $items_result = $query_items->row();
+            
+            // Verificar si hay resultados y asignar valores
+            $total_items = $items_result->TotalItems ?? 0;
+            $picked_items = $items_result->PickedItems ?? 0;
+
+            // Añadir los datos al array
+            $this->data["data"][] = array(
+                "TransId" => $row->TransId,
+                "IdProceso" => $row->IdProceso,
+                "Orden" => $row->Orden,
+                "TransType" => $row->Proceso,
+                "CustName" => $row->CustName,
+                "Name" => $row->Name,
+                "FechaTransaccion" => $row->FechaTransaccion,
+                "FechaImpresion" => $row->FechaImpresion,
+                "HoraInicial" => $row->HoraInicial,
+                "HoraFinal" => $row->HoraFinal,
+                "Piso" => $row->Piso,
+                "Bodega" => $row->LocId,
+                "IdUsuario" => $row->IdUsuario,
+                "NombreUsuario" => $row->NombreUsuario,
+                "Observaciones" => $row->Observaciones,
+                "TipoEnvio" => $row->TipoEnvio,
+                "TotalItems" => $total_items,      
+                "PickedItems" => $picked_items     
             );
         }
 
+        // Devolver la respuesta
         $this->respuesta();
-        //$this->load->view('welcome_message');
     }
+
 
     public function obtenerUsuarios()
     {
@@ -165,7 +205,7 @@ class BodegaItem_Admin extends CI_Controller {
         $this->data = array();
 
         //$this->load->view('welcome_message');
-		$sql = sprintf("select d.entrynum Orden,e.cf_Ruta Ruta, d.ItemId Referencia, e.ExtLocID Localizacion, d.Descr,  d.QtyOrdSell Cantidad_Pedida, d.picked as Picked, i.[cf_Referencia Equivalente] [Referencia_Equivalente],
+		$sql = sprintf("select d.entrynum Orden,e.cf_Ruta Ruta, d.ItemId Referencia, e.ExtLocID Localizacion, d.Descr,  d.QtyOrdSell Cantidad_Pedida, d.picked as Picked, d.packed Packed, i.[cf_Referencia Equivalente] [Referencia_Equivalente],
 (select QtyOnHand from trav_InItemOnHand_view a where a.itemid=d.ItemId and a.LocId=d.LocId) Existencias,
 (select SUM(Qty) AS Comprt from tblInQty a where a.itemid=d.itemid and a.LocId=d.locid and a.LinkID='SO' and Qty>0) Comprt,
 
@@ -177,18 +217,24 @@ class BodegaItem_Admin extends CI_Controller {
 			inner join tblInItemLoc l on  d.ItemId=l.ItemId and d.LocId=l.LocId
 			left join trav_tblWmExtLoc_view E on l.DfltBinNum=e.ExtLocID
 			where H.TransId='%s' and (e.[cf_Ubicacion Fisica]='%s' or e.[cf_Ubicacion Fisica] is NULL) and d.[status]='0' and h.Voidyn='0' and d.LocId='%s'
-			group by H.TransID, [cf_Ubicacion Fisica], d.ItemId, e.ExtLocID, d.Descr, d.QtyOrdSell, i.[cf_Referencia Equivalente], e.cf_Ruta, d.LocId, d.entrynum,Picked
+			group by H.TransID, [cf_Ubicacion Fisica], d.ItemId, e.ExtLocID, d.Descr, d.QtyOrdSell, i.[cf_Referencia Equivalente], e.cf_Ruta, d.LocId, d.entrynum,Picked,Packed
 			order by e.cf_Ruta",$transid, $piso,$bodega);
 
         $query = $this->db->query($sql);
 
         foreach ($query->result() as $row)
         {
+
             if ($row->Picked == NULL)
             {
                 $row->Picked = 0;
             }
-            
+
+            if($row->Packed == null)
+            {
+                $row->Packed = 0;
+            }
+
             $this->data["data"][] = array(
                 "Orden"=>$row->Orden, 
                 "Ruta"=>$row->Ruta, 
@@ -200,14 +246,15 @@ class BodegaItem_Admin extends CI_Controller {
                 "Comprt"=>$row->Comprt,
                 "Disp"=>$row->Disp, 
                 "Referencia_Equivalente"=>$row->Referencia_Equivalente,
-                "Picked"=>$row->Picked
+                "Picked"=>$row->Picked,
+                "Packed"=>$row->Packed
 
 );
         }
 
         $this->respuesta();
         //$this->load->view('welcome_message');
-    }    	
+    }
 
     public function guardarHistorialPicked()
     {
