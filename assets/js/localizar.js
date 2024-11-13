@@ -1,13 +1,5 @@
 Ext.onReady(function() {
 	var socket = io.connect('http://192.168.0.205:4000');
-	//new Date().toJSON().split("T")[0].split("-").reverse().join("/")
-	/**
-	 * This example shows how to enable inline editing of grid cells.
-	 *
-	 * Note that cell editing is ideal for mouse/keyboard users and is not
-	 * recommended on touch devices.
-	 */
-	//var url = "http://192.168.0.251/agro/bodega/";
 	var url = "/agro/localizar/";
 
 	function restablecer(){
@@ -39,12 +31,6 @@ Ext.onReady(function() {
 				//showSummaryRow: true // agrega al agrupar una fila para calculos https://docs-devel.sencha.com/extjs/7.4.0/classic/Ext.grid.feature.Grouping.html
 				
 			}, 
-			
-			/*{
-				ftype: 'summary',  // Habilita la funcionalidad de resumen
-				dock: 'bottom'
-			}*/
-			
 		],
 				
 				dockedItems: [
@@ -81,8 +67,6 @@ Ext.onReady(function() {
 										}else{
 											Ext.getCmp('tabla').getStore().filter("Piso",combo.getRawValue());
 										}	
-										//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + Ext.getCmp('tabla').getStore().data.BinNum + Ext.getCmp('tabla').getStore().getModel().getFields('BinNum').getValue);
-										//console.log(Ext.getCmp('tabla').getStore().getModel().getFields);
 										console.log(Ext.getCmp('tabla').getStore().getRange(0,100));
 									}
 								}
@@ -123,9 +107,6 @@ Ext.onReady(function() {
 											});
 
 										}	
-										//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + Ext.getCmp('tabla').getStore().data.BinNum + Ext.getCmp('tabla').getStore().getModel().getFields('BinNum').getValue);
-										//console.log(Ext.getCmp('tabla').getStore().getModel().getFields);
-										//console.log(Ext.getCmp('tabla').getStore().getRange(0,100));
 									}
 								}
 							},
@@ -164,7 +145,83 @@ Ext.onReady(function() {
 								Ext.getCmp('tabla').getStore().load({params: {FechaTransaccion: Ext.getCmp('fecha').getRawValue()}});
 							//	Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + Ext.getCmp('fecha').getRawValue() );
 
-							} },
+							} 
+							},
+							"-",
+							{
+								xtype: 'button',
+								text: 'Finalizar',
+								id: 'finalizarButton',
+								iconCls: 'fas fa-check',
+								handler: function() {
+									var store = Ext.getCmp('tabla').getStore();
+                                    var allMatched = true;
+									var transid = "";
+                
+                                    store.each(function(record) {
+										transid = record.data.TransId;
+                                        if (record.get('Proceso') !== "Localizado") {
+                                            allMatched = false;
+                                        }
+                                    });
+                
+                                    if (allMatched) {
+                                        Ext.Msg.confirm(
+                                            'Finalizar Localizado',
+                                            '¿Quieres finalizar el localizado de la orden ' + transid + '?',
+                                            function(buttonId) {
+                                                if (buttonId === 'yes') {
+                                                    Ext.Ajax.request({
+                                                        url: url + 'finalizarLocalizado',
+                                                        method: 'POST',
+                                                        params: {
+                                                            TransId: transid
+                                                        },
+                                                        success: function(response) {
+                                                            var result = Ext.decode(response.responseText);
+                                                            if (result.success) {
+																window.location.reload();
+																Ext.Msg.alert('Éxito', result.message);
+                                                            } else {
+                                                                Ext.Msg.alert('Error', result.message);
+                                                            }
+                                                        },
+                                                        failure: function(response) {
+                                                            Ext.Msg.alert('Error', 'No se pudo completar la solicitud.');
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                    } else {
+                                        Ext.Msg.confirm(
+                                            'Advertencia',
+                                            'Hay items sin localizar en esta remisión, ¿estas seguro de finalizar el localizado de la orden ' + transid + '?',
+                                            function(buttonId) {
+                                                if (buttonId === 'yes') {
+                                                    Ext.Ajax.request({
+                                                        url: url + 'finalizarLocalizado',
+                                                        method: 'POST',
+                                                        params: {
+                                                            TransId: transid
+                                                        },
+                                                        success: function(response) {
+                                                            var result = Ext.decode(response.responseText);
+                                                            if (result.success) {
+																window.location.reload();
+																Ext.Msg.alert('Éxito', result.message);
+                                                            } else {
+                                                                Ext.Msg.alert('Error', result.message);
+                                                            }
+                                                        },
+                                                        failure: function(response) {
+                                                            Ext.Msg.alert('Error', 'No se pudo completar la solicitud.');
+                                                        }
+                                                    });
+                                                }
+                                        });
+                                    }
+								}
+							},
 							"->",
 
 							{
@@ -196,8 +253,6 @@ Ext.onReady(function() {
 									XLSX.writeFile(workbook, 'tabla.xlsx');
 
 									store.clearFilter();
-
-								
 								}
 							}
 
@@ -211,15 +266,6 @@ Ext.onReady(function() {
 					},
 					{
 						ptype: 'cellediting',			
-
-						// The widget definition describes a widget to be rendered into the expansion row.
-						// It has access to the application's ViewModel hierarchy. Its immediate ViewModel
-						// contains a record and recordIndex property. These, or any property of the record
-						// (including association stores) may be bound to the widget.
-						//
-						// See the Order model definition with the association declared to Company.
-						// Every Company record will be decorated with an "orders" method which,
-						// when called yields a store containing associated orders.
 						widget: {	
 							bind: {
 								store: Ext.create('Ext.data.Store', {
@@ -237,31 +283,14 @@ Ext.onReady(function() {
 										{ name: 'Comprt', type: 'int' },
 										{ name: 'Disp', type: 'int' },
 										{ name: 'Referencia_Equivalente', type: 'string' }
-									]/*,
-									proxy: {
-										timeout: 600000,
-										useDefaultXhrHeader: false,
-										type: 'ajax',
-										url: url+"obtenerReferencias",
-										reader: {
-											type: 'json',
-											rootProperty: 'data'
-										}
-									}*/,
+									],
 									data: []
 								})
 							},
 							xtype: 'grid',
 							header: false,
-							columns: [/*{
-								text: 'TransId',
-								dataIndex: 'TransId',
-								flex: 1
-							}, {
-								text: 'Piso',
-								dataIndex: 'Piso',
-								flex: 1
-							},*/ {
+							columns: [
+							{
 								text: 'Ruta',
 								dataIndex: 'Ruta',
 								flex: 1
@@ -310,8 +339,7 @@ Ext.onReady(function() {
 				viewConfig: {
 					listeners: {
 						expandbody: function (rowNode, record, expandRow, e) {
-							//console.log(record);
-							//Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).store.load({params: {TransId: record.data.TransId, Piso: record.data.Piso}});
+							
 							
 							if(Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).getStore().count() === 0){
 								Ext.Ajax.request({
@@ -342,6 +370,7 @@ Ext.onReady(function() {
 					autoLoad: false,
 					//groupField: "TransId",
 					fields: [
+						{ name: 'IdFinalizado', type: 'string' },
 						{ name: 'TransId', type: 'string' },
 						{ name: 'RefEmpaque', type: 'string' },
 						{ name: 'Itemid', type: 'string' },
@@ -369,9 +398,39 @@ Ext.onReady(function() {
 							type: 'json',
 							rootProperty: 'data'
 						}
+					},
+					listeners: {
+						load: function(store) {
+							var record = store.first();
+				
+							if (record && record.get('IdFinalizado') == 1) {
+								Ext.Msg.show({
+									title: 'Información',
+									message: 'Remisión ya ha sido localizada en su totalidad.',
+									icon: Ext.Msg.INFO,
+									buttons: Ext.Msg.OK
+								});
+								Ext.getCmp('finalizarButton').setDisabled(true);
+							} else if (record) {
+								Ext.getCmp('finalizarButton').setDisabled(false);
+							}
+						}
 					}
 				}),
 				columns: [
+					{
+						header: 'Estado',
+						dataIndex: 'IdFinalizado',
+						width: 120,
+						renderer: function(value, metaData) {
+							if (value === '1') {
+								metaData.style = 'background-color: #D3D3D3; color: black;';  // Fondo gris
+								return 'Finalizado';
+							} else {
+								return 'Abierto';
+							}
+						}
+					},
 					{
 						header: 'Despacho',
 						dataIndex: 'TransId',
@@ -405,9 +464,7 @@ Ext.onReady(function() {
 						dataIndex: 'Descrip',
 						groupable: true,
 						headerCheckbox: true,
-						width: 210,//,
-						//summaryType: 'count',  // Agrega resumen de recuento al final de la columna
-						//stopSelection: false
+						width: 210,
 						filter: 'string'
 						
 					}, 
@@ -428,8 +485,7 @@ Ext.onReady(function() {
 						header: 'Bodega',
 						dataIndex: 'Piso',
 						//headerCheckbox: true,
-						width: 100//,
-						//stopSelection: false
+						width: 100
 					}, 
 					{
 						//xtype: 'datecolumn',
@@ -437,14 +493,6 @@ Ext.onReady(function() {
 						dataIndex: 'Qtyorder',
 						//refenence: 'Name',
 						width: 120
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}*/
 					},
 					{
 						//xtype: 'datecolumn',
@@ -453,14 +501,6 @@ Ext.onReady(function() {
 						hidden: false,
 						//refenence: 'Name',
 						width: 120
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}*/
 					},
 					{
 						//xtype: 'datecolumn',
@@ -468,14 +508,6 @@ Ext.onReady(function() {
 						dataIndex: 'BinNum',
 						//refenence: 'Name',
 						width: 120
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}*/
 					}, 
 					{
 						//xtype: 'datecolumn',
@@ -483,14 +515,6 @@ Ext.onReady(function() {
 						dataIndex: 'BimNumold',
 						//refenence: 'Name',
 						width: 100
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}*/
 					}, 
 					 
 					{
@@ -558,24 +582,6 @@ Ext.onReady(function() {
 							return value;
 						}
 					}, 
-					/*{
-						header: 'Orden Proceso',
-						dataIndex: 'Orden',
-						hidden: true,
-						width: 100/*,
-						editor: {
-							xtype: 'combo',
-							typeAhead: true,
-							triggerAction: 'all',
-							store: [
-								['Shade','Shade'],
-								['Mostly Shady','Mostly Shady'],
-								['Sun or Shade','Sun or Shade'],
-								['Mostly Sunny','Mostly Sunny'],
-								['Sunny','Sunny']
-							]
-						}
-					}, */
 					
 					{
 						header: 'Proveedor',
@@ -583,63 +589,19 @@ Ext.onReady(function() {
 						flex: 1,
 						minWidth: 150,
 						align: 'center',
-						//formatter: 'usMoney',
-						/*editor: {
-							xtype: 'numberfield',
-
-							allowBlank: false,
-							minValue: 0,
-							maxValue: 100000
-						}*/
 					}, 
-					
-					/*{
-						//xtype: 'datecolumn',
-						header: 'Ingresa',
-						dataIndex: 'Name',
-						refenence: 'Name',
-						width: 200
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}
-					}, */
-					
 					{
 						//xtype: 'checkcolumn',
 						header: 'Fecha Localizado',
-						dataIndex: 'HoraInicial'/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
+						dataIndex: 'HoraInicial',
 						//headerCheckbox: true,
-						width: 190//,
-						//stopSelection: false
+						width: 190
 					}, 
 					
 					{
 						//xtype: 'checkcolumn',
 						header: 'Responsable',
-						dataIndex: 'NombreUsuario'/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
+						dataIndex: 'NombreUsuario',
 						//headerCheckbox: true,
 						width: 130//,
 						//stopSelection: false
@@ -649,15 +611,7 @@ Ext.onReady(function() {
 						dataIndex: 'Observaciones',
 						flex: 0.3,
 						minWidth: 125,
-						align: 'center',
-						//formatter: 'usMoney',
-						/*editor: {
-							xtype: 'numberfield',
-
-							allowBlank: false,
-							minValue: 0,
-							maxValue: 100000
-						}*/
+						align: 'center'
 					},
 					{
 						//xtype: 'datecolumn',
@@ -666,63 +620,8 @@ Ext.onReady(function() {
 						hidden: true,
 						//refenence: 'Name',
 						width: 120
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}*/
 					}
-					/*,{
-						//xtype: 'checkcolumn',
-						header: 'Observaciones',
-						dataIndex: 'Observaciones',
-						headerCheckbox: true/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
-						//headerCheckbox: true,
-						//width: 190//,
-						//stopSelection: false
-					/*},
-					 {
-						xtype: 'actioncolumn',
-						width: 30,
-						sortable: false,
-						menuDisabled: true,
-						items: [{
-							iconCls: 'far fa-trash-alt',
-							tooltip: 'Delete Plant',
-							handler: 'onRemoveClick'
-						}]
-					}*/
 				],
-				/*viewConfig: {
-					getRowClass: function(record, rowIndex, rowParams, store){
-						var proc = record.get("IdProceso");
-
-						switch(proc) {
-							case 0:
-								return 'picked';
-							case 1:
-								return 'recogiendo';
-							case 2:
-								return 'recogiendo';
-							case 3:
-								return 'empacando';
-							case 3:
-								return 'empacado';
-						}
-					}
-				},*/
 				listeners: {			
 					afterrender: function( view, eOpts ){
 						Ext.getCmp("form").getForm().reset();
@@ -733,52 +632,47 @@ Ext.onReady(function() {
 						Ext.getCmp('usuarios').getStore().load();
 					},
 					rowdblclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
-						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro8").setDisabled(true);
-						//Ext.getCmp("Observacion").setDisabled(true);
-						Ext.getCmp('Observacion').setValue(record.data.Observaciones);
-						/*Ext.getCmp("pro1").setDisabled(true);
-						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp("pro4").setDisabled(true);*/
-						//Ext.getCmp("tabla").getView().setDisabled(true);
-						Ext.getCmp('tabpanel').setVisible(true);
+						if (record.data.IdFinalizado != 1)
+						{
+							Ext.getCmp("form").getForm().reset();
+							Ext.getCmp("pro8").setDisabled(true);
+							//Ext.getCmp("Observacion").setDisabled(true);
+							Ext.getCmp('Observacion').setValue(record.data.Observaciones);
+							Ext.getCmp('tabpanel').setVisible(true);
 
-						if(record.data.IdUsuario != null){
-							Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
+							if(record.data.IdUsuario != null){
+								Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
+							}
+
+							if(record.data.IdProceso < 8){
+								Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
+								Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
+								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
+								Ext.getCmp('BinNum').setValue(record.data.BinNum);
+								//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + record.data.BinNum);
+								
+							}		
 						}
-
-						if(record.data.IdProceso < 8){
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
-							Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
-							Ext.getCmp('BinNum').setValue(record.data.BinNum);
-							//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + record.data.BinNum);
-							
-						}						
 					},
 					rowclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
-						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro8").setDisabled(true);
-						Ext.getCmp('Observacion').setValue(record.data.Observaciones);
-						//Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
-						/*Ext.getCmp("pro1").setDisabled(true);
-						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp("pro4").setDisabled(true);*/
-						//Ext.getCmp("tabla").getView().setDisabled(true);
-						//Ext.getCmp('tabpanel').setVisible(true);
+						if (record.data.IdFinalizado != 1)
+						{
+							Ext.getCmp("form").getForm().reset();
+							Ext.getCmp("pro8").setDisabled(true);
+							Ext.getCmp('Observacion').setValue(record.data.Observaciones);
 
-						if(record.data.IdUsuario != null){
-							Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
-						}
+							if(record.data.IdUsuario != null){
+								Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
+							}
 
-						if(record.data.IdProceso < 8){
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
-							Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
-							Ext.getCmp('BinNum').setValue(record.data.BinNum);
-						}						
+							if(record.data.IdProceso < 8){
+								Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
+								Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
+								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
+								Ext.getCmp('BinNum').setValue(record.data.BinNum);
+							}	
+						}	
+											
 					}
 				}
 			}),
@@ -840,16 +734,7 @@ Ext.onReady(function() {
 											});
 											return false;
 										}
-										/*if(Ext.getCmp("proceso").getValue().IdProceso==7 && Ext.getCmp("Observacion").getValue().trim()==""){
-											Ext.Msg.show({
-												title:'Atención!',
-												message: 'Si vas a cancelar/activar un pedido digita la observacion',
-												buttons: Ext.Msg.OK,
-												icon: Ext.Msg.WARNING
-											});
-											return false;
-										}*/
-										else{
+										else {
 											var datos = {};
 											datos.Id = fila.Id;
 											datos.TransId = fila.TransId;
@@ -969,28 +854,20 @@ Ext.onReady(function() {
 								columns: 1,
 								vertical: true,
 								allowBlank: false,
-listeners: {
-                        scope: this,
-                        change: function(checkbox) {
-                            if (checkbox.checked) {
-                                resetBoxes(checkbox.ownerCt, checkbox.inputValue);
-                            }
-                            /* not relevant for the understanding of the sample */
-                            var panel = checkbox.ownerCt.ownerCt;
-                            var f = panel.down('displayfield');
-                            checkbox.checked ? checkbox.inputValue : 'none';
-                        
-                            /* so you can delete this, with the displayfield too */
+								listeners: {
+									scope: this,
+									change: function(checkbox) {
+										if (checkbox.checked) {
+											resetBoxes(checkbox.ownerCt, checkbox.inputValue);
+										}
+										/* not relevant for the understanding of the sample */
+										var panel = checkbox.ownerCt.ownerCt;
+										var f = panel.down('displayfield');
+										checkbox.checked ? checkbox.inputValue : 'none';
 
-                        }
-                    },
-
+									}
+								},
 								items: [
-									/*{ boxLabel: 'Recogiendo', name: 'IdProceso', id: "pro1", inputValue: 1, disabled: true },
-									{ boxLabel: 'Recogido', name: 'IdProceso', id: "pro2", inputValue: 2, disabled: true },
-									{ boxLabel: 'Empacando', name: 'IdProceso', id: "pro3", inputValue: 3, disabled: true },
-									{ boxLabel: 'Empacado', name: 'IdProceso', id: "pro4", inputValue: 4, disabled: true },
-	                                { boxLabel: 'Cancelado', name: 'IdProceso', id: "pro7", inputValue: 7, disabled: false },*/
 									{ boxLabel: 'Localizar', name: 'IdProceso', id: "pro8", inputValue: 8, disabled: true }
 								]
 							},
@@ -1017,8 +894,6 @@ listeners: {
 									autoLoad: false,
 									fields: [
 										{ name: 'BinNum', type: 'string' }
-										/*,{ name: 'UserName', type: 'string' },
-										{ name: 'Password', type: 'string' }*/
 									],
 									proxy: {
 										timeout: 600000,
@@ -1031,7 +906,7 @@ listeners: {
 										}
 									}
 								})
-							},
+							} 
 						]
 					}
 				]

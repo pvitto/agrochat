@@ -232,7 +232,7 @@ Ext.onReady(function() {
 						{ name: 'NombreUsuario', type: 'string' },
 						{ name: 'Observaciones', type: 'string' },
 						{ name: 'TipoEnvio', type: 'string' },
-						{ name: 'PorcentajeCompletado', type: 'string' } // Nuevo campo para el porcentaje
+						{ name: 'PorcentajeCompletado', type: 'string' } 
 					],
 					proxy: {
 						timeout: 600000,
