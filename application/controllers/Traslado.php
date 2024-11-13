@@ -231,7 +231,7 @@ class traslado extends CI_Controller {
         $this->data = array();
 
         if ($this->db->affected_rows() > 0) {
-            $this->data["message"] = "Remision localizada correctamente.";
+            $this->data["message"] = "Remision trasladada correctamente.";
             $this->data["success"] = true;
             
         } else {
