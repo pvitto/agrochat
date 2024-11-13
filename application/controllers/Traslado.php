@@ -104,7 +104,9 @@ class traslado extends CI_Controller {
                 "Observaciones"=>$row->Observaciones,
                 "RefEmpaque"=>$row->RefEmpaque,
                 "enMano"=>$row->enMano,
-                "AliasProv"=>$row->AliasProv);
+                "AliasProv"=>$row->AliasProv,
+                "IdFinalizado"=>$row->IdFinalizado
+            );
 
                 
 
@@ -207,4 +209,37 @@ class traslado extends CI_Controller {
         $this->respuesta();
         //$this->load->view('welcome_message');
     }    
+
+    public function finalizarTraslado()
+    {
+        $transid = $this->input->post('TransId');
+
+        if (empty($transid))
+        {
+            $this->data = array();
+            $this->data["message"] = "TransId es requerido";
+            $this->data["success"] = false;
+            $this->respuesta();
+            return;
+        }
+
+        $sql = "UPDATE AGRInProcesoLocalizar SET IdFinalizado = 1 WHERE TransId = ?";
+    
+        // Ejecutar la consulta
+        $query = $this->db->query($sql, array($transid));
+
+        $this->data = array();
+
+        if ($this->db->affected_rows() > 0) {
+            $this->data["message"] = "Remision localizada correctamente.";
+            $this->data["success"] = true;
+            
+        } else {
+            
+            $this->data["message"] = "No se encontró la remisión o ya estaba finalizada.";
+            $this->data["success"] = false;
+        }
+
+        $this->respuesta();
+    }
 }

@@ -169,6 +169,81 @@ Ext.onReady(function() {
 							//	Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + Ext.getCmp('fecha').getRawValue() );
 
 							} },
+							"-",
+							{
+								xtype: 'button',
+								text: 'Finalizar',
+								id: 'finalizarButton',
+								iconCls: 'fas fa-check',
+								handler: function() {
+									var store = Ext.getCmp('tabla').getStore();
+                                    var allMatched = true;
+									var transid = "";
+                
+                                    store.each(function(record) {
+										transid = record.data.TransId;
+                                        if (record.get('Proceso') !== "Localizado") {
+                                            allMatched = false;
+                                        }
+                                    });
+                
+                                    if (allMatched) {
+                                        Ext.Msg.confirm(
+                                            'Finalizar Localizado',
+                                            '¿Quieres finalizar el traslado de la orden ' + transid + '?',
+                                            function(buttonId) {
+                                                if (buttonId === 'yes') {
+                                                    Ext.Ajax.request({
+                                                        url: url + 'finalizarTraslado',
+                                                        method: 'POST',
+                                                        params: {
+                                                            TransId: transid
+                                                        },
+                                                        success: function(response) {
+                                                            var result = Ext.decode(response.responseText);
+                                                            if (result.success) {
+																window.location.reload();
+																Ext.Msg.alert('Éxito', result.message);
+                                                            } else {
+                                                                Ext.Msg.alert('Error', result.message);
+                                                            }
+                                                        },
+                                                        failure: function(response) {
+                                                            Ext.Msg.alert('Error', 'No se pudo completar la solicitud.');
+                                                        }
+                                                    });
+                                                }
+                                            });
+                                    } else {
+                                        Ext.Msg.confirm(
+                                            'Advertencia',
+                                            'Hay items aún en bodega en esta remisión, ¿estás seguro de finalizar el traslado de la orden ' + transid + '?',
+                                            function(buttonId) {
+                                                if (buttonId === 'yes') {
+                                                    Ext.Ajax.request({
+                                                        url: url + 'finalizarTraslado',
+                                                        method: 'POST',
+                                                        params: {
+                                                            TransId: transid
+                                                        },
+                                                        success: function(response) {
+                                                            var result = Ext.decode(response.responseText);
+                                                            if (result.success) {
+																window.location.reload();
+																Ext.Msg.alert('Éxito', result.message);
+                                                            } else {
+                                                                Ext.Msg.alert('Error', result.message);
+                                                            }
+                                                        },
+                                                        failure: function(response) {
+                                                            Ext.Msg.alert('Error', 'No se pudo completar la solicitud.');
+                                                        }
+                                                    });
+                                                }
+                                        });
+                                    }
+								}
+							},
 							"->",
 
 							{
@@ -346,6 +421,7 @@ Ext.onReady(function() {
 					autoLoad: false,
 					//groupField: "TransId",
 					fields: [
+						{ name: 'IdFinalizado', type: 'string' },
 						{ name: 'Id', type: 'int' },
 						{ name: 'TransId', type: 'string' },
 						{ name: 'FechaTransaccion', type: 'string' },
@@ -373,9 +449,39 @@ Ext.onReady(function() {
 							type: 'json',
 							rootProperty: 'data'
 						}
+					},
+					listeners: {
+						load: function(store) {
+							var record = store.first();
+				
+							if (record && record.get('IdFinalizado') == 1) {
+								Ext.Msg.show({
+									title: 'Información',
+									message: 'Remisión ya ha sido localizada en su totalidad.',
+									icon: Ext.Msg.INFO,
+									buttons: Ext.Msg.OK
+								});
+								Ext.getCmp('finalizarButton').setDisabled(true);
+							} else if (record) {
+								Ext.getCmp('finalizarButton').setDisabled(false);
+							}
+						}
 					}
 				}),
 				columns: [
+					{
+						header: 'Estado',
+						dataIndex: 'IdFinalizado',
+						width: 120,
+						renderer: function(value, metaData) {
+							if (value === '1') {
+								metaData.style = 'background-color: #D3D3D3; color: black;';  // Fondo gris
+								return 'Finalizado';
+							} else {
+								return 'Abierto';
+							}
+						}
+					},
 					{
 						header: 'Id',
 						dataIndex: 'Id',
@@ -739,54 +845,48 @@ Ext.onReady(function() {
 						Ext.getCmp('usuarios').getStore().load();
 					},
 					rowdblclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
-						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro8").setDisabled(true);
-						//Ext.getCmp("Observacion").setDisabled(true);
-						Ext.getCmp('Observacion').setValue(record.data.Observaciones);
-						/*Ext.getCmp("pro1").setDisabled(true);
-						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp("pro4").setDisabled(true);*/
-						//Ext.getCmp("tabla").getView().setDisabled(true);
-						Ext.getCmp('tabpanel').setVisible(true);
-						Ext.getCmp("usuarios").focus();
+						if (record.data.IdFinalizado != 1)
+						{
+							Ext.getCmp("form").getForm().reset();
+							Ext.getCmp("pro8").setDisabled(true);
+							Ext.getCmp('Observacion').setValue(record.data.Observaciones);
+							Ext.getCmp('tabpanel').setVisible(true);
+							Ext.getCmp("usuarios").focus();
 
-						if(record.data.IdUsuario != null){
-							Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
-							
+							if(record.data.IdUsuario != null){
+								Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
+								
+							}
+
+							if(record.data.IdProceso < 8){
+								Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
+								Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
+								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
+								Ext.getCmp('BinNum').setValue(record.data.BinNum);
+								
+							}	
 						}
-
-						if(record.data.IdProceso < 8){
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
-							Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
-							Ext.getCmp('BinNum').setValue(record.data.BinNum);
-							//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + record.data.BinNum);
-							
-						}						
+											
 					},
 					rowclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
-						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro8").setDisabled(true);
-						Ext.getCmp('Observacion').setValue(record.data.Observaciones);
-						//Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
-						/*Ext.getCmp("pro1").setDisabled(true);
-						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp("pro4").setDisabled(true);*/
-						//Ext.getCmp("tabla").getView().setDisabled(true);
-						//Ext.getCmp('tabpanel').setVisible(true);
-
-						if(record.data.IdUsuario != null){
-							Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
+						if (record.data.IdFinalizado != 1)
+						{
+							Ext.getCmp("form").getForm().reset();
+							Ext.getCmp("pro8").setDisabled(true);
+							Ext.getCmp('Observacion').setValue(record.data.Observaciones);
+	
+							if(record.data.IdUsuario != null){
+								Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
+							}
+	
+							if(record.data.IdProceso < 8){
+								Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
+								Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
+								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
+								Ext.getCmp('BinNum').setValue(record.data.BinNum);
+							}				
 						}
-
-						if(record.data.IdProceso < 8){
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
-							Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
-							Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
-							Ext.getCmp('BinNum').setValue(record.data.BinNum);
-						}						
+								
 					}
 				}
 			}),
