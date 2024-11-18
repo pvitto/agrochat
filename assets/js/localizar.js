@@ -17,7 +17,7 @@ Ext.onReady(function() {
 				width: '76%',
 				region: 'center',
 				iconCls: 'logo',
-				title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Aadmninistracion Bodega - PackingList',
+				title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; A dmninistracion Bodega - PackingList',
 				layout: 'fit',
 				rowLines: true,
 				split: true,
@@ -626,15 +626,43 @@ Ext.onReady(function() {
 					afterrender: function( view, eOpts ){
 						Ext.getCmp("form").getForm().reset();
 						Ext.getCmp('tabpanel').setVisible(false);
-						//Ext.getCmp("tabla").getView().setDisabled(false);
-						var fe = Ext.getCmp("fecha").getRawValue();
-						view.getStore().load({params: {FechaTransaccion: fe}});					
+						//Ext.getCmp("tabla").getView().setDisabled(false);	
 						Ext.getCmp('usuarios').getStore().load();
 					},
 					rowdblclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
 						if (record.data.IdFinalizado != 1)
 						{
 							Ext.getCmp("form").getForm().reset();
+							Ext.getCmp("pro8").setValue(true);
+							Ext.getCmp("pro8").setDisabled(true);
+							//Ext.getCmp("Observacion").setDisabled(true);
+							Ext.getCmp('Observacion').setValue(record.data.Observaciones);
+							Ext.getCmp('tabpanel').setVisible(true);
+
+							if(record.data.IdUsuario != null){
+								Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
+							}
+
+							if(record.data.IdProceso < 8) {
+								Ext.getCmp("pro8").setDisabled(false); 
+								Ext.getCmp('BinNum').setDisabled(false);
+								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
+								Ext.getCmp('BinNum').setValue(record.data.BinNum);
+							}		
+							else
+							{
+								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
+								Ext.getCmp('BinNum').setValue(record.data.BinNum);
+								Ext.getCmp('BinNum').setDisabled(true);
+							}
+						}
+					},
+					rowclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
+						if (record.data.IdFinalizado != 1)
+						{
+							
+							Ext.getCmp("form").getForm().reset();
+							Ext.getCmp("pro8").setValue(true);
 							Ext.getCmp("pro8").setDisabled(true);
 							//Ext.getCmp("Observacion").setDisabled(true);
 							Ext.getCmp('Observacion').setValue(record.data.Observaciones);
@@ -645,32 +673,17 @@ Ext.onReady(function() {
 							}
 
 							if(record.data.IdProceso < 8){
-								Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
-								Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
+								Ext.getCmp("pro8").setDisabled(false);
+								Ext.getCmp('BinNum').setDisabled(false);
 								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
 								Ext.getCmp('BinNum').setValue(record.data.BinNum);
-								//Ext.Msg.alert('Title', 'Basic message box in ExtJS ' + record.data.BinNum);
-								
 							}		
-						}
-					},
-					rowclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
-						if (record.data.IdFinalizado != 1)
-						{
-							Ext.getCmp("form").getForm().reset();
-							Ext.getCmp("pro8").setDisabled(true);
-							Ext.getCmp('Observacion').setValue(record.data.Observaciones);
-
-							if(record.data.IdUsuario != null){
-								Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
-							}
-
-							if(record.data.IdProceso < 8){
-								Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
-								Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
+							else
+							{
 								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
 								Ext.getCmp('BinNum').setValue(record.data.BinNum);
-							}	
+								Ext.getCmp('BinNum').setDisabled(true);
+							}
 						}	
 											
 					}
@@ -739,7 +752,7 @@ Ext.onReady(function() {
 											datos.Id = fila.Id;
 											datos.TransId = fila.TransId;
 											datos.Itemid = fila.Itemid;
-											
+											datos.Usuario = fila.NombreUsuario;
 											datos.IdTransTipo = Ext.getCmp("proceso").getValue().IdProceso;
 											datos.IdPiso = fila.Piso;
 											datos.IdUsuario = Ext.getCmp("usuarios").getValue();
