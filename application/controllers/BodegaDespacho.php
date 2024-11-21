@@ -41,10 +41,54 @@ class BodegaDespacho extends CI_Controller {
             $remision = $this->input->get("Remision");
         }
     
-        $sql = sprintf(
-            "EXEC [dbo].[HistorialDespachoBodegaBorrador] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', %d, '%s', '%s'", 
-            $remision, $tipo, '', '', '', '', '', '', '', '', $fechaConsulta, ''
-        );
+
+        if ($tipo == 4)
+        {
+            $sql = "Select
+				D.Id as IdDespachado,
+                d.TransId,
+                CONVERT(VARCHAR,d.TransDate,103) [FechaTransaccion],
+               CONVERT(date, d.fechaimpresion) [FechaImpresion],
+               Case when d.idproceso='2' then 'DESPACHADO'  else '0' end Proceso,
+				b.CustId as IdCliente,
+                b.CustName as Cliente, 
+				d.Rep2Id as Rep2id,
+				'' as Vendedor,
+				'' as EstadoTransaccion,
+                d.Notes Observaciones,
+                '' as TipoEnvio,
+				NULL Ubicacion,
+				e.Descrip Transportadora,
+				d.NumGuia Guia,
+				h.UserName Administrador,
+				F.UserName Operario,
+				D.Fecha AS FechaDespachado,
+				Flete
+				from
+				[dbo].[AGRInProcesoDespacho] d
+				
+				inner join tblArCust b
+				on d.IdCliente=b.CustId
+				
+				inner join AGRinTransportadoras e
+				on e.Idtransportadora=d.IdTransportadora
+				left join TSM.dbo.[User] f
+				on F.UserId=D.IdOperario
+				left join TSM.dbo.[User] h
+				on h.UserId=D.IdUsuario
+				where idestado='0' and
+                convert(varchar,D.Fecha,103) = convert(varchar,"."'".$fechaConsulta."'".",103)";
+		}
+        else
+        {
+            
+            $sql = sprintf(
+                "EXEC [dbo].[HistorialDespachoBodegaBorrador] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', %d, '%s', '%s'", 
+                $remision, $tipo, '', '', '', '', '', '', '', '', $fechaConsulta, ''
+            );
+
+        }
+       
     
         $query = $this->db->query($sql);
     
