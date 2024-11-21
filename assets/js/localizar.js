@@ -680,6 +680,7 @@ Ext.onReady(function() {
 							}		
 							else
 							{
+								Ext.getCmp("usuarios").setDisabled(true);
 								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
 								Ext.getCmp('BinNum').setValue(record.data.BinNum);
 								Ext.getCmp('BinNum').setDisabled(true);
