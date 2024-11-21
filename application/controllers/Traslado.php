@@ -199,7 +199,7 @@ class traslado extends CI_Controller {
         $this->datos = json_decode($this->input->post("datos"));
 
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialLocalizarBodega] %d,'%s', '%s', %d, '%s', '%s', '%s','%s' ",$this->datos->Id,$this->datos->TransId,$this->datos->Itemid ,$this->datos->IdTransTipo, $this->datos->IdPiso, $this->datos->IdUsuario, $this->datos->BinNum,$this->datos->Observaciones);
+        $sql = sprintf("EXEC [dbo].[HistorialLocalizarBodegaBorrador1] %d,'%s', '%s', %d, '%s', '%s', '%s','%s', '%s' ",$this->datos->Id,$this->datos->TransId,$this->datos->Itemid ,$this->datos->IdTransTipo, $this->datos->IdPiso, $this->datos->IdUsuario, $this->datos->Usuario, $this->datos->BinNum,$this->datos->Observaciones);
 
         $query = $this->db->query($sql);
 

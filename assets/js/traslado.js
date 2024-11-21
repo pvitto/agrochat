@@ -840,51 +840,63 @@ Ext.onReady(function() {
 						Ext.getCmp("form").getForm().reset();
 						Ext.getCmp('tabpanel').setVisible(false);
 						//Ext.getCmp("tabla").getView().setDisabled(false);
-						var fe = Ext.getCmp("fecha").getRawValue();
-						view.getStore().load({params: {FechaTransaccion: fe}});					
 						Ext.getCmp('usuarios').getStore().load();
 					},
 					rowdblclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
 						if (record.data.IdFinalizado != 1)
 						{
 							Ext.getCmp("form").getForm().reset();
+							Ext.getCmp("pro8").setValue(true);
 							Ext.getCmp("pro8").setDisabled(true);
+							//Ext.getCmp("Observacion").setDisabled(true);
 							Ext.getCmp('Observacion').setValue(record.data.Observaciones);
 							Ext.getCmp('tabpanel').setVisible(true);
-							Ext.getCmp("usuarios").focus();
 
 							if(record.data.IdUsuario != null){
 								Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
-								
 							}
 
-							if(record.data.IdProceso < 8){
-								Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
-								Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
+							if(record.data.IdProceso < 8) {
+								Ext.getCmp("pro8").setDisabled(false); 
+								Ext.getCmp('BinNum').setDisabled(false);
 								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
 								Ext.getCmp('BinNum').setValue(record.data.BinNum);
-								
-							}	
-						}
+							}		
+							else
+							{
+								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
+								Ext.getCmp('BinNum').setValue(record.data.BinNum);
+								Ext.getCmp('BinNum').setDisabled(true);
+							}
+						}  
 											
 					},
 					rowclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
 						if (record.data.IdFinalizado != 1)
 						{
 							Ext.getCmp("form").getForm().reset();
+							Ext.getCmp("pro8").setValue(true);
 							Ext.getCmp("pro8").setDisabled(true);
+							//Ext.getCmp("Observacion").setDisabled(true);
 							Ext.getCmp('Observacion').setValue(record.data.Observaciones);
-	
+							Ext.getCmp('tabpanel').setVisible(true);
+
 							if(record.data.IdUsuario != null){
 								Ext.getCmp("usuarios").setValue(record.data.IdUsuario);
 							}
-	
-							if(record.data.IdProceso < 8){
-								Ext.getCmp("pro"+(record.data.IdProceso+8)).setDisabled(false);
-								Ext.getCmp("pro"+(record.data.IdProceso+8)).setValue(true);
+
+							if(record.data.IdProceso < 8) {
+								Ext.getCmp("pro8").setDisabled(false); 
+								Ext.getCmp('BinNum').setDisabled(false);
 								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
 								Ext.getCmp('BinNum').setValue(record.data.BinNum);
-							}				
+							}		
+							else
+							{
+								Ext.getCmp('BinNum').getStore().load({params: {bodega: record.data.Piso}});
+								Ext.getCmp('BinNum').setValue(record.data.BinNum);
+								Ext.getCmp('BinNum').setDisabled(true);
+							}
 						}
 								
 					}
