@@ -5,12 +5,11 @@ Ext.onReady(function() {
 	var queryParams = new URLSearchParams(window.location.search);
     var bodega = queryParams.get('LocId');
 
-	if (!bodega) {
+	if (!bodega || bodega != "P1" && bodega != "A") {
         Ext.Msg.alert('Atención', 'Debe seleccionar una bodega.', function () {
             window.location.href = "/agro/menuBodega";
         });
-    }
-
+	} 
 
 	var tipo = 1;
 	var IdTransTipo = 0;    
@@ -389,7 +388,7 @@ Ext.onReady(function() {
 				width: '76%',
 				region: 'center',
 				iconCls: 'logo',
-				title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Admninistracion Bodega - Administrador',
+				title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Proceso Despacho - Bodega ' + bodega,
 				layout: 'fit',
 				rowLines: true,
 				split: true,

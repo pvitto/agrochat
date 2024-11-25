@@ -23,7 +23,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             background-image: url(/agro/assets/img/logo.png);
             background-size: 100%;
             background-repeat: no-repeat;
-         } 
+         }
+         
+        .x-panel-header-default-framed {
+            border: 5px solid #060600 !important;
+        }
+        .x-panel-header-default-framed-top {
+            background-color: #808080 !important; 
+        }
+        .x-panel-default-framed {
+            border-color: #0e0e0e !important;
+        }
          
       </style>
       <meta charset="UTF-8">

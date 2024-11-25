@@ -1,6 +1,7 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
+
 class BodegaDespacho extends CI_Controller {
 
     public function __construct()
@@ -21,8 +22,17 @@ class BodegaDespacho extends CI_Controller {
 
     public function index()
     {
+        $bodega = isset($_GET['LocId']) ? $_GET['LocId'] : null;
         //echo base_url();
-        $this->load->view('bodegadespacho');
+        if ($bodega == "P1")
+        {
+            $this->load->view('bodegadespacho_P1');
+        }
+        else 
+        {
+            $this->load->view('bodegadespacho_A');
+        }
+        
     }
 	
     public function obtenerPickedList()

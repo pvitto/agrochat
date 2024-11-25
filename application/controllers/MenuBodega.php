@@ -7,5 +7,13 @@ class MenuBodega extends CI_Controller
 	{
         $this->load->view('menubodega');
 	}
+
+
+    public function guardarLocId()
+    {
+        $bodega = $this->input->post("Bodega");
+
+        $_SESSION['LocId'] = $bodega; 
+    }
 }
 ?>
