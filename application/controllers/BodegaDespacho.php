@@ -155,7 +155,7 @@ class BodegaDespacho extends CI_Controller {
                     "Id"=>$row->IdDespachado,
                     "Fecha"=>$row->FechaDespachado,
                     "Flete"=>$row->Flete,
-                    "LocId"=>$row->Bodega
+                    "Bodega"=>$row->Bodega
                 );
             }
         }
@@ -181,7 +181,7 @@ class BodegaDespacho extends CI_Controller {
                     "Operario"=>$row->Operario,
                     "Id"=>$row->IdUbicado,
                     "Fecha"=>$row->FechaUbicado,
-                    "LocId"=>$row->Bodega
+                    "Bodega"=>$row->Bodega
                 );
             }
         }
@@ -300,7 +300,7 @@ class BodegaDespacho extends CI_Controller {
         }
 
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodegaBorrador1] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado, '', $this->data->Flete, $this->data->Bodega);
+        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodegaBorrador1] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s','%s'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado, '', $this->data->Flete, $this->data->Bodega);
 
         $query = $this->db->query($sql);
 
@@ -346,5 +346,10 @@ class BodegaDespacho extends CI_Controller {
 
         $this->respuesta();
         //$this->load->view('welcome_message');
+    }
+
+    public function dividirRemision()
+    {
+        
     }
 }

@@ -9,7 +9,8 @@ Ext.onReady(function () {
         closable: false,
         draggable: false,
         resizable: false,
-        width: 300,
+        width: 500,
+        height: 310,
         layout: 'fit',
         items: [{
             xtype: 'form',
@@ -23,12 +24,14 @@ Ext.onReady(function () {
             items: [
                 {
                     text: 'Bodega A',
+                    height: 100,
                     handler: function () {
                         redirectToBodega('A');
                     }
                 },
                 {
                     text: 'Bodega P1',
+                    height: 100,
                     handler: function () {
                         redirectToBodega('P1');
                     }
