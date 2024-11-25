@@ -47,6 +47,7 @@ class BodegaDespacho extends CI_Controller {
             $sql = "Select
 				D.Id as IdDespachado,
                 d.TransId,
+                d.LocId as Bodega,
                 CONVERT(VARCHAR,d.TransDate,103) [FechaTransaccion],
                CONVERT(date, d.fechaimpresion) [FechaImpresion],
                Case when d.idproceso='2' then 'DESPACHADO'  else '0' end Proceso,
@@ -143,7 +144,8 @@ class BodegaDespacho extends CI_Controller {
                     "Operario"=>$row->Operario,
                     "Id"=>$row->IdDespachado,
                     "Fecha"=>$row->FechaDespachado,
-                    "Flete"=>$row->Flete
+                    "Flete"=>$row->Flete,
+                    "LocId"=>$row->Bodega
                 );
             }
         }
@@ -168,7 +170,8 @@ class BodegaDespacho extends CI_Controller {
                     "Administrador"=>$row->Administrador,
                     "Operario"=>$row->Operario,
                     "Id"=>$row->IdUbicado,
-                    "Fecha"=>$row->FechaUbicado
+                    "Fecha"=>$row->FechaUbicado,
+                    "LocId"=>$row->Bodega
                 );
             }
         }
@@ -287,7 +290,7 @@ class BodegaDespacho extends CI_Controller {
         }
 
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodegaBorrador] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado, '', $this->data->Flete);
+        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodegaBorrador1] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado, '', $this->data->Flete, $this->data->Bodega);
 
         $query = $this->db->query($sql);
 

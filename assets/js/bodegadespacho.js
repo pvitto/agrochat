@@ -2,8 +2,18 @@ Ext.onReady(function() {
 	var socket = io.connect('http://192.168.0.205:4000');
 	var url = "/agro/BodegaDespacho/";
 
+	var queryParams = new URLSearchParams(window.location.search);
+    var bodega = queryParams.get('LocId');
+
+	if (!bodega) {
+        Ext.Msg.alert('Atención', 'Debe seleccionar una bodega.', function () {
+            window.location.href = "/agro/menuBodega";
+        });
+    }
+
+
 	var tipo = 1;
-	var IdTransTipo = 0;
+	var IdTransTipo = 0;    
 
 	function actualizarInterfaz() {
 
@@ -339,7 +349,8 @@ Ext.onReady(function() {
 			{ name: 'Guia', type: 'string' },
 			{ name: 'Administrador', type: 'string' },
 			{ name: 'Operario', type: 'string' },
-			{ name: 'IdDespachado', type: 'int' }
+			{ name: 'IdDespachado', type: 'int' },
+			{ name: 'Bodega', type: 'string' },
 		],
 		proxy: {
 			timeout: 600000,
@@ -625,21 +636,18 @@ Ext.onReady(function() {
 								// Obtenemos el valor completo de "Observaciones" desde el registro
 								var observaciones = record.get('Observaciones');
 								
-								
-				
 								Ext.Msg.show({
 									title: 'Observaciones',
 									message: observaciones,
 									buttons: Ext.Msg.OK,
 									scrollable: true // Esto permite hacer scroll si el texto es muy largo
 								});
+
 							}
 							else if (cellIndex === grid.headerCt.items.findIndex('dataIndex', 'Guia'))
 							{
 								// Obtenemos el valor completo de "Guia" desde el registro
 								var guia = record.get('Guia');
-				
-								
 				
 								Ext.Msg.show({
 									title: 'Guia',
@@ -657,6 +665,11 @@ Ext.onReady(function() {
 					{
 						header: 'Remisión',
 						dataIndex: 'TransId',
+						width: 100
+					}, 
+					{
+						header: 'Bodega',
+						dataIndex: 'Bodega',
 						width: 100
 					}, 
 					{
@@ -809,7 +822,8 @@ Ext.onReady(function() {
 						itemId: 'operarioColumn', // Asigna un itemId
 						hidden: true,
 						minWidth: 150
-					}					
+					}
+
 				],
 				
 				listeners: {
@@ -865,55 +879,10 @@ Ext.onReady(function() {
 								Ext.getCmp("form").setDisabled(false);
 								Ext.getCmp("form").getForm().reset();
 								
-								setVisibilityForm(false);
-							
+								setVisibilityForm(false); 
 						}
 						
-					}/*,
-					rowclick: function(viewTable, record, element, rowIndex, e, eOpts) {
-						if (tipo == 1 || tipo == 6)
-						{
-							Ext.getCmp("form").setDisabled(false);
-							Ext.getCmp("form").getForm().reset();
-							Ext.getCmp("pro2").setDisabled(true);
-							Ext.getCmp("pro3").setDisabled(true);
-							Ext.getCmp('Localizacion').setVisible(false);
-							Ext.getCmp('Transportadora').setVisible(false);
-							Ext.getCmp('Guia').setVisible(false);
-							Ext.getCmp('Flete').setVisible(false);
-							Ext.getCmp('FechaDespacho').setVisible(false);
-							setVisibilityForm(true);
-					
-							var proceso = record.get('Proceso');
-					
-							switch (proceso) {
-								case 'POR DESPACHO':
-									Ext.getCmp("pro2").setDisabled(false);
-									Ext.getCmp("pro3").setDisabled(false);
-									break;
-								case 'UBICADO':
-									Ext.getCmp("pro3").setDisabled(false);
-									break;
-							}
-						}
-						else
-						{
-							if (record.get('Guia').trim() == "")
-							{
-								Ext.getCmp("Guia").setVisible(true);
-							}
-							else
-							{
-								Ext.getCmp("Guia").setVisible(false);
-							}
-
-							Ext.getCmp('tabpanel').setVisible(true);
-							Ext.getCmp("form").setDisabled(false);
-							Ext.getCmp("form").getForm().reset();
-							
-							setVisibilityForm(false);
-						}
-					}*/
+					}
 				}				
 			}),
 			Ext.create('Ext.panel.Panel',{
@@ -939,7 +908,7 @@ Ext.onReady(function() {
 								dock: 'bottom',
 								ui: 'footer',
 								layout: {
-									pack: 'left'
+									pack: 'left'  
 								},
 								items: [
 									{
@@ -981,6 +950,7 @@ Ext.onReady(function() {
 											datos.Guia = Ext.getCmp("Guia").getValue().trim();
 											datos.Flete = "";
 											datos.Proceso = fila.Proceso;
+											datos.Bodega = bodega;
 							
 											if (datos.IdTransTipo == 2) {
 												datos.BinNum = Ext.getCmp("Localizacion").getValue();
@@ -1122,6 +1092,10 @@ Ext.onReady(function() {
 									},
 									'->',
 									{
+										
+									},
+									'-',
+									{
 										minWidth: 50,
 										id: 'anularButton',
 										iconCls: 'fas fa-times',
@@ -1170,6 +1144,7 @@ Ext.onReady(function() {
 														datos.BinNum = "";
 														datos.Transportadora = "";
 														datos.Flete = "";
+														datos.Bodega = bodega;
 
 														Ext.Ajax.request({
 															url: url + 'guardarHistorialPicked',
