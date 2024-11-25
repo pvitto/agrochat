@@ -84,8 +84,8 @@ class BodegaDespacho extends CI_Controller {
         {
             
             $sql = sprintf(
-                "EXEC [dbo].[HistorialDespachoBodegaBorrador] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', %d, '%s', '%s'", 
-                $remision, $tipo, '', '', '', '', '', '', '', '', $fechaConsulta, ''
+                "EXEC [dbo].[HistorialDespachoBodegaBorrador1] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s'", 
+                $remision, $tipo, '', '', '', '', '', '', '', '', $fechaConsulta, '', ''
             );
 
         }

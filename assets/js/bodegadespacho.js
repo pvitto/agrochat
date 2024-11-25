@@ -408,6 +408,35 @@ Ext.onReady(function() {
 						},
 						items: [
 							{
+								xtype: 'combo',
+								typeAhead: true,
+								id: 'pisos',
+								width: 185,
+								labelWidth: 60,
+								fieldLabel: 'Bodega',
+								triggerAction: 'all',
+								value: 0,
+								editable: false,
+								store: [
+									[0,'Todos'],
+									[1,'P1'],
+									[2,'A']
+								],
+								listeners: {
+									select: function( combo, record, eOpts ) {
+										Ext.getCmp("form").getForm().reset();
+										//Ext.getCmp("tabla").getView().setDisabled(false);
+										Ext.getCmp('tabpanel').setVisible(false);
+										if(combo.getValue() == 0){
+											Ext.getCmp('tabla').getStore().clearFilter();
+										}else{
+											Ext.getCmp('tabla').getStore().filter("Bodega",combo.getRawValue());
+										}	
+										console.log(Ext.getCmp('tabla').getStore().getRange(0,100));
+									}
+								}
+							},
+							{
 								xtype: 'button',
 								id: 'PorDespacharButton',
 								text: 'Mostrar Por Despachar',
