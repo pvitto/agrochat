@@ -347,6 +347,205 @@ Ext.onReady(function() {
 		}
 	});
 
+	var historicoPanel = Ext.create('Ext.window.Window', {
+		title: 'Histórico',
+		height: '100%',
+		width: '100%',
+		layout: 'fit',
+		modal: true,
+		hidden: true,
+		resizable: false,
+		draggable: false,
+		closable: false,
+		id: 'historicoPanel', // Cambia el ID del panel
+		items: [
+			{
+				xtype: 'grid',
+				id: 'historicoGrid', // Ahora el ID pertenece al grid
+				store: {
+					fields: [
+						{ name: 'TransId', type: 'string' }, // Remisión
+						{ name: 'FechaTransaccion', type: 'string' }, // Fecha Transacción
+						{ name: 'FechaImpresion', type: 'string' }, // Fecha Impresión
+						{ name: 'Proceso', type: 'int' }, // Proceso
+						{ name: 'IdCliente', type: 'string' }, // Cliente
+						{ name: 'Rep2Id', type: 'string' }, // Rep2 Id
+						{ name: 'BinNum', type: 'string' }, // Ubicacion
+						{ name: 'Transportadora', type: 'string' }, // Transportadora
+						{ name: 'Guia', type: 'string' }, // Guía
+						{ name: 'Notas', type: 'string' }, // Observaciones
+						{ name: 'Fecha', type: 'string' }, // Fecha
+						{ name: 'Estado', type: 'int' }, // Estado
+						{ name: 'Usuario', type: 'string' }, // Usuario
+						{ name: 'Operario', type: 'string' }, // Operario
+						{ name: 'FechaAnulacion', type: 'string' }, // Fecha Anulación
+						{ name: 'Flete', type: 'string' }, // Flete
+						{ name: 'Ubicacion', type: 'string' } // Bodega
+					],
+					proxy: {
+						timeout: 600000,
+						useDefaultXhrHeader: false,
+						type: 'ajax',
+						url: url + "obtenerHistoricos",
+						reader: {
+							type: 'json',
+							rootProperty: 'data'
+						}
+					},
+					autoLoad: false
+				},
+				columns: [
+					{
+						header: 'Remisión',
+						dataIndex: 'TransId',
+						minWidth: 150
+					},
+					{
+						header: 'Proceso',
+						dataIndex: 'Proceso',
+						minWidth: 150,
+						renderer: function(value, metaData, record, rowIndex, colIndex, store, view){
+							var proc = record.get("Proceso");
+
+							switch(proc) {
+								case 1:
+									metaData.tdCls = 'pordespacho';
+									return 'Por Despacho';
+								case 3:
+									metaData.tdCls = 'ubicado';
+									return 'Ubicado';
+								case 2:
+									metaData.tdCls = 'despachado';
+									return 'Despachado';
+
+							}
+
+							return value;
+						}
+					},
+					{
+						header: 'Cliente',
+						dataIndex: 'IdCliente',
+						minWidth: 200
+					},
+					{
+						header: 'Rep2 Id',
+						dataIndex: 'Rep2Id',
+						minWidth: 100
+					},
+					{
+						header: 'Bodega',
+						dataIndex: 'Ubicacion',
+						minWidth: 150
+					},
+					{
+						header: 'Ubicacion',
+						dataIndex: 'BinNum',
+						minWidth: 100
+					},
+					{
+						header: 'Transportadora',
+						dataIndex: 'Transportadora',
+						minWidth: 200
+					},
+					{
+						header: 'Guía',
+						dataIndex: 'Guia',
+						minWidth: 150
+					},
+					{
+						header: 'Flete',
+						dataIndex: 'Flete',
+						minWidth: 150
+					},
+					{
+						header: 'Observaciones',
+						dataIndex: 'Notas',
+						flex: 1,
+						minWidth: 250
+					},
+					{
+						header: 'Fecha',
+						dataIndex: 'Fecha',
+						minWidth: 150
+					},
+					{
+						header: 'Estado',
+						dataIndex: 'Estado',
+						minWidth: 150
+					},
+					{
+						header: 'Usuario',
+						dataIndex: 'Usuario',
+						minWidth: 150
+					},
+					{
+						header: 'Operario',
+						dataIndex: 'Operario',
+						minWidth: 150
+					},
+					{
+						header: 'Fecha Transacción',
+						dataIndex: 'FechaTransaccion',
+						minWidth: 150
+					},
+					{
+						header: 'Fecha Impresión',
+						dataIndex: 'FechaImpresion',
+						minWidth: 150
+					},
+					{
+						header: 'Fecha Anulación',
+						dataIndex: 'FechaAnulacion',
+						minWidth: 150
+					}
+				]
+				
+			}
+		],
+		dockedItems: [
+			{
+				xtype: 'toolbar',
+				dock: 'bottom',
+				items: [
+					{
+						xtype: 'textfield',
+						fieldLabel: 'TransId',
+						id: 'transidField',
+						emptyText: 'Ingrese un número de TransId',
+						width: '50%'
+					},
+					{
+						xtype: 'button',
+						text: 'Buscar',
+						handler: function () {
+							var transId = Ext.getCmp('transidField').getValue();
+							if (!transId) {
+								Ext.Msg.alert('Error', 'Por favor, ingrese un TransId para buscar.');
+								return;
+							}
+							Ext.getCmp('historicoGrid').getStore().reload({
+								params: { 
+									transId: transId
+								}
+							});
+						}
+					},
+					"->",
+					{
+						xtype: 'button',
+						text: 'Cerrar',
+						handler: function() {
+							historicoPanel.hide();
+						}
+					}
+				]
+			}
+		]
+	});
+	
+	
+
 	 
 	Ext.create('Ext.container.Viewport', {
 		layout: 'border',
@@ -513,6 +712,17 @@ Ext.onReady(function() {
 								Ext.getCmp('tabla').getStore().reload();
 							} },
 							"->",
+							{
+								id: 'historicoButton',
+								xtype: 'button',
+								text: 'Consultar históricos',
+								iconCls: 'fas fa-search',
+								handler: function() {
+									Ext.getCmp('tabpanel').setVisible(false);
+									historicoPanel.show();
+								}
+							},
+							"-",
 							{
 								id: 'exportButton',
 								xtype: 'button',
@@ -871,7 +1081,7 @@ Ext.onReady(function() {
 								{
 									Ext.getCmp("Guia").setVisible(false);
 								}
-								
+
 								Ext.getCmp('Division').setVisible(false);
 								Ext.getCmp('tabpanel').setVisible(true);
 								Ext.getCmp("form").setDisabled(false);

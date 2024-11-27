@@ -34,6 +34,115 @@ class BodegaDespacho extends CI_Controller {
         }
         
     }
+
+    public function obtenerHistoricos()
+    {
+        $this->data = array();
+
+        // Obtiene el TransId desde los parámetros de la solicitud
+        $transId = $this->input->get('transId');
+
+        // Verifica si el TransId fue proporcionado
+        if (!$transId) {
+            $this->data["error"] = "Por favor, proporcione un TransId válido.";
+            $this->respuesta();
+            return;
+        }
+
+        // Consulta SQL para buscar los historiales que coincidan con el TransId
+        $sql = "SELECT 
+                    [Id],
+                    [Transid],
+                    [TransDate],
+                    [FechaImpresion],
+                    [Idproceso],
+                    [Idcliente],
+                    [Rep2Id],
+                    [BinNum],
+                    [IdTransportadora],
+                    [NumGuia],
+                    [Notes],
+                    [Fecha],
+                    [IdEstado],
+                    [IdUsuario],
+                    [IdOperario],
+                    [FechaAnulacion],
+                    [Flete],
+                    [LocId]
+                FROM 
+                    [AGR].[dbo].[AGRInProcesoDespacho]
+                WHERE 
+                    Transid LIKE ?";
+        
+        // Ejecuta la consulta usando el parámetro de TransId
+        $query = $this->db->query($sql, array($transId . '%'));
+
+        // Procesa los resultados y los agrega al arreglo de respuesta
+        foreach ($query->result() as $row) {
+            $sql_transportadora = "SELECT Descrip from AGRinTransportadoras
+            WHERE Idtransportadora = ?";
+
+            $query_transportadora = $this->db->query($sql_transportadora, $row->IdTransportadora);
+
+            if ($row->IdTransportadora)
+            {
+                $transportadora = $query_transportadora->row()->Descrip;
+            }
+            else
+            {
+                $transportadora = "";
+            }
+
+            $sql_usuarios = "select 
+            u.UserName
+        from 
+            [TSM].[dbo].[UserCompanyGroup] g 
+            inner join [TSM].[dbo].[UserCompany] c on g.UserCompId=c.UserCompId  
+            inner join [TSM].[dbo].[User] u on c.UserId=u.UserId 
+        where 
+            u.UserId = ?";
+
+            $query_usuario = $this->db->query($sql_usuarios, $row->IdOperario);
+
+
+            $sql_admin = "select 
+                u.UserName 
+            from 
+                [TSM].[dbo].[UserCompanyGroup] g 
+                inner join [TSM].[dbo].[UserCompany] c on g.UserCompId=c.UserCompId  
+                inner join [TSM].[dbo].[User] u on c.UserId=u.UserId 
+            where 
+                u.UserId = ?";
+
+            $query_admin = $this->db->query($sql_admin, $row->IdUsuario);
+
+
+            $this->data["data"][] = array(
+                "Id" => $row->Id,
+                "TransId" => $row->Transid,
+                "FechaTransaccion" => $row->TransDate,
+                "FechaImpresion" => $row->FechaImpresion,
+                "Proceso" => $row->Idproceso,
+                "IdCliente" => $row->Idcliente,
+                "Rep2Id" => $row->Rep2Id,
+                "BinNum" => $row->BinNum,
+                "Transportadora" => $transportadora,
+                "Guia" => $row->NumGuia,
+                "Notas" => $row->Notes,
+                "Fecha" => $row->Fecha,
+                "Estado" => $row->IdEstado,
+                "Usuario" => $query_usuario->row()->UserName,
+                "Operario" => $query_admin->row()->UserName,
+                "FechaAnulacion" => $row->FechaAnulacion,
+                "Flete" => $row->Flete,
+                "Ubicacion" => $row->LocId,
+            );
+        }
+
+        // Responde con los datos procesados
+        $this->respuesta();
+    }
+
 	
     public function obtenerPickedList()
     {
