@@ -34,16 +34,9 @@ Ext.onReady(function() {
 		var guiaColumn = grid.down('[itemId=guiaColumn]');
 		var fechaColumn = grid.down('[itemId=fechaColumn]');
 		var fleteColumn = grid.down('[itemId=fleteColumn]');
-
-		var transportadoraComboBox = Ext.getCmp('Transportadora');
-		var binNumComboBox = Ext.getCmp('Localizacion');
-		var fleteTextField = Ext.getCmp('Flete');
-		var fechaDesapchoaCalendar = Ext.getCmp('FechaDespacho');
 	
-
 		var calendario = Ext.getCmp('fecha');
 
-		// Ajustar visibiliad de elementos dependientes al tipo de proceso
 
 		// Items correspondientes a Ubicados / Despachados
 		exportButton.setDisabled(tipo !== 4 && tipo !== 6);
@@ -51,7 +44,6 @@ Ext.onReady(function() {
 		operarioColumn.setVisible(tipo === 4 || tipo === 6);
 		fechaColumn.setVisible(tipo === 6 || tipo === 4);
 		boton_Actualizar.setVisible(tipo !== 1);
-
 
 		// Items correspondientes exclusivamente a Despachados
 		transportadoraColumn.setVisible(tipo === 4);
@@ -67,11 +59,6 @@ Ext.onReady(function() {
 		textFieldRemision.setVisible(tipo === 1); 
 		boton_BuscarRemision.setVisible(tipo === 1);
 
-		// Items tabpanel
-		transportadoraComboBox.setVisible(false);
-		binNumComboBox.setVisible(false);
-		fleteTextField.setVisible(false);
-		fechaDesapchoaCalendar.setVisible(false);
 
 		Ext.getCmp('tabla').getStore().clearFilter();
 		Ext.getCmp("form").getForm().reset();
@@ -292,38 +279,19 @@ Ext.onReady(function() {
 	
 	function setVisibilityForm(visible)
 	{
-		if (visible === false)
-		{
-			Ext.getCmp("pro2").setVisible(false);
-			Ext.getCmp("pro3").setVisible(false);
-			Ext.getCmp("proceso").setVisible(false);
-			//Ext.getCmp("usuarios").setVisible(false);
-			//Ext.getCmp("password").setVisible(false);
-			Ext.getCmp("Operarios").setVisible(false);
-			Ext.getCmp("Observacion").setVisible(false);
+		Ext.getCmp("pro2").setVisible(visible);
+		Ext.getCmp("pro3").setVisible(visible);
+		Ext.getCmp("proceso").setVisible(visible);
+		//Ext.getCmp("usuarios").setVisible(false);
+		//Ext.getCmp("password").setVisible(false);
+		Ext.getCmp("Operarios").setVisible(visible);
+		Ext.getCmp("Observacion").setVisible(visible);
 
-			Ext.getCmp("proceso").setDisabled(true);
-			//Ext.getCmp("usuarios").setDisabled(true);
-			//Ext.getCmp("password").setDisabled(true);
-			Ext.getCmp("Operarios").setDisabled(true);
-			Ext.getCmp("Observacion").setDisabled(true);
-		}
-		else if (visible === true)
-		{
-			Ext.getCmp("pro2").setVisible(true);
-			Ext.getCmp("pro3").setVisible(true);
-			Ext.getCmp("proceso").setVisible(true);
-			//Ext.getCmp("usuarios").setVisible(true);
-			//Ext.getCmp("password").setVisible(true);
-			Ext.getCmp("Operarios").setVisible(true);
-			Ext.getCmp("Observacion").setVisible(true);
-
-			Ext.getCmp("proceso").setDisabled(false);
-			//Ext.getCmp("usuarios").setDisabled(false)
-			//Ext.getCmp("password").setDisabled(false)
-			Ext.getCmp("Operarios").setDisabled(false)
-			Ext.getCmp("Observacion").setDisabled(false)
-		}
+		Ext.getCmp("proceso").setDisabled(!visible);
+		//Ext.getCmp("usuarios").setDisabled(true);
+		//Ext.getCmp("password").setDisabled(true);
+		Ext.getCmp("Operarios").setDisabled(!visible);
+		Ext.getCmp("Observacion").setDisabled(!visible);
 	}
 	
 
@@ -807,8 +775,8 @@ Ext.onReady(function() {
 						dataIndex: 'Observaciones',
 						headerCheckbox: true,
 						flex: 1,
+						minWidth: 135,
 						//headerCheckbox: true,
-						width: 220,
 						editor: null	
 					},
 					{
@@ -875,6 +843,7 @@ Ext.onReady(function() {
 							Ext.getCmp('Guia').setVisible(false);
 							Ext.getCmp('Flete').setVisible(false);
 							Ext.getCmp('FechaDespacho').setVisible(false);
+							Ext.getCmp('Division').setVisible(false);
 							
 							setVisibilityForm(true);
 					
@@ -902,7 +871,8 @@ Ext.onReady(function() {
 								{
 									Ext.getCmp("Guia").setVisible(false);
 								}
-									
+								
+								Ext.getCmp('Division').setVisible(false);
 								Ext.getCmp('tabpanel').setVisible(true);
 								Ext.getCmp("form").setDisabled(false);
 								Ext.getCmp("form").getForm().reset();
@@ -980,7 +950,7 @@ Ext.onReady(function() {
 											datos.Proceso = fila.Proceso;
 											datos.Bodega = bodega;
 							
-											if (datos.IdTransTipo == 2) {
+											if (datos.IdTransTipo == 3) {
 												datos.BinNum = Ext.getCmp("Localizacion").getValue();
 
 												if (datos.BinNum == null)
@@ -996,7 +966,7 @@ Ext.onReady(function() {
 
 												datos.Transportadora = "";
 
-											} else if (datos.IdTransTipo == 3) {
+											} else if (datos.IdTransTipo == 2) {
 
 												datos.Transportadora = Ext.getCmp("Transportadora").getValue();
 												
@@ -1023,6 +993,47 @@ Ext.onReady(function() {
 												}
 
 												datos.BinNum = "";
+
+												if (Ext.getCmp('Division').checked) { // Ensure it's checking the checkbox's checked status
+													Ext.Ajax.request({
+														url: url + 'dividirRemision',
+														params: {
+															datos: JSON.stringify(datos) // Pass the required data as a JSON string
+														},
+														method: 'POST',
+														success: function (result, request) {
+															console.log(result.responseText);
+															try {
+																var response = Ext.decode(result.responseText); // Parse the server's JSON response
+																if (response.success) {
+																	Ext.Msg.show({
+																		title: 'Confirmación',
+																		message: response.mensaje,
+																		buttons: Ext.Msg.OK,
+																		icon: Ext.Msg.INFO,
+																		fn: function() {
+																			Ext.getCmp('tabla').getStore().clearFilter();
+																			Ext.getCmp("form").getForm().reset();
+																			//Ext.getCmp("tabla").getView().setDisabled(false);
+																			Ext.getCmp('tabpanel').setVisible(false);
+																			Ext.getCmp('tabla').getStore().reload();
+																		}
+																	});
+																} else {
+																	Ext.Msg.alert('Error', response.mensaje || 'Ocurrió un error.');
+																}
+															} catch (e) {
+																Ext.Msg.alert('Error', 'Error al procesar la respuesta del servidor.');
+															}
+														},
+														failure: function (result, request) {
+															Ext.Msg.alert('Error', 'No se pudo dividir la remisión. Verifica la conexión.');
+														}
+													});
+
+													return;
+												}
+
 											} else if (datos.Proceso == "DESPACHADO")
 											{
 												datos.IdTransTipo = 5;
@@ -1120,7 +1131,12 @@ Ext.onReady(function() {
 									},
 									'->',
 									{
-										
+										xtype: 'checkbox', // Añadir un checkbox
+										id: 'Division', // ID del checkbox
+										boxLabel: 'Dividir', // Etiqueta para el checkbox
+										inputValue: '1', // Valor que toma cuando está seleccionado
+										uncheckedValue: '0', // Valor cuando está deseleccionado
+										hidden: true
 									},
 									'-',
 									{
@@ -1294,14 +1310,14 @@ Ext.onReady(function() {
 										boxLabel: 'Ubicado', 
 										name: 'IdProceso', 
 										id: "pro2", 
-										inputValue: 2, 
+										inputValue: 3, 
 										disabled: true
 									},
 									{ 
 										boxLabel: 'Despachado', 
 										name: 'IdProceso', 
 										id: "pro3", 
-										inputValue: 3, 
+										inputValue: 2, 
 										disabled: true
 									}
 								],
@@ -1315,18 +1331,20 @@ Ext.onReady(function() {
 										Ext.getCmp('Flete').setVisible(false);
 							
 										// Muestra el campo correspondiente basado en la selección
-										if (newValue.IdProceso === 2) {
+										if (newValue.IdProceso === 3) {
 											Ext.getCmp('Localizacion').setVisible(true);
 											Ext.getCmp('Transportadora').setVisible(false);
 											Ext.getCmp('Guia').setVisible(false);
 											Ext.getCmp('Flete').setVisible(false);
 											Ext.getCmp('FechaDespacho').setVisible(false);
-										} else if (newValue.IdProceso === 3) {
+											Ext.getCmp('Division').setVisible(false);
+										} else if (newValue.IdProceso === 2) {
 											Ext.getCmp('Transportadora').setVisible(true);
 											Ext.getCmp('Localizacion').setVisible(false);
 											Ext.getCmp('Guia').setVisible(true);
 											Ext.getCmp('Flete').setVisible(true);
 											Ext.getCmp('FechaDespacho').setVisible(true);
+											Ext.getCmp('Division').setVisible(true);
 										}
 
 										IdTransTipo = newValue.IdProceso;

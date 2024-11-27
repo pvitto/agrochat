@@ -280,27 +280,8 @@ class BodegaDespacho extends CI_Controller {
 
         $this->data = json_decode($this->input->post("datos"));
 
-        $tipo = 0;
-
-        if ($this->data->IdTransTipo == 2)
-        {
-            $tipo = 3;
-        }
-        else if ($this->data->IdTransTipo == 3)
-        {
-            $tipo = 2;
-        }
-        else if ($this->data->IdTransTipo == 5)
-        {
-            $tipo = 5;
-        }
-        else if ($this->data->IdTransTipo == 7)
-        {
-            $tipo = 7;
-        }
-
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodegaBorrador1] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s','%s'", $this->data->TransId, $tipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado, '', $this->data->Flete, $this->data->Bodega);
+        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodegaBorrador1] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s','%s'", $this->data->TransId, $this->data->IdTransTipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado, '', $this->data->Flete, $this->data->Bodega);
 
         $query = $this->db->query($sql);
 
@@ -350,6 +331,132 @@ class BodegaDespacho extends CI_Controller {
 
     public function dividirRemision()
     {
+        // Decode the incoming JSON data
+        $this->data = json_decode($this->input->post("datos"));
+
+        // Validate required parameters
+        if (empty($this->data->TransId) || empty($this->data->IdTransTipo)) {
+            $this->data = array(
+                "mensaje" => "Datos inválidos. TransId o IdTransTipo no definidos.",
+                "success" => false
+            );
+            $this->respuesta();
+            return;
+        }
+
+        $originalTransId = $this->data->TransId;
+
+        // Query to count existing divisions
+        $sql_count = "SELECT COUNT(*) as Divisiones 
+                    FROM [AGR].[dbo].[AGRInProcesoDespacho] 
+                    WHERE TransId LIKE ?";
+        $query = $this->db->query($sql_count, array($originalTransId . '-%'));
+
+        if (!$query || !$query->row()) {
+            $this->data = array(
+                "mensaje" => "Error al obtener divisiones.",
+                "success" => false
+            );
+            $this->respuesta();
+            return;
+        }
+
+        $divisiones = $query->row()->Divisiones;
+
+        // Calculate the new suffix and define the new TransId
+        $newSuffix = $divisiones + 1;
+        $newTransId = $originalTransId . '-' . $newSuffix;
+
+        // Call the stored procedure to change the process to "despachado"
+        $sql_despachado = "EXEC [dbo].[HistorialDespachoBodegaBorrador1] ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?";
+        $params_despachado = [
+            $this->data->TransId,
+            $this->data->IdTransTipo,
+            $this->data->Transportadora,
+            $this->data->IdUsuario,
+            $this->data->Idoperario,
+            $this->data->BinNum,
+            $this->data->Observaciones,
+            $this->data->FechaDespacho,
+            $this->data->Guia,
+            $this->data->IdDespachado,
+            '',
+            $this->data->Flete,
+            $this->data->Bodega
+        ];
+
+        $query_despachado = $this->db->query($sql_despachado, $params_despachado);
+        if (!$query_despachado || !$query_despachado->row() || $query_despachado->row()->Mensaje !== "Ok") {
+            $this->data = array(
+                "mensaje" => $query_despachado->row()->Mensaje ?? "Error al cambiar el estado a despachado.",
+                "success" => false
+            );
+            $this->respuesta();
+            return;
+        }
+
+        // Update TransId in the database to reflect the division
+        $sql_update = "UPDATE [AGR].[dbo].[AGRInProcesoDespacho] SET Transid = ? WHERE Transid = ? AND IdEstado = 0";
+        if (!$this->db->query($sql_update, array($newTransId, $originalTransId))) {
+            $this->data = array(
+                "mensaje" => "Error al actualizar el TransId.",
+                "success" => false
+            );
+            $this->respuesta();
+            return;
+        }
+
+        if ($divisiones == 0)
+        {
+            // Si el proceso es de "Por Despachar" a "Despachado" se vuelve a llamar el procedimiento almacenado para volver a crear la remision en proceso 3 (ubicado)
+            $sql_ubicado = "EXEC [dbo].[HistorialDespachoBodegaBorrador1] ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?";
+            $params_ubicado = [
+                $this->data->TransId,
+                3, // Estado "ubicado"
+                $this->data->Transportadora,
+                $this->data->IdUsuario,
+                $this->data->Idoperario,
+                "Parcial", // Indica que es una división parcial
+                '',
+                $this->data->FechaDespacho,
+                $this->data->Guia,
+                $this->data->IdDespachado,
+                '',
+                $this->data->Flete,
+                $this->data->Bodega
+            ];
+
+            $query_ubicado = $this->db->query($sql_ubicado, $params_ubicado);
+            if (!$query_ubicado || !$query_ubicado->row() || $query_ubicado->row()->Mensaje !== "Ok") {
+                $this->data = array(
+                    "mensaje" => $query_ubicado->row()->Mensaje ?? "Error al crear la remisión original con estado 'Ubicado'.",
+                    "success" => false
+                );
+                $this->respuesta();
+                return;
+            }
+        }
+        else
+        {
+            $sql_activar = "UPDATE [AGR].[dbo].[AGRInProcesoDespacho] SET IdEstado = 0 WHERE Transid = ? AND IdEstado = 1";
+            if (!$this->db->query($sql_activar, array($originalTransId))) {
+                $this->data = array(
+                    "mensaje" => "Error al activar el TransId ubicado.",
+                    "success" => false
+                );
+                $this->respuesta();
+                return;
+            }
+        }
         
+
+        // Response for successful division
+        $this->data = array(
+            "mensaje" => "Despacho dividido correctamente. División creada con TransId = " . $newTransId,
+            "success" => true
+        );
+        $this->respuesta();
     }
+
+
 }
