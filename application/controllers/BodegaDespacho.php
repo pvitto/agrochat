@@ -37,19 +37,19 @@ class BodegaDespacho extends CI_Controller {
 
     public function obtenerHistoricos()
     {
-        $this->data = array();
+        $this->data = [];
 
         // Obtiene el TransId desde los parámetros de la solicitud
         $transId = $this->input->get('transId');
 
         // Verifica si el TransId fue proporcionado
-        if (!$transId) {
+        if (empty($transId)) {
             $this->data["error"] = "Por favor, proporcione un TransId válido.";
             $this->respuesta();
             return;
         }
 
-        // Consulta SQL para buscar los historiales que coincidan con el TransId
+        // Consulta optimizada para incluir Transportadora, Usuario y Operario
         $sql = "SELECT 
                     D.[Id],
                     D.[Transid],
@@ -57,16 +57,16 @@ class BodegaDespacho extends CI_Controller {
                     D.[FechaImpresion],
                     D.[Idproceso],
                     D.[Idcliente],
-                    C.[CustName], -- Agregado el nombre del cliente
+                    C.[CustName] AS Cliente,
                     D.[Rep2Id],
                     D.[BinNum],
-                    D.[IdTransportadora],
+                    T.[Descrip] AS Transportadora,
                     D.[NumGuia],
                     D.[Notes],
                     D.[Fecha],
                     D.[IdEstado],
-                    D.[IdUsuario],
-                    D.[IdOperario],
+                    U1.[UserName] AS Usuario,
+                    U2.[UserName] AS Operario,
                     D.[FechaAnulacion],
                     D.[Flete],
                     D.[LocId]
@@ -74,79 +74,47 @@ class BodegaDespacho extends CI_Controller {
                     [AGR].[dbo].[AGRInProcesoDespacho] D
                 LEFT JOIN 
                     [AGR].[dbo].[tblArCust] C ON D.[Idcliente] = C.[CustId] -- Relación con la tabla de clientes
+                LEFT JOIN 
+                    [AGR].[dbo].[AGRinTransportadoras] T ON D.[IdTransportadora] = T.[Idtransportadora] -- Transportadora
+                LEFT JOIN 
+                    [TSM].[dbo].[User] U1 ON D.[IdUsuario] = U1.[UserId] -- Usuario (Administrador)
+                LEFT JOIN 
+                    [TSM].[dbo].[User] U2 ON D.[IdOperario] = U2.[UserId] -- Operario
                 WHERE 
-                    D.[Transid] LIKE ?
-        ";
-        
-        // Ejecuta la consulta usando el parámetro de TransId
-        $query = $this->db->query($sql, array($transId . '%'));
+                    D.[Transid] LIKE ?";
+
+        // Ejecuta la consulta principal
+        $query = $this->db->query($sql, [$transId . '%']);
 
         // Procesa los resultados y los agrega al arreglo de respuesta
         foreach ($query->result() as $row) {
-            $sql_transportadora = "SELECT Descrip from AGRinTransportadoras
-            WHERE Idtransportadora = ?";
-
-            $query_transportadora = $this->db->query($sql_transportadora, $row->IdTransportadora);
-
-            if ($row->IdTransportadora)
-            {
-                $transportadora = $query_transportadora->row()->Descrip;
-            }
-            else
-            {
-                $transportadora = "";
-            }
-
-            $sql_usuarios = "select 
-            u.UserName
-        from 
-            [TSM].[dbo].[UserCompanyGroup] g 
-            inner join [TSM].[dbo].[UserCompany] c on g.UserCompId=c.UserCompId  
-            inner join [TSM].[dbo].[User] u on c.UserId=u.UserId 
-        where 
-            u.UserId = ?";
-
-            $query_usuario = $this->db->query($sql_usuarios, $row->IdOperario);
-
-
-            $sql_admin = "select 
-                u.UserName 
-            from 
-                [TSM].[dbo].[UserCompanyGroup] g 
-                inner join [TSM].[dbo].[UserCompany] c on g.UserCompId=c.UserCompId  
-                inner join [TSM].[dbo].[User] u on c.UserId=u.UserId 
-            where 
-                u.UserId = ?";
-
-            $query_admin = $this->db->query($sql_admin, $row->IdUsuario);
-
-
-            $this->data["data"][] = array(
+            $this->data["data"][] = [
                 "Id" => $row->Id,
                 "TransId" => $row->Transid,
                 "FechaTransaccion" => $row->TransDate,
                 "FechaImpresion" => $row->FechaImpresion,
                 "Proceso" => $row->Idproceso,
                 "IdCliente" => $row->Idcliente,
-                "Cliente" => $row->CustName,
+                "Cliente" => $row->Cliente,
                 "Rep2Id" => $row->Rep2Id,
                 "BinNum" => $row->BinNum,
-                "Transportadora" => $transportadora,
+                "Transportadora" => $row->Transportadora ?? "", // Valor por defecto si es nulo
                 "Guia" => $row->NumGuia,
                 "Notas" => $row->Notes,
                 "Fecha" => $row->Fecha,
                 "Estado" => $row->IdEstado,
-                "Usuario" => $query_usuario->row()->UserName,
-                "Operario" => $query_admin->row()->UserName,
+                "Usuario" => $row->Usuario ?? "", // Valor por defecto si es nulo
+                "Operario" => $row->Operario ?? "", // Valor por defecto si es nulo
                 "FechaAnulacion" => $row->FechaAnulacion,
                 "Flete" => $row->Flete,
                 "Ubicacion" => $row->LocId,
-            );
+            ];
         }
 
         // Responde con los datos procesados
         $this->respuesta();
     }
+
 
 	
     public function obtenerPickedList()
