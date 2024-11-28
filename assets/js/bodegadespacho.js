@@ -368,7 +368,7 @@ Ext.onReady(function() {
 						{ name: 'FechaTransaccion', type: 'string' }, // Fecha Transacción
 						{ name: 'FechaImpresion', type: 'string' }, // Fecha Impresión
 						{ name: 'Proceso', type: 'int' }, // Proceso
-						{ name: 'IdCliente', type: 'string' }, // Cliente
+						{ name: 'Cliente', type: 'string' }, // Cliente
 						{ name: 'Rep2Id', type: 'string' }, // Rep2 Id
 						{ name: 'BinNum', type: 'string' }, // Ubicacion
 						{ name: 'Transportadora', type: 'string' }, // Transportadora
@@ -425,7 +425,7 @@ Ext.onReady(function() {
 					},
 					{
 						header: 'Cliente',
-						dataIndex: 'IdCliente',
+						dataIndex: 'Cliente',
 						minWidth: 200
 					},
 					{
@@ -513,7 +513,7 @@ Ext.onReady(function() {
 						fieldLabel: 'TransId',
 						id: 'transidField',
 						emptyText: 'Ingrese un número de TransId',
-						width: '50%'
+						width: '25%'
 					},
 					{
 						xtype: 'button',

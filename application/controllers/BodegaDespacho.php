@@ -51,28 +51,32 @@ class BodegaDespacho extends CI_Controller {
 
         // Consulta SQL para buscar los historiales que coincidan con el TransId
         $sql = "SELECT 
-                    [Id],
-                    [Transid],
-                    [TransDate],
-                    [FechaImpresion],
-                    [Idproceso],
-                    [Idcliente],
-                    [Rep2Id],
-                    [BinNum],
-                    [IdTransportadora],
-                    [NumGuia],
-                    [Notes],
-                    [Fecha],
-                    [IdEstado],
-                    [IdUsuario],
-                    [IdOperario],
-                    [FechaAnulacion],
-                    [Flete],
-                    [LocId]
+                    D.[Id],
+                    D.[Transid],
+                    D.[TransDate],
+                    D.[FechaImpresion],
+                    D.[Idproceso],
+                    D.[Idcliente],
+                    C.[CustName], -- Agregado el nombre del cliente
+                    D.[Rep2Id],
+                    D.[BinNum],
+                    D.[IdTransportadora],
+                    D.[NumGuia],
+                    D.[Notes],
+                    D.[Fecha],
+                    D.[IdEstado],
+                    D.[IdUsuario],
+                    D.[IdOperario],
+                    D.[FechaAnulacion],
+                    D.[Flete],
+                    D.[LocId]
                 FROM 
-                    [AGR].[dbo].[AGRInProcesoDespacho]
+                    [AGR].[dbo].[AGRInProcesoDespacho] D
+                LEFT JOIN 
+                    [AGR].[dbo].[tblArCust] C ON D.[Idcliente] = C.[CustId] -- Relación con la tabla de clientes
                 WHERE 
-                    Transid LIKE ?";
+                    D.[Transid] LIKE ?
+        ";
         
         // Ejecuta la consulta usando el parámetro de TransId
         $query = $this->db->query($sql, array($transId . '%'));
@@ -124,6 +128,7 @@ class BodegaDespacho extends CI_Controller {
                 "FechaImpresion" => $row->FechaImpresion,
                 "Proceso" => $row->Idproceso,
                 "IdCliente" => $row->Idcliente,
+                "Cliente" => $row->CustName,
                 "Rep2Id" => $row->Rep2Id,
                 "BinNum" => $row->BinNum,
                 "Transportadora" => $transportadora,
