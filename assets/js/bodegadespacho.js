@@ -34,6 +34,7 @@ Ext.onReady(function() {
 		var guiaColumn = grid.down('[itemId=guiaColumn]');
 		var fechaColumn = grid.down('[itemId=fechaColumn]');
 		var fleteColumn = grid.down('[itemId=fleteColumn]');
+		var valorFleteColumn = grid.down('[itemId=valorFleteColumn]');
 	
 		var calendario = Ext.getCmp('fecha');
 
@@ -51,6 +52,7 @@ Ext.onReady(function() {
 		calendario.setVisible(tipo === 4);
 		boton_Anular.setVisible(tipo === 4);
 		fleteColumn.setVisible(tipo === 4);
+		valorFleteColumn.setVisible(tipo === 4);
 
 		// Items correspondientes exclusivamente a Ubicados
 		ubicacionColumn.setVisible(tipo === 6);
@@ -318,6 +320,8 @@ Ext.onReady(function() {
 			{ name: 'Operario', type: 'string' },
 			{ name: 'IdDespachado', type: 'int' },
 			{ name: 'Bodega', type: 'string' },
+			{ name: 'Flete', type: 'string' }, 
+			{ name: 'ValorFlete', type: 'int' },
 		],
 		proxy: {
 			timeout: 600000,
@@ -380,6 +384,7 @@ Ext.onReady(function() {
 						{ name: 'Operario', type: 'string' }, // Operario
 						{ name: 'FechaAnulacion', type: 'string' }, // Fecha Anulación
 						{ name: 'Flete', type: 'string' }, // Flete
+						{ name: 'ValorFlete', type: 'int' }, // Flete
 						{ name: 'Ubicacion', type: 'string' } // Bodega
 					],
 					proxy: {
@@ -459,6 +464,11 @@ Ext.onReady(function() {
 						minWidth: 150
 					},
 					{
+						header: 'Flete',
+						dataIndex: 'Flete',
+						minWidth: 150
+					},
+					{
 						header: 'Observaciones',
 						dataIndex: 'Notas',
 						flex: 1,
@@ -472,7 +482,21 @@ Ext.onReady(function() {
 					{
 						header: 'Estado',
 						dataIndex: 'Estado',
-						minWidth: 150
+						minWidth: 150,
+						renderer: function(value, metaData, record, rowIndex, colIndex, store, view){
+							var estado = record.get("Estado");
+
+							switch(estado) {
+								case 0:
+									metaData.tdCls = 'activo';
+									return 'Activo';
+								case 1:
+									metaData.tdCls = 'inactivo';
+									return 'Inactivo';
+							}
+
+							return value;
+						}
 					},
 					{
 						header: 'Usuario',
@@ -980,6 +1004,13 @@ Ext.onReady(function() {
 						minWidth: 100
 					},
 					{
+						header: 'Valor Flete',
+						dataIndex: 'ValorFlete',
+						itemId: 'valorFleteColumn',
+						hidden: true,
+						minWidth: 150
+					},
+					{
 						//xtype: 'checkcolumn',
 						header: 'Observaciones',
 						dataIndex: 'Observaciones',
@@ -1040,6 +1071,14 @@ Ext.onReady(function() {
 						Ext.getCmp('Operarios').getStore().load();
 					},
 					rowdblclick: function(viewTable, record, element, rowIndex, e, eOpts) {
+						Ext.getCmp('Localizacion').setVisible(false);
+							Ext.getCmp('Transportadora').setVisible(false);
+							Ext.getCmp('Guia').setVisible(false);
+							Ext.getCmp('Flete').setVisible(false);
+							Ext.getCmp('ValorFlete').setVisible(false);
+							Ext.getCmp('FechaDespacho').setVisible(false);
+							Ext.getCmp('Division').setVisible(false);
+							
 						if (tipo == 1 || tipo == 6)
 						{
 							Ext.getCmp("form").setDisabled(false);
@@ -1048,12 +1087,7 @@ Ext.onReady(function() {
 							Ext.getCmp("pro3").setDisabled(true);
 							Ext.getCmp('tabpanel').setVisible(true);
 
-							Ext.getCmp('Localizacion').setVisible(false);
-							Ext.getCmp('Transportadora').setVisible(false);
-							Ext.getCmp('Guia').setVisible(false);
-							Ext.getCmp('Flete').setVisible(false);
-							Ext.getCmp('FechaDespacho').setVisible(false);
-							Ext.getCmp('Division').setVisible(false);
+							
 							
 							setVisibilityForm(true);
 					
@@ -1157,6 +1191,7 @@ Ext.onReady(function() {
 											datos.IdDespachado = "";
 											datos.Guia = Ext.getCmp("Guia").getValue().trim();
 											datos.Flete = "";
+											datos.ValorFlete = "";
 											datos.Proceso = fila.Proceso;
 											datos.Bodega = bodega;
 							
@@ -1200,6 +1235,12 @@ Ext.onReady(function() {
 												if (Ext.getCmp("Flete").getValue() != null)
 												{
 													datos.Flete = Ext.getCmp("Flete").getValue();
+
+													if (Ext.getCmp("ValorFlete").getValue() != null)
+													{
+														datos.ValorFlete = Ext.getCmp("ValorFlete").getValue();
+													}
+
 												}
 
 												datos.BinNum = "";
@@ -1533,12 +1574,6 @@ Ext.onReady(function() {
 								],
 								listeners: {
 									change: function(field, newValue, oldValue) {
-										// Oculta todos los campos al inicio
-										Ext.getCmp('Localizacion').setVisible(false);
-										Ext.getCmp('Transportadora').setVisible(false);
-										Ext.getCmp('Guia').setVisible(false);
-										Ext.getCmp('FechaDespacho').setVisible(false);
-										Ext.getCmp('Flete').setVisible(false);
 							
 										// Muestra el campo correspondiente basado en la selección
 										if (newValue.IdProceso === 3) {
@@ -1546,6 +1581,7 @@ Ext.onReady(function() {
 											Ext.getCmp('Transportadora').setVisible(false);
 											Ext.getCmp('Guia').setVisible(false);
 											Ext.getCmp('Flete').setVisible(false);
+											Ext.getCmp('ValorFlete').setVisible(false);
 											Ext.getCmp('FechaDespacho').setVisible(false);
 											Ext.getCmp('Division').setVisible(false);
 										} else if (newValue.IdProceso === 2) {
@@ -1553,6 +1589,7 @@ Ext.onReady(function() {
 											Ext.getCmp('Localizacion').setVisible(false);
 											Ext.getCmp('Guia').setVisible(true);
 											Ext.getCmp('Flete').setVisible(true);
+											Ext.getCmp('ValorFlete').setVisible(true);
 											Ext.getCmp('FechaDespacho').setVisible(true);
 											Ext.getCmp('Division').setVisible(true);
 										}
@@ -1689,9 +1726,27 @@ Ext.onReady(function() {
 								}),
 								displayField: 'Descrip',  
 								valueField: 'Descrip',    
-								hidden: true  
-
+								hidden: true,
+								listeners: {
+									change: function (combo, newValue) {
+										// Enable the "ValorFlete" field when a value is selected
+										const valorFleteField = Ext.getCmp('ValorFlete');
+										if (valorFleteField) {
+											valorFleteField.setDisabled(false); // Enable the field
+										}
+									}
+								}
 							},
+							{
+								xtype: 'numberfield',
+								id: 'ValorFlete',
+								fieldLabel: 'Valor del Flete',
+								allowBlank: true, 
+								anchor: '98%', 
+								minValue: 0, 
+								hidden: true,
+								disabled: true
+							},							
 							{
 								xtype: 'textareafield',
 								id: 'Guia',

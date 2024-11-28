@@ -69,6 +69,7 @@ class BodegaDespacho extends CI_Controller {
                     U2.[UserName] AS Operario,
                     D.[FechaAnulacion],
                     D.[Flete],
+                    D.[ValorFlete],
                     D.[LocId]
                 FROM 
                     [AGR].[dbo].[AGRInProcesoDespacho] D
@@ -107,6 +108,7 @@ class BodegaDespacho extends CI_Controller {
                 "Operario" => $row->Operario ?? "", // Valor por defecto si es nulo
                 "FechaAnulacion" => $row->FechaAnulacion,
                 "Flete" => $row->Flete,
+                "ValorFlete"=>$row->ValorFlete,
                 "Ubicacion" => $row->LocId,
             ];
         }
@@ -156,7 +158,8 @@ class BodegaDespacho extends CI_Controller {
 				h.UserName Administrador,
 				F.UserName Operario,
 				D.Fecha AS FechaDespachado,
-				Flete
+				d.Flete,
+                d.ValorFlete
 				from
 				[dbo].[AGRInProcesoDespacho] d
 				
@@ -176,8 +179,8 @@ class BodegaDespacho extends CI_Controller {
         {
             
             $sql = sprintf(
-                "EXEC [dbo].[HistorialDespachoBodegaBorrador1] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s'", 
-                $remision, $tipo, '', '', '', '', '', '', '', '', $fechaConsulta, '', ''
+                "EXEC [dbo].[HistorialDespachoBodegaBorrador1] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s', '%d'", 
+                $remision, $tipo, '', '', '', '', '', '', '', '', $fechaConsulta, '', '', ''
             );
 
         }
@@ -237,6 +240,7 @@ class BodegaDespacho extends CI_Controller {
                     "Id"=>$row->IdDespachado,
                     "Fecha"=>$row->FechaDespachado,
                     "Flete"=>$row->Flete,
+                    "ValorFlete"=>$row->ValorFlete,
                     "Bodega"=>$row->Bodega
                 );
             }
@@ -363,7 +367,7 @@ class BodegaDespacho extends CI_Controller {
         $this->data = json_decode($this->input->post("datos"));
 
         //$this->load->view('welcome_message');
-        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodegaBorrador1] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s','%s'", $this->data->TransId, $this->data->IdTransTipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado, '', $this->data->Flete, $this->data->Bodega);
+        $sql = sprintf("EXEC [dbo].[HistorialDespachoBodegaBorrador1] '%s','%d','%d', '%d', '%d', '%s', '%s', '%s', '%s', '%d', '%s', '%s','%s'", $this->data->TransId, $this->data->IdTransTipo, $this->data->Transportadora, $this->data->IdUsuario, $this->data->Idoperario, $this->data->BinNum, $this->data->Observaciones, $this->data->FechaDespacho, $this->data->Guia, $this->data->IdDespachado, '', $this->data->Flete, $this->data->Bodega, $this->data->ValorFlete);
 
         $query = $this->db->query($sql);
 
@@ -450,7 +454,7 @@ class BodegaDespacho extends CI_Controller {
         $newTransId = $originalTransId . '-' . $newSuffix;
 
         // Call the stored procedure to change the process to "despachado"
-        $sql_despachado = "EXEC [dbo].[HistorialDespachoBodegaBorrador1] ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?";
+        $sql_despachado = "EXEC [dbo].[HistorialDespachoBodegaBorrador1] ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?";
         $params_despachado = [
             $this->data->TransId,
             $this->data->IdTransTipo,
@@ -464,7 +468,8 @@ class BodegaDespacho extends CI_Controller {
             $this->data->IdDespachado,
             '',
             $this->data->Flete,
-            $this->data->Bodega
+            $this->data->Bodega,
+            $this->data->ValorFlete
         ];
 
         $query_despachado = $this->db->query($sql_despachado, $params_despachado);
@@ -491,7 +496,7 @@ class BodegaDespacho extends CI_Controller {
         if ($divisiones == 0)
         {
             // Si el proceso es de "Por Despachar" a "Despachado" se vuelve a llamar el procedimiento almacenado para volver a crear la remision en proceso 3 (ubicado)
-            $sql_ubicado = "EXEC [dbo].[HistorialDespachoBodegaBorrador1] ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?";
+            $sql_ubicado = "EXEC [dbo].[HistorialDespachoBodegaBorrador1] ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?";
             $params_ubicado = [
                 $this->data->TransId,
                 3, // Estado "ubicado"
@@ -505,7 +510,8 @@ class BodegaDespacho extends CI_Controller {
                 $this->data->IdDespachado,
                 '',
                 $this->data->Flete,
-                $this->data->Bodega
+                $this->data->Bodega,
+                $this->data->ValorFlete
             ];
 
             $query_ubicado = $this->db->query($sql_ubicado, $params_ubicado);

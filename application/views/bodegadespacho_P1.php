@@ -17,6 +17,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
          .empacado {
             background-color: lightgreen;
          }
+         .activo {
+            background-color: lightgreen;
+         }
+         .inactivo {
+            background-color: indianred;
+         }
          #tabla .x-panel-header-title-default-framed > .x-title-icon-wrap-default-framed > .x-title-icon-default-framed {
             width: 50px;
             height: 25px;
