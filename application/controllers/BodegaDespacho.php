@@ -330,24 +330,23 @@ class BodegaDespacho extends CI_Controller {
     public function obtenerReferencias()
     {
 		$transid = $this->input->get("TransId");
-		$piso = $this->input->get("Piso");
-        $bodega = $this->input->get("Bodega");
         $this->data = array();
 
-		$sql = sprintf("select d.entrynum,e.cf_Ruta Ruta, d.ItemId Referencia, e.ExtLocID Localizacion, d.Descr,  d.QtyOrdSell Cantidad_Pedida, i.[cf_Referencia Equivalente] [Referencia_Equivalente],
-(select QtyOnHand from trav_InItemOnHand_view a where a.itemid=d.ItemId and a.LocId=d.LocId) Existencias,
-(select SUM(Qty) AS Comprt from tblInQty a where a.itemid=d.itemid and a.LocId=d.locid and a.LinkID='SO' and Qty>0) Comprt,
+		
+        $sql = sprintf("select d.entrynum,e.cf_Ruta Ruta, d.Partid Referencia, e.ExtLocID Localizacion, d.[Desc] as Descr,  d.QtyOrdSell Cantidad_Pedida, i.[cf_Referencia Equivalente] [Referencia_Equivalente],
+(select QtyOnHand from trav_InItemOnHand_view a where a.itemid=d.Partid and a.LocId=d.whseid) Existencias,
+(select SUM(Qty) AS Comprt from tblInQty a where a.itemid=d.Partid and a.LocId=d.whseid and a.LinkID='SO' and Qty>0) Comprt,
 
-(select QtyOnHand from trav_InItemOnHand_view a where a.itemid=d.ItemId and a.LocId=d.LocId) - 
-(select SUM(Qty) AS Comprt from tblInQty a where a.itemid=d.itemid and a.LocId=d.locid and a.LinkID='SO' and Qty>0) Disp
-			from tblSoTransHeader H
-			inner join tblSoTransDetail d on d.TransID=H.TransId
-			inner join trav_tblInItem_view I on d.ItemId=I.ItemId
-			inner join tblInItemLoc l on  d.ItemId=l.ItemId and d.LocId=l.LocId
+(select QtyOnHand from trav_InItemOnHand_view a where a.itemid=d.Partid and a.LocId=d.whseid) - 
+(select SUM(Qty) AS Comprt from tblInQty a where a.itemid=d.Partid and a.LocId=d.whseid and a.LinkID='SO' and Qty>0) Disp
+			from tblArhistHeader H
+			inner join tblarhistDetail d on d.TransID=H.TransId
+			inner join trav_tblInItem_view I on d.Partid=I.ItemId
+			inner join tblInItemLoc l on  d.Partid=l.ItemId and d.whseid=l.LocId
 			left join trav_tblWmExtLoc_view E on l.DfltBinNum=e.ExtLocID
-			where H.TransId='%s' and (e.[cf_Ubicacion Fisica]='%s' or e.[cf_Ubicacion Fisica] is NULL) and d.[status]='0' and h.Voidyn='0' and d.LocId='%s'
-			group by H.TransID, [cf_Ubicacion Fisica], d.ItemId, e.ExtLocID, d.Descr, d.QtyOrdSell, i.[cf_Referencia Equivalente], e.cf_Ruta, d.LocId, d.entrynum
-			order by e.cf_Ruta",$transid, $piso,$bodega);
+			where H.TransId='%s' and d.[status]='0' and h.Voidyn='0'
+			group by H.TransID, [cf_Ubicacion Fisica], d.Partid, e.ExtLocID, d.[Desc], d.QtyOrdSell, i.[cf_Referencia Equivalente], e.cf_Ruta, d.whseid, d.entrynum
+			order by e.cf_Ruta",$transid);
 
         $query = $this->db->query($sql);
 

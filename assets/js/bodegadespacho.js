@@ -464,8 +464,8 @@ Ext.onReady(function() {
 						minWidth: 150
 					},
 					{
-						header: 'Flete',
-						dataIndex: 'Flete',
+						header: 'Valor Flete',
+						dataIndex: 'ValorFlete',
 						minWidth: 150
 					},
 					{
@@ -842,7 +842,7 @@ Ext.onReady(function() {
 								Ext.Ajax.request({
 									method: 'GET',
 									url: url+"obtenerReferencias",
-									params: { TransId: record.data.TransId, Piso: record.data.Piso, Bodega: record.data.Bodega },
+									params: { TransId: record.data.TransId },
 									headers:
 									{
 										'Content-Type': 'application/json'
