@@ -1,4 +1,5 @@
 <?php
+<<<<<<< HEAD
 // --------------------------------------------
 // RESPUESTA DIRECTA SI NO SE USA COMO CONTROLLER
 // --------------------------------------------
@@ -29,32 +30,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['tipo']) && $_POST['ti
 // CONTROLADOR DE CODEIGNITER
 // --------------------------------------------
 defined('BASEPATH') OR exit('No direct script access allowed');
+=======
+// seguridad de CodeIgniter,  evita acceso directo al archivo
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+// hereda del controlador BodegaDespacho (donde hay funcionalidades compartidas)
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
 require_once(APPPATH . 'controllers/BodegaDespacho.php');
 
 class BodegaGuias extends BodegaDespacho
 {
     public function __construct()
     {
+<<<<<<< HEAD
         parent::__construct();
         $this->data = null;
     }
 
+=======
+        parent::__construct(); // ejecuta el constructor del padre (BodegaDespacho)
+        $this->data = null;    // variable para almacenar datos que se retornarán en las respuestas
+    }
+
+    // metodo privado que envia una respuesta JSON al frontend
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
     private function enviarRespuesta($resultado = [])
     {
         $this->output
             ->set_content_type('application/json', 'UTF-8')
+<<<<<<< HEAD
             ->set_output(json_encode(["data" => $resultado]));
     }
 
+=======
+            ->set_output(json_encode(["data" => $resultado])); // devuelve un JSON con clave "data"
+    }
+
+    // carga la vista principal asociada a esta seccion
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
     public function index()
     {
         $this->load->view('seguimientoguias');
     }
 
+<<<<<<< HEAD
+=======
+    // retorna una lista de guías despachadas filtradas por fecha o remision
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
     public function obtenerPickedList()
     {
         $fechaConsulta = $this->input->get("Fecha");
         $remision = $this->input->get("Remision");
+<<<<<<< HEAD
 
         $where = "WHERE D.IdProceso = 2 AND D.TransId NOT LIKE '%*%'";
 
@@ -70,6 +97,36 @@ class BodegaGuias extends BodegaDespacho
             $where .= " AND CONVERT(VARCHAR, D.Fecha, 103) = CONVERT(VARCHAR, '" . $this->db->escape_str($fechaConsulta) . "', 103)";
         }
 
+=======
+        $guia = $this->input->get("Guia");
+$guia = $this->input->get("Guia");
+
+$where = "WHERE D.IdProceso = 2 AND D.TransId NOT LIKE '%*%'";
+
+if (!empty($guia)) {
+    $this->db->like('numguia', $guia); // Esto está bien solo si usas query builder
+    $where .= " AND D.numguia LIKE '%" . $this->db->escape_like_str($guia) . "%'";
+}
+
+        if ($remision) {
+            if (strpos($remision, '*') === 0) {
+                // si empieza por asterisco, no se devuelve ningun resultado
+                $this->enviarRespuesta([]);
+                return;
+            } else {
+                // si tiene guion o cualquier otro valor, se filtra parcialmente por TransId
+                $remisionBase = explode('-', $this->db->escape_str($remision))[0];
+                $where .= " AND (D.TransId LIKE '%" . $remisionBase . "%')";
+            }
+        } else {
+            // si no hay remision, se filtra por fecha (formato dda/mes/año)
+            if (!empty($fechaConsulta)) {
+                $where .= " AND CONVERT(VARCHAR, D.Fecha, 103) = CONVERT(VARCHAR, '" . $this->db->escape_str($fechaConsulta) . "', 103)";
+            }
+        }
+
+        // consulta principal que trae los campos necesarios para mostrar en el grid
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
         $sql = "
             SELECT
                 D.TransId,
@@ -96,15 +153,27 @@ class BodegaGuias extends BodegaDespacho
             ORDER BY D.Fecha DESC
         ";
 
+<<<<<<< HEAD
+=======
+        // ejecuta la consulta y envia la respuesta
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
         $query = $this->db->query($sql);
         $this->enviarRespuesta($query->result_array());
     }
 
+<<<<<<< HEAD
+=======
+    // devuelve el detalle de referencias de una remision
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
     public function obtenerReferencias()
     {
         $transid = $this->input->get("TransId");
         $bodega = $this->input->get("Bodega");
 
+<<<<<<< HEAD
+=======
+        // consulta que obtiene las referencias asociadas a una remision activa
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
         $sql = sprintf(
             "SELECT 
                 d.ItemId AS Referencia,
@@ -123,12 +192,20 @@ class BodegaGuias extends BodegaDespacho
         $this->enviarRespuesta($query->result_array());
     }
 
+<<<<<<< HEAD
+=======
+    // autocompletado para el combo de remisiones
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
     public function buscarRemisiones()
     {
         $query = $this->input->get("query");
         $query = $this->db->escape_like_str($query);
         $querySinGuion = explode('-', $query)[0];
 
+<<<<<<< HEAD
+=======
+        // devuelve las 10 remisiones mas recientes coincidentes, excluyendo las que tienen '*'
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
         $sql = "
             SELECT TOP 10 TransId
             FROM AGRInProcesoDespacho
@@ -145,6 +222,7 @@ class BodegaGuias extends BodegaDespacho
         $this->enviarRespuesta($query->result_array());
     }
 
+<<<<<<< HEAD
     public function consultarGuiaChatbot()
     {
         $tipo = $this->input->post('tipo');
@@ -198,5 +276,26 @@ class BodegaGuias extends BodegaDespacho
                 ->set_output(json_encode(['ok' => false, 'msg' => 'No se encontró información para esa búsqueda.']));
         }
     }
+=======
+  public function buscarGuias()
+{
+    $query = $this->input->get("query");
+    $query = $this->db->escape_like_str($query);
+    $querySinGuion = explode('-', $query)[0];
+
+    $sql = "
+        SELECT TOP 10 numguia
+        FROM AGRInProcesoDespacho
+        WHERE (numguia IS NOT NULL AND LTRIM(RTRIM(numguia)) != '')
+        AND numguia LIKE '%" . $query . "%'
+        ORDER BY numguia DESC
+    ";
+
+    $query = $this->db->query($sql);
+    $this->enviarRespuesta($query->result_array());
+}
+
+
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
 }
 ?>

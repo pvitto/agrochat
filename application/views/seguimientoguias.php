@@ -91,6 +91,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
             font-weight: bold;
             -webkit-text-stroke: 0.6px yellow; /* borde  */
          }
+<<<<<<< HEAD
 
          .despachado {
     background-color: #808080 !important; /* gris oscuro */
@@ -110,10 +111,16 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 
 
+=======
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
       </style>
    </head>
    
    <body>
+<<<<<<< HEAD
       <!-- el cuerpo queda vacio........
+=======
+      <!-- el cuerpo queda vacío. EXT JS se encargara de construir la interfaz aqui dinamicamente. -->
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
    </body>
 </html>

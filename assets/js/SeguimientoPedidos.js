@@ -128,6 +128,7 @@ Ext.onReady(function() {
 										}	
 									}
 								}
+								
 							},
 							"-",
 							{
@@ -162,7 +163,11 @@ Ext.onReady(function() {
 							} },
 							{ //boton de guias / redirige en la misma pestaña sin abrir una nueva
 								minWidth: 80,text: 'Guías',iconCls: 'fas fa-truck',hidden: false,handler: function () {
+<<<<<<< HEAD
 									window.location.href = "/agro/BodegaGuias";//x es
+=======
+									window.location.href = "/agro/BodegaGuias";
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
 								}
 							}
 							
@@ -272,10 +277,18 @@ Ext.onReady(function() {
 						}
 					}
 				],
+<<<<<<< HEAD
 				viewConfig: {
 							
 					enableTextSelection: true,
 					listeners: {				
+=======
+				viewConfig: 
+					 {
+    enableTextSelection: true// para copiar 
+},
+					listeners: {
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
 						//si quito este comentario vuelve a funcionar
 						expandbody: function (rowNode, record, expandRow, e) {
 							//console.log(record);
@@ -309,7 +322,7 @@ Ext.onReady(function() {
 							//console.log('Main Grid Collapse Body')
 						}
 						
-					}
+					
 				},				
 				store: Ext.create('Ext.data.Store', {
 					autoLoad: false,
@@ -359,9 +372,8 @@ Ext.onReady(function() {
 						//editor: {
 							//allowBlank: false
 						//}
-					}, 
+					},  
 					{
-						header: 'Id Proceso',
 						dataIndex: 'IdProceso',
 						hidden: true,
 						width: 100,
@@ -382,6 +394,11 @@ Ext.onReady(function() {
 						header: 'Proceso',
 						dataIndex: 'TransType',
 						width: 140,
+
+					
+								
+							
+						 
 						editor: {
 							xtype: 'combo',
 							typeAhead: true,

@@ -151,7 +151,11 @@ Ext.onReady(function () {
                 {
                     header: 'Proceso',
                     dataIndex: 'Proceso',
+<<<<<<< HEAD
                     minWidth: 120,
+=======
+                    minWidth: 110,
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
                     renderer: function () {
                         return '<span class="despachado">Despachado</span>';
                     }
@@ -300,14 +304,24 @@ Ext.onReady(function () {
                         }
                         
                     },//-----------
+<<<<<<< HEAD
                     {
+=======
+   {
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
                         xtype: 'button',
                         text: 'Buscar Remision',
                         handler: function () {
                             recargarStore(true); //se llama a la funcion recargarStore() para que se ejecute y actualice los datos del store
                         }
                     },
+<<<<<<< HEAD
                     {
+=======
+
+{
+                    
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
                         xtype: 'button', 
                         text: 'Actualizar',
                         iconCls: 'fas fa-sync-alt',
@@ -324,6 +338,7 @@ Ext.onReady(function () {
     //funcion auxiliar para recargar el store con parametros filtrados
      //puede recargar por fecha o por numero de remision
      
+<<<<<<< HEAD
     function recargarStore(filtrarPorRemision = false) {
         const fecha = Ext.Date.format(Ext.getCmp('fechaFiltro').getValue(), 'd/m/Y');
         const remision = Ext.getCmp('remisionFiltro').getValue();
@@ -345,4 +360,32 @@ Ext.onReady(function () {
         });
     }
 
+=======
+   function recargarStore(filtrarPorRemision = false, filtrarPorGuia = false) {
+    const fecha = Ext.Date.format(Ext.getCmp('fechaFiltro').getValue(), 'd/m/Y');
+    const remision = Ext.getCmp('remisionFiltro').getValue();
+    
+
+    const params = { Tipo: tipo };
+
+    if (filtrarPorRemision && remision) {
+        params.Remision = remision.padStart(8, '0');
+    
+    } else {
+        params.Fecha = fecha;
+    }
+
+    storeGuias.getProxy().extraParams = params;
+    storeGuias.load({
+        callback: function (records, operation, success) {
+            if ((filtrarPorRemision || filtrarPorGuia) && (!records || records.length === 0)) {
+                Ext.Msg.alert('Sin resultados', 'No se encontraron resultados.');
+            }
+        }
+    });
+}
+
+
+
+>>>>>>> d237607dea62ab0e8d15f95ccbf1d17d516758be
 });

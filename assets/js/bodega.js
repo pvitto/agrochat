@@ -93,14 +93,22 @@ Ext.onReady(function() {
 								maxValue: new Date()  // limited to the current date or prior
 							},
 							"-",
-							{ minWidth: 80, text: 'Actualizar', iconCls: 'fas fa-sync-alt', hidden: false, handler: function(){
+							{ minWidth: 80, text: 'PAOLO', iconCls: 'fas fa-sync-alt', hidden: false, handler: function(){
 								Ext.getCmp('tabla').getStore().clearFilter();
 								Ext.getCmp("pisos").setValue(0);
 								Ext.getCmp("form").getForm().reset();
 								//Ext.getCmp("tabla").getView().setDisabled(false);
 								Ext.getCmp('tabpanel').setVisible(false);
 								Ext.getCmp('tabla').getStore().reload();
-							} }
+							} }, 	
+							
+							{
+								minWidth: 80, text: 'Guías',iconCls: 'fas fa-truck',hidden: false, handler: function () {
+									window.open("http://localhost/agro/BodegaDespacho", "_blank");
+								}
+							}
+							
+							
 						]
 					}
 				],
