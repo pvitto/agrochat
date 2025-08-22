@@ -544,7 +544,7 @@ Ext.onReady(function() {
 						text: 'Buscar',
 						handler: function () {
 							var transId = Ext.getCmp('transidField').getValue();
-							if (!transId) {
+							if (!transId || transId.length < 8) {
 								Ext.Msg.alert('Error', 'Por favor, ingrese un TransId para buscar.');
 								return;
 							}

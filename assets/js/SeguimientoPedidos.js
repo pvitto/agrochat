@@ -70,6 +70,7 @@ Ext.onReady(function() {
 										}	
 									}
 								}
+								
 							},
 							"-",
 							{
@@ -101,7 +102,13 @@ Ext.onReady(function() {
 								//Ext.getCmp("tabla").getView().setDisabled(false);
 								Ext.getCmp('tabpanel').setVisible(false);
 								Ext.getCmp('tabla').getStore().reload();
-							} }
+							} },
+							{ //boton de guias / redirige en la misma pestaña sin abrir una nueva
+								minWidth: 80,text: 'Guías',iconCls: 'fas fa-truck',hidden: false,handler: function () {
+									window.location.href = "/agro/BodegaGuias";
+								}
+							}
+							
 						]
 					}
 				],
@@ -208,7 +215,10 @@ Ext.onReady(function() {
 						}
 					}
 				],
-				viewConfig: {
+				viewConfig: 
+					 {
+    enableTextSelection: true// para copiar 
+},
 					listeners: {
 						//si quito este comentario vuelve a funcionar
 						expandbody: function (rowNode, record, expandRow, e) {
@@ -243,7 +253,7 @@ Ext.onReady(function() {
 							//console.log('Main Grid Collapse Body')
 						}
 						
-					}
+					
 				},				
 				store: Ext.create('Ext.data.Store', {
 					autoLoad: false,
@@ -293,9 +303,8 @@ Ext.onReady(function() {
 						//editor: {
 							//allowBlank: false
 						//}
-					}, 
+					},  
 					{
-						header: 'Id Proceso',
 						dataIndex: 'IdProceso',
 						hidden: true,
 						width: 100,
@@ -316,6 +325,11 @@ Ext.onReady(function() {
 						header: 'Proceso',
 						dataIndex: 'TransType',
 						width: 140,
+
+					
+								
+							
+						 
 						editor: {
 							xtype: 'combo',
 							typeAhead: true,

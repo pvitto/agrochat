@@ -130,7 +130,7 @@ width: 90%;
       <a href="http://192.168.0.205/agro/traslado/" class="tile" target="_blank" style="background-color:#000;color:#fff;font-weight:bold;">Traslados</a>
       <a href="http://192.168.0.205/agro/localizar/" class="tile" target="_blank" style="background-color:#157fcc;color:#fff;font-weight:bold;">Despachos</a>
       <a href="http://192.168.0.205/agro/localizaciones/" class="tile" target="_blank" style="background-color:#97213f;color:#fff;font-weight:bold;">Localizar ITEMS</a>
-      <a href="#" class="tile"></a>
+      <a href="localhost:81/agro/BodegaGuias" class="tile" target="_blank" style="background-color:#d1b787;color:#green;font-weight:bold;">GUIAS</a>
     </div>
   </div>
 
