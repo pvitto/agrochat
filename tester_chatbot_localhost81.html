@@ -1,0 +1,55 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tester de consulta Guía / Remisión</title>
+</head>
+<body>
+  <h2>🔍 Consultar Remisión o Guía</h2>
+  <form id="consultaForm">
+    <label>Tipo:
+      <select name="tipo" id="tipo">
+        <option value="remision">Remisión</option>
+        <option value="guia">Guía</option>
+      </select>
+    </label><br><br>
+    <label>Valor:
+      <input type="text" id="valor" name="valor" placeholder="Ej: 01050841" required>
+    </label><br><br>
+    <button type="submit">Consultar</button>
+  </form>
+
+  <h3>🧾 Resultado:</h3>
+  <pre id="resultado" style="background:#eee; padding:1em;"></pre>
+
+  <script>
+    const form = document.getElementById('consultaForm');
+    const resultado = document.getElementById('resultado');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      resultado.textContent = '⏳ Consultando...';
+
+      const tipo = document.getElementById('tipo').value;
+      const valor = document.getElementById('valor').value;
+
+      fetch('http://localhost:81/agrochat/index.php/BodegaGuias/consultarGuiaChatbot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({ tipo, valor })
+      })
+      .then(res => res.json())
+      .then(data => {
+        resultado.textContent = JSON.stringify(data, null, 2);
+      })
+      .catch(err => {
+        resultado.textContent = '❌ Error de conexión:
+' + err;
+      });
+    });
+  </script>
+</body>
+</html>

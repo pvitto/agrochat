@@ -1,0 +1,10 @@
+Array
+(
+    [intent] => ConsultarRemision
+    [fulfillmentText] => Perfecto, voy a buscar la remisión remision
+    [parameters] => Array
+        (
+            [remision] => remision
+        )
+
+)

@@ -1,72 +1,6 @@
 Ext.onReady(function() {
-    var socket = io.connect('http://192.168.0.205:4000');
-    var url = "/agro/SeguimientoPedidos/";
-
-    const chatBotInput = document.querySelector('.chatbox textarea');
-
-    if (chatBotInput) {
-        chatBotInput.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const input = chatBotInput.value.trim();
-                const remisionMatch = input.match(/010\d{5}/);
-
-                if (remisionMatch) {
-                    const remision = remisionMatch[0];
-                    chatAppend(`🔎 Consultando remisión: ${remision}...`, 'bot');
-
-                    Ext.Ajax.request({
-                        url: '/agro/BodegaGuias/consultarGuiaChatbot', // URL corregida para CodeIgniter
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        params: {
-                            tipo: 'remision',
-                            valor: remision
-                        },
-                        success: function (response) {
-                            const res = JSON.parse(response.responseText);
-                            if (res.ok && res.data) {
-                                const info = res.data;
-                                const mensaje = `
-<b>📦 Remisión:</b> ${info.TransId}<br>
-<b>👤 Cliente:</b> ${info.Cliente}<br>
-<b>🚛 Guía:</b> ${info.Guia}<br>
-<b>🚚 Transportadora:</b> ${info.Transportadora}<br>
-<b>📄 TipoGuía:</b> ${info.TipoGuia}<br>
-<b>👨‍💼 Vendedor:</b> ${info.Vendedor}<br>
-<b>📅 Fecha despacho:</b> ${info.Fecha}<br>
-<b>🗒 Observaciones:</b> ${info.Observaciones}<br>
-<b>💰 Flete:</b> ${info.Flete} ($${info.ValorFlete})<br>
-<b>🧑‍🔧 Operario:</b> ${info.Operario}<br>
-<b>🧑‍💼 Admin:</b> ${info.Administrador}<br>
-<b>🖨️ Fecha impresión:</b> ${info.FechaImpresion}<br>`;
-                                chatAppend(mensaje, 'bot');
-                            } else {
-                                chatAppend(`❌ ${res.msg || 'No se encontró información.'}`, 'bot');
-                            }
-                        },
-                        failure: function () {
-                            chatAppend('🚫 Error al conectar con el sistema.', 'bot');
-                        }
-                    });
-                }
-            }
-        });
-    }
-
-    function chatAppend(text, sender = 'bot') {
-        const box = document.querySelector('.chatbox .x-window-body');
-        const msg = document.createElement('div');
-        msg.innerHTML = `<p style="margin:5px;"><strong>${sender === 'bot' ? 'Bot' : 'Tú'}:</strong> ${text}</p>`;
-        box.appendChild(msg);
-        box.scrollTop = box.scrollHeight;
-    }
-
-    // resto del código existente...
-
-
+	var socket = io.connect('http://192.168.0.205:4000');
+	var url = "/agro/BodegaItem_Admin/";
 
 	function restablecer(){
 		Ext.getCmp("form").getForm().reset();
@@ -83,7 +17,7 @@ Ext.onReady(function() {
 				width: '76%',
 				region: 'center',
 				iconCls: 'logo',
-				title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; GESTOR DE PEDIDOS (Logistica Integral de Despachos) - ASESORES',
+				title: '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Admninistracion Bodega - Administrador',
 				layout: 'fit',
 				rowLines: true,
 				split: true,
@@ -159,13 +93,7 @@ Ext.onReady(function() {
 								//Ext.getCmp("tabla").getView().setDisabled(false);
 								Ext.getCmp('tabpanel').setVisible(false);
 								Ext.getCmp('tabla').getStore().reload();
-							} },
-							{ //boton de guias / redirige en la misma pestaña sin abrir una nueva
-								minWidth: 80,text: 'Guías',iconCls: 'fas fa-truck',hidden: false,handler: function () {
-									window.location.href = "/agro/BodegaGuias";//x es
-								}
-							}
-							
+							} }
 						]
 					}
 				],
@@ -176,15 +104,6 @@ Ext.onReady(function() {
 					},
 					{
 						ptype: 'rowwidget',			
-
-						// The widget definition describes a widget to be rendered into the expansion row.
-						// It has access to the application's ViewModel hierarchy. Its immediate ViewModel
-						// contains a record and recordIndex property. These, or any property of the record
-						// (including association stores) may be bound to the widget.
-						//
-						// See the Order model definition with the association declared to Company.
-						// Every Company record will be decorated with an "orders" method which,
-						// when called yields a store containing associated orders.
 						widget: {	
 							bind: {
 								store: Ext.create('Ext.data.Store', {
@@ -201,32 +120,16 @@ Ext.onReady(function() {
 										{ name: 'Existencias', type: 'int' },
 										{ name: 'Comprt', type: 'int' },
 										{ name: 'Disp', type: 'int' },
-										{ name: 'Referencia_Equivalente', type: 'string' }
-									]/*,
-									proxy: {
-										timeout: 600000,
-										useDefaultXhrHeader: false,
-										type: 'ajax',
-										url: url+"obtenerReferencias",
-										reader: {
-											type: 'json',
-											rootProperty: 'data'
-										}
-									}*/,
+										{ name: 'Referencia_Equivalente', type: 'string' },
+										{ name: 'Picked', type: 'int' },
+										{ name: 'Packed', type: 'int' }
+									],
 									data: []
 								})
 							},
 							xtype: 'grid',
 							header: false,
-							columns: [/*{
-								text: 'TransId',
-								dataIndex: 'TransId',
-								flex: 1
-							}, {
-								text: 'Piso',
-								dataIndex: 'Piso',
-								flex: 1
-							},*/ {
+							columns: [{
 								text: 'Ruta',
 								dataIndex: 'Ruta',
 								flex: 1
@@ -263,29 +166,30 @@ Ext.onReady(function() {
 								dataIndex: 'Disp',
 								flex: 1
 
-							},{
+							},
+							{ 
+								text: 'Picked', 
+								dataIndex: 'Picked', 
+								width: 100 
+							},
+							{ 
+								text: 'Packed', 
+								dataIndex: 'Packed', 
+								width: 100 
+							},
+							{
 
 								text: 'Referencia Equivalente',
 								dataIndex: 'Referencia_Equivalente',
 								flex: 1
-							}]						
+							}
+							]						
 						}
 					}
 				],
 				viewConfig: {
-							
-					enableTextSelection: true,
-					listeners: {				
-						//si quito este comentario vuelve a funcionar
+					listeners: {
 						expandbody: function (rowNode, record, expandRow, e) {
-							//console.log(record);
-							//Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).store.load({params: {TransId: record.data.TransId, Piso: record.data.Piso}});
-							
-							//funciona con el condicional para que despues de sacar los ITEMS la primera vez
-							//muestra la cache las siguiente los quite porque la cache lo filtraba por remision sino por posicion
-							//si la primeravez consultabas la primera y cambiabas el orden mirabas la priemra y mostraba lo de la otra
-							//
-							//if(Ext.getCmp(rowNode.rows[1].childNodes[1].childNodes[0].childNodes[0].id).getStore().count() === 0){
 								Ext.Ajax.request({
 									method: 'GET',
 									url: url+"obtenerReferencias",
@@ -308,12 +212,10 @@ Ext.onReady(function() {
 						collapsebody: function () {
 							//console.log('Main Grid Collapse Body')
 						}
-						
 					}
 				},				
 				store: Ext.create('Ext.data.Store', {
 					autoLoad: false,
-					//groupField: "TransId",
 					fields: [
 						{ name: 'TransId', type: 'string' },
 						{ name: 'IdProceso', type: 'int' },
@@ -328,16 +230,18 @@ Ext.onReady(function() {
 						{ name: 'FechaTransaccion', type: 'string' },
 						{ name: 'FechaImpresion', type: 'string' },
 						{ name: 'NombreUsuario', type: 'string' },
-						{ name: 'Observaciones', type: 'string' }
+						{ name: 'Observaciones', type: 'string' },
+						{ name: 'TipoEnvio', type: 'string' },
 					],
 					proxy: {
 						timeout: 600000,
 						useDefaultXhrHeader: false,
 						type: 'ajax',
-						url: url+"obtenerPickedList",
+						url: url + "obtenerPickedList",
 						reader: {
 							type: 'json',
-							rootProperty: 'data'
+							rootProperty: 'data',
+							totalProperty: 'total' // Asegúrate de que tu backend pase este campo correctamente
 						}
 					}
 				}),
@@ -413,6 +317,9 @@ Ext.onReady(function() {
 								case 4:
 									metaData.tdCls = 'empacado';
 									break;
+								case 5:
+									metaData.tdCls = 'porempacar';
+									break;
 							}
 
 							return value;
@@ -422,19 +329,7 @@ Ext.onReady(function() {
 						header: 'Orden Proceso',
 						dataIndex: 'Orden',
 						hidden: true,
-						width: 100/*,
-						editor: {
-							xtype: 'combo',
-							typeAhead: true,
-							triggerAction: 'all',
-							store: [
-								['Shade','Shade'],
-								['Mostly Shady','Mostly Shady'],
-								['Sun or Shade','Sun or Shade'],
-								['Mostly Sunny','Mostly Sunny'],
-								['Sunny','Sunny']
-							]
-						}*/
+						width: 100
 					}, 
 					{
 						//xtype: 'checkcolumn',
@@ -458,30 +353,23 @@ Ext.onReady(function() {
 						flex: 1,
 						minWidth: 200,
 						align: 'center',
-						//formatter: 'usMoney',
-						/*editor: {
-							xtype: 'numberfield',
-
-							allowBlank: false,
-							minValue: 0,
-							maxValue: 100000
-						}*/
 					}, 
+					
 					{
 						//xtype: 'datecolumn',
 						header: 'Vendedor',
 						dataIndex: 'Name',
 						refenence: 'Name',
 						width: 200
-						//format: 'M d, Y',
-						/*editor: {
-							xtype: 'datefield',
-							format: 'm/d/y',
-							minValue: '01/01/06',
-							disabledDays: [0, 6],
-							disabledDaysText: 'Plants are not available on the weekends'
-						}*/
 					}, 
+					{
+						//xtype: 'checkcolumn',
+						header: 'Envio',
+						dataIndex: 'TipoEnvio',
+						//headerCheckbox: true,
+						width: 100//,
+						//stopSelection: false
+					},
 					{
 						//xtype: 'checkcolumn',
 						header: 'Fecha Impresión',
@@ -494,16 +382,7 @@ Ext.onReady(function() {
 					{
 						//xtype: 'checkcolumn',
 						header: 'Fecha Inicial',
-						dataIndex: 'HoraInicial'/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
+						dataIndex: 'HoraInicial',
 						//headerCheckbox: true,
 						width: 190//,
 						//stopSelection: false
@@ -511,16 +390,7 @@ Ext.onReady(function() {
 					{
 						//xtype: 'checkcolumn',
 						header: 'Fecha Final',
-						dataIndex: 'HoraFinal'/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
+						dataIndex: 'HoraFinal',
 						//headerCheckbox: true,
 						width: 190//,
 						//stopSelection: false
@@ -528,16 +398,7 @@ Ext.onReady(function() {
 					{
 						//xtype: 'checkcolumn',
 						header: 'Responsable',
-						dataIndex: 'NombreUsuario'/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
+						dataIndex: 'NombreUsuario',
 						//headerCheckbox: true,
 						width: 130//,
 						//stopSelection: false
@@ -546,49 +407,27 @@ Ext.onReady(function() {
 						//xtype: 'checkcolumn',
 						header: 'Observaciones',
 						dataIndex: 'Observaciones',
-						headerCheckbox: true/*,
-						renderer: function(value){
-							if(value.toString() != ""){
-								var f = value.split(" ")[0];
-								var fecha = f.split("/")[1]+"/"+f.split("/")[0]+"/"+f.split("/")[2]+" "+value.split(" ")[1]+" "+value.split(" ")[2];
-								return fecha;
-							}else{
-								return value.toString();
-							}							
-						}*/,
-						//headerCheckbox: true,
-						width: 190//,
-						//stopSelection: false
-					}/*, {
-						xtype: 'actioncolumn',
-						width: 30,
-						sortable: false,
-						menuDisabled: true,
-						items: [{
-							iconCls: 'far fa-trash-alt',
-							tooltip: 'Delete Plant',
-							handler: 'onRemoveClick'
-						}]
-					}*/
-				],
-				/*viewConfig: {
-					getRowClass: function(record, rowIndex, rowParams, store){
-						var proc = record.get("IdProceso");
-
-						switch(proc) {
-							case 0:
-								return 'picked';
-							case 1:
-								return 'recogiendo';
-							case 2:
-								return 'recogiendo';
-							case 3:
-								return 'empacando';
-							case 3:
-								return 'empacado';
+						headerCheckbox: true,
+						width: 190,
+						editor: {
+							xtype: 'textfield',
+							typeAhead: true,
+							triggerAction: 'all'
+							
+						},
+						
+						listeners: {
+							beforeedit: function (editor, context) {
+								// Cancelamos el evento de edición para evitar que se inicie el modo de edición
+								return false;
+							},
+							// Manejador del evento de clic en la celda para mostrar el texto completo
+							click: function (grid, cell, cellIndex, record, row, rowIndex, e) {
+								Ext.Msg.alert('Observaciones', cell.innerHTML.toLowerCase());
+							}
 						}
 					}
-				},*/
+				],
 				listeners: {			
 					afterrender: function( view, eOpts ){
 						Ext.getCmp("form").getForm().reset();
@@ -599,46 +438,27 @@ Ext.onReady(function() {
 						Ext.getCmp('usuarios').getStore().load();
 						Ext.getCmp('Operarios').getStore().load();
 						
-					}
-					/*,
-					rowdblclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
-						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro1").setDisabled(true);
-						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp("pro4").setDisabled(true);
-						//Ext.getCmp("tabla").getView().setDisabled(true);
-						Ext.getCmp('tabpanel').setVisible(true);
-
-						if(record.data.IdUsuario != null){
-							Ext.getCmp("Operarios").setValue(record.data.IdUsuario);
-						}
-
-						if(record.data.IdProceso < 4){
-							Ext.getCmp("pro"+(record.data.IdProceso+1)).setDisabled(false);
-						}						
 					},
-					rowclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
-						Ext.getCmp("form").getForm().reset();
-						Ext.getCmp("pro1").setDisabled(true);
-						Ext.getCmp("pro2").setDisabled(true);
-						Ext.getCmp("pro3").setDisabled(true);
-						Ext.getCmp("pro4").setDisabled(true);
-						//Ext.getCmp("tabla").getView().setDisabled(true);
-						//Ext.getCmp('tabpanel').setVisible(true);
+					rowdblclick: function( viewTable, record, element, rowIndex, e, eOpts ) {
 
-						if(record.data.IdUsuario != null){
-							Ext.getCmp("Operarios").setValue(record.data.IdUsuario);
+						if (record.data.IdProceso == 0 || record.data.IdProceso == 5)
+						{
+							Ext.getCmp("form").getForm().reset();
+							//Ext.getCmp("tabla").getView().setDisabled(true);
+							Ext.getCmp('tabpanel').setVisible(true);
+	
+							if(record.data.IdUsuario != null){
+								Ext.getCmp("Operarios").setValue(record.data.IdUsuario);
+							}
+	
+							if(record.data.IdProceso != null)
+							{
+								Ext.getCmp("proceso").setValue(record.data.IdProceso);
+							}
 						}
-
-						if(record.data.IdProceso < 4){
-							Ext.getCmp("pro"+(record.data.IdProceso+1)).setDisabled(false);
-						}						
-					}*/
+					}
 				}
 			}),
-			
-
 			Ext.create('Ext.panel.Panel',{
 				hidden: true,
 				split: true,
@@ -666,17 +486,23 @@ Ext.onReady(function() {
 								},
 								items: [
 									{ minWidth: 80, text: 'Guardar', iconCls: 'fas fa-save', hidden: false, handler: function(){
-										var seleccion = Ext.getCmp("tabla").getSelection();
-            if (seleccion.length === 0) {
-                Ext.Msg.alert("Atención", "Por favor seleccione una fila primero.");
-                return;
-            }
-            var fila = seleccion[0].data;
+										var fila = Ext.getCmp("tabla").getSelection()[0].data;
 
 										if(fila.Piso == null || fila.Piso == ""){
 											Ext.Msg.show({
 												title:'Atención!',
 												message: 'Debe asignar un piso a la ubicación de unas de las referencias de la remisión: <br> <strong>'+fila.TransId+'</strong>',
+												buttons: Ext.Msg.OK,
+												icon: Ext.Msg.WARNING
+											});
+											return false;
+										}
+
+										if (fila.IdProceso != 0 && fila.IdProceso != 5)
+										{
+											Ext.Msg.show({
+												title:'Atención!',
+												message: 'Estado de proceso inválido.',
 												buttons: Ext.Msg.OK,
 												icon: Ext.Msg.WARNING
 											});
@@ -713,7 +539,7 @@ Ext.onReady(function() {
 										else{
 											var datos = {};
 											datos.TransId = fila.TransId;
-											datos.IdTransTipo = Ext.getCmp("proceso").getValue().IdProceso;
+											datos.IdTransTipo = 0;
 											datos.IdPiso = fila.Piso;
 											datos.IdUsuario = Ext.getCmp("usuarios").getValue();
 											datos.Idoperario = Ext.getCmp("Operarios").getValue();
@@ -837,23 +663,6 @@ Ext.onReady(function() {
 								allowBlank: false  // requires a non-empty value
 							},
 							{
-								id: 'proceso',
-								xtype: 'checkboxgroup',
-								fieldLabel: 'Proceso actual',
-								anchor: '98%',
-								// Arrange checkboxes into two columns, distributed vertically
-								columns: 1,
-								vertical: true,
-								allowBlank: false,
-								items: [
-									{ boxLabel: 'Recogiendo', name: 'IdProceso', id: "pro1", inputValue: 1, disabled: true },
-									{ boxLabel: 'Recogido', name: 'IdProceso', id: "pro2", inputValue: 2, disabled: true },
-									{ boxLabel: 'Empacando', name: 'IdProceso', id: "pro3", inputValue: 3, disabled: true },
-									{ boxLabel: 'Empacado', name: 'IdProceso', id: "pro4", inputValue: 4, disabled: true },
-									//{ boxLabel: 'Cancelado', name: 'IdProceso', id: "pro7", inputValue: 7, disabled: false }
-								]
-							},
-							{
 								xtype: 'combo',
 								id: 'Operarios',
 								typeAhead: true,
@@ -882,6 +691,15 @@ Ext.onReady(function() {
 										}
 									}
 								})
+							},
+							{
+								id: 'proceso',
+								xtype: 'textfield',
+								anchor: '98%',
+								// Arrange checkboxes into two columns, distributed vertically
+								vertical: true,
+								hidden: true,
+								editable: false
 							},
 							{
 								xtype: 'textareafield',

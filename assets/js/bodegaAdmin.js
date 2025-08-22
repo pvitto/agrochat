@@ -855,7 +855,12 @@ Ext.onReady(function() {
 							}
 						]
 					}
-				]
+				],
+				
+				viewConfig: {
+					enableTextSelection: true
+				}
+				
 			})
 		]
 	});

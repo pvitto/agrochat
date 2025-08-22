@@ -2,12 +2,12 @@ Ext.onReady(function() {
 	var socket = io.connect('http://192.168.0.205:4000');
 	var url = "/agro/BodegaDespacho/";
 
-	var queryParams = new URLSearchParams(window.location.search);
+	var queryParams = new URLSearchParams(window.location.search);//vi aqui
     var bodega = queryParams.get('LocId');
 
 	if (!bodega || bodega != "P1" && bodega != "A") {
         Ext.Msg.alert('Atención', 'Debe seleccionar una bodega.', function () {
-            window.location.href = "/agro/menuBodega";
+            window.location.href = "/agro/menuBodega";//vi aqui
         });
 	} 
 
@@ -337,17 +337,31 @@ Ext.onReady(function() {
 			}
 		},
 		listeners: {
+			
 			// Desactivar botones antes de cargar la store
 			beforeload: function() {
 
 				Ext.getCmp('toolbar').setDisabled(true);
 			},
-			load: function(store, records, successful, operation, eOpts) {
+			/*load: function(store, records, successful, operation, eOpts) {
 				if (successful) { // Verifica si la carga fue exitosa
 					Ext.getCmp('toolbar').setDisabled(false);
 					actualizarInterfaz();
 				}
-			}
+			}*/ //si pongo esto que esta comentado, se quita el contador y borro lo de abajo.
+			load: function(store, records, successful, operation, eOpts) {
+				if (successful) {
+					Ext.getCmp('toolbar').setDisabled(false);
+					actualizarInterfaz();
+			
+					// Contador en el título
+					var total = records.length;
+					var tituloBase = '<img src="/agro/assets/img/logo.png" style="height:20px; vertical-align:middle; margin-right:8px;"> Guias Despachadas - Vista para Asesores';
+					var tituloConContador = tituloBase + ' (' + total + ')';
+					Ext.getCmp('tabla').setTitle(tituloConContador);
+				}
+			}//
+			
 		}
 	});
 
@@ -544,7 +558,7 @@ Ext.onReady(function() {
 						text: 'Buscar',
 						handler: function () {
 							var transId = Ext.getCmp('transidField').getValue();
-							if (!transId) {
+							if (!transId || transId.length < 8) {
 								Ext.Msg.alert('Error', 'Por favor, ingrese un TransId para buscar.');
 								return;
 							}
@@ -760,6 +774,9 @@ Ext.onReady(function() {
 							}
 						]
 						
+					},
+					{
+						enableTextSelection: true,//para copiar con clic derecho
 					}
 				],
 				plugins: [
@@ -1125,7 +1142,40 @@ Ext.onReady(function() {
 						}
 						
 					}
-				}				
+				}	,
+				viewConfig: {
+					enableTextSelection: true
+				}
+				
+				/*viewConfig: {
+					enableTextSelection: true,
+					listeners: {
+						cellcontextmenu: function(view, td, cellIndex, record, tr, rowIndex, e) {
+							e.stopEvent(); // Bloquea el menú del navegador
+				
+							var column = view.getHeaderCt().getGridColumns()[cellIndex];
+							var dataIndex = column.dataIndex;
+							var value = record.get(dataIndex);
+				
+							if (value !== undefined) {
+								navigator.clipboard.writeText(value).then(function() {
+									Ext.toast({
+										html: 'Texto copiado: <b>' + value + '</b>',
+										title: 'Copiado',
+										align: 't',
+										slideInDuration: 300,
+										minWidth: 200
+									});
+								}).catch(function(err) {
+									console.error('Error al copiar', err);
+								});
+							}
+						}
+					}
+				
+				
+				}*/
+							
 			}),
 			Ext.create('Ext.panel.Panel',{
 				hidden: true,

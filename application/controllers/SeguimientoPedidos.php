@@ -189,6 +189,8 @@ class SeguimientoPedidos extends CI_Controller {
         //$this->load->view('welcome_message');
     }    	
 
+    
+
     public function guardarHistorialPicked()
     {
 
@@ -205,4 +207,68 @@ class SeguimientoPedidos extends CI_Controller {
         $this->respuesta();
         //$this->load->view('welcome_message');
     }    
+
+
+public function chatbot() {
+    $mensaje = strtolower(trim($this->input->get('remision')));
+    $mensajeLimpio = $this->db->escape_str($mensaje);
+
+    // Saludo inicial
+    if (in_array($mensaje, ['hola', 'buenas', 'hey', 'hello'])) {
+        echo json_encode([
+            'respuesta' => "Hola 👋, soy tu asistente de remisiones. Puedes preguntarme por el estado de una remisión, por ejemplo: <b>01048520</b>"
+        ]);
+        return;
+    }
+
+    // Validación del patrón de remisión
+    if (!preg_match("/^\d{8}(-\d)?$/", $mensaje)) {
+        echo json_encode([
+            'respuesta' => "Por favor ingresa una remisión válida de 8 dígitos (ej: 01048520)."
+        ]);
+        return;
+    }
+
+    // Usamos directamente el modelo (no instancia del controlador) para buscar la remisión
+    $remision = explode('-', $mensaje)[0];
+    $remision = $this->db->escape_str($remision);
+
+    $sql = "
+        SELECT TOP 1
+            D.TransId,
+            D.NumGuia AS Guia,
+            ISNULL(E.Descrip, 'Transportadora no registrada') AS Transportadora,
+            FORMAT(DATEADD(HOUR, -5, D.Fecha), 'dd/MM/yyyy HH:mm:ss') AS Fecha,
+            CASE
+                WHEN D.Idproceso = 1 THEN 'Por Despacho'
+                WHEN D.Idproceso = 2 THEN 'Despachado'
+                WHEN D.Idproceso = 3 THEN 'Ubicado'
+                ELSE 'Estado desconocido'
+            END AS Estado
+        FROM AGRInProcesoDespacho D
+        LEFT JOIN AGRinTransportadoras E ON D.IdTransportadora = E.IdTransportadora
+        WHERE D.TransId LIKE '{$remision}%'
+            AND D.IdProceso = 2
+            AND D.TransId NOT LIKE '%*%'
+        ORDER BY D.Fecha DESC
+    ";
+
+    $query = $this->db->query($sql);
+    $row = $query->row_array();
+
+    if ($row) {
+        $this->session->set_userdata('ultima_remision', $row['TransId']);
+
+        echo json_encode([
+            'respuesta' => "La remisión <b>{$row['TransId']}</b> está en estado <b>{$row['Estado']}</b> desde el <b>{$row['Fecha']}</b>.",
+            'info' => $row
+        ]);
+    } else {
+        echo json_encode([
+            'respuesta' => "No encontré información para la remisión <b>{$mensaje}</b>."
+        ]);
+    }
+}
+
+
 }
